@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const DEFAULT_BASE_URL = 'http://192.168.0.24:5000/api';
+const DEFAULT_BASE_URL = 'https://cash-upi-backend.onrender.com/api';
 const API_URL_KEY = '@custom_api_url';
 
 const api = axios.create({
