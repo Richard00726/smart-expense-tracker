@@ -164,7 +164,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
           <div style={{ display: 'flex', justifyContent: 'center', color: 'var(--accent-primary)', marginBottom: '1.5rem' }}>
             <Building2 size={56} strokeWidth={1.5} />
           </div>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: '700', letterSpacing: '-0.5px' }}>Cash and UPI Management</h2>
+          <h2 style={{ fontSize: '1.75rem', fontWeight: '700', letterSpacing: '-0.5px' }}>Smart Expense Tracker</h2>
           <p style={{ color: 'var(--text-secondary)', marginTop: '0.75rem', fontSize: '0.95rem' }}>
             {isForgotPassword ? 'Reset your password' : (isLogin ? 'Securely access your accounts' : 'Open a new digital account')}
           </p>

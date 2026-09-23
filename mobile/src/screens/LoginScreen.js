@@ -57,7 +57,7 @@ export default function LoginScreen({ navigation }) {
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.card}>
-          <Text style={styles.title}>Cash & UPI Tracker</Text>
+          <Text style={styles.title}>Smart Expense Tracker</Text>
           <Text style={styles.subtitle}>Securely access your account</Text>
           
           {error ? <Text style={styles.errorText}>{error}</Text> : null}

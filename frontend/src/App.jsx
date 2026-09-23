@@ -161,7 +161,7 @@ function App() {
       <aside className="sidebar">
         <div className="sidebar-logo">
           <WalletIcon size={28} />
-          Cash & UPI
+          Smart Expense Tracker
         </div>
         <div 
           className={`nav-item ${activeTab === 'home' ? 'active' : ''}`}
