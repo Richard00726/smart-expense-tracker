@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id                 String        @id @default(uuid())
+  username           String        @unique
+  email              String        @unique
+  currency           String        @default("₹")
+  profileImage       String?       @default("")
+  dailyLimit         Float         @default(0)
+  weeklyLimit        Float         @default(0)
+  monthlyLimit       Float         @default(0)
+  yearlyLimit        Float         @default(0)
+  excludedCategories String[]      @default([])
+  linkedBanks        String[]      @default([])
+  password           String
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  transactions       Transaction[]
+  wallets            Wallet[]
+}
+
+model Transaction {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  wallet    String   // "Cash" or "UPI"
+  type      String   // "credit" or "debit"
+  amount    Float
+  category  String?
+  note      String?
+  
+  // New fields for UPI auto-capture
+  counterparty       String?   // Sender/receiver name or UPI VPA
+  counterpartyType   String?   // 'name' or 'vpa'
+  refNo              String?   // Bank reference number
+  balance            Float?    // Remaining balance after txn
+  bank               String?   // e.g. 'TMB', 'SBI'
+  accountNo          String?   // Masked account number, e.g. XXXX0086
+  entryMode          String    @default("manual") // 'manual' or 'auto'
+  txnDate            DateTime? // The actual date/time from the bank message
+
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Wallet {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  type      String   // "Cash" or "UPI"
+  balance   Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, type])
+}
+
+model OTP {
+  id        String   @id @default(uuid())
+  email     String
+  code      String
+  createdAt DateTime @default(now())
+}
