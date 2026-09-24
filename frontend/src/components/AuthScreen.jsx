@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { loginUser, registerUser, sendOTP, forgotPassword, resetPassword } from '../services/api';
-import { Wallet, LogIn, UserPlus, Mail, ArrowRight, ArrowLeft, Eye, EyeOff, Building2 } from 'lucide-react';
+import { Wallet, LogIn, UserPlus, Mail, ArrowRight, ArrowLeft, Building2 } from 'lucide-react';
 
 const AuthScreen = ({ onAuthSuccess }) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -16,7 +16,6 @@ const AuthScreen = ({ onAuthSuccess }) => {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
   const [mathChallenge, setMathChallenge] = useState({ num1: 5, num2: 3, answer: '' });
@@ -199,24 +198,14 @@ const AuthScreen = ({ onAuthSuccess }) => {
 
             <div className="form-group">
               <label className="form-label">Password</label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  className="form-control"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                  style={{ paddingRight: '2.5rem' }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
+              <input
+                type="password"
+                name="password"
+                className="form-control"
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
                 <button type="button" onClick={() => { setIsForgotPassword(true); setStep(1); generateMathChallenge(); setError(''); setSuccessMsg(''); }} style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '0.85rem', cursor: 'pointer' }}>
                   Forgot Password?
@@ -307,25 +296,15 @@ const AuthScreen = ({ onAuthSuccess }) => {
                 
                 <div className="form-group">
                   <label className="form-label">New Password</label>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      name="password"
-                      className="form-control"
-                      value={formData.password}
-                      onChange={handleChange}
-                      required
-                      minLength={6}
-                      style={{ paddingRight: '2.5rem' }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
+                  <input
+                    type="password"
+                    name="password"
+                    className="form-control"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                    minLength={6}
+                  />
                 </div>
 
                 <div className="form-group">
@@ -427,25 +406,15 @@ const AuthScreen = ({ onAuthSuccess }) => {
                 
                 <div className="form-group">
                   <label className="form-label">Create a Password</label>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      name="password"
-                      className="form-control"
-                      value={formData.password}
-                      onChange={handleChange}
-                      required
-                      minLength={6}
-                      style={{ paddingRight: '2.5rem' }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
+                  <input
+                    type="password"
+                    name="password"
+                    className="form-control"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                    minLength={6}
+                  />
                 </div>
 
                 <button
