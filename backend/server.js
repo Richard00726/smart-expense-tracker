@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 
 // Health check endpoint for cloud liveness monitors
 app.get("/health", (req, res) => {
-  res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+  res.status(200).send("OK");
 });
 
 app.get("/", (req, res) => {

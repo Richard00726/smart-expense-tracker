@@ -32,7 +32,7 @@ router.post("/send-otp", async (req, res) => {
     if (!email) return res.status(400).json({ error: "Please provide an email" });
 
     const userExists = await prisma.user.findUnique({ where: { email } });
-    if (userExists) return res.status(400).json({ error: "User already exists with this email" });
+    if (userExists) return res.status(400).json({ error: "This email is already registered. Please log in instead." });
 
     const code = Math.floor(100000 + Math.random() * 900000).toString();
 
