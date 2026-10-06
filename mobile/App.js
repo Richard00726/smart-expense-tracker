@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { ActivityIndicator, View, StatusBar } from 'react-native';
+import { ActivityIndicator, View, StatusBar, Linking } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,10 +16,34 @@ import BankSelectionScreen from './src/screens/BankSelectionScreen';
 
 const Stack = createNativeStackNavigator();
 
-
-
 function AppNavigator() {
-  const { user, isLoading } = useContext(AuthContext);
+  const { user, isLoading, loginWithToken } = useContext(AuthContext);
+
+  React.useEffect(() => {
+    const handleUrl = async (url) => {
+      if (!url) return;
+      try {
+        console.log("Deep link received:", url);
+        const match = url.match(/[?&]token=([^&]+)/);
+        if (match && match[1]) {
+          const receivedToken = decodeURIComponent(match[1]);
+          await loginWithToken(receivedToken);
+        }
+      } catch (err) {
+        console.error("Deep link error:", err);
+      }
+    };
+
+    Linking.getInitialURL().then(url => {
+      if (url) handleUrl(url);
+    });
+
+    const subscription = Linking.addEventListener('url', (event) => {
+      if (event?.url) handleUrl(event.url);
+    });
+
+    return () => subscription.remove();
+  }, [loginWithToken]);
 
   if (isLoading) {
     return (

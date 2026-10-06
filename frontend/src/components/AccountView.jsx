@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { User, Lock, AlertTriangle, Save, Check, X, Sun, Moon, Trash2, ArrowLeft, ChevronRight } from 'lucide-react';
+import { User, Lock, AlertTriangle, Save, Check, X, Sun, Moon, Trash2, ArrowLeft, ChevronRight, Smartphone } from 'lucide-react';
 import { getUser, updateProfile, changePassword, deleteAccount } from '../services/api';
 import profileIllustration from '../assets/profile_illustration.jpg';
 import preferencesIllustration from '../assets/preferences_illustration.jpg';
@@ -24,7 +24,7 @@ const ToggleSwitch = ({ checked, onChange }) => (
   </div>
 );
 
-const AccountView = ({ theme, toggleTheme, onLogout }) => {
+const AccountView = ({ theme, toggleTheme, onLogout, onOpenSetupGuide }) => {
   const [activeSetting, setActiveSetting] = useState(null);
   const [profile, setProfile] = useState({ username: '', email: '', currency: '₹', createdAt: '', profileImage: '' });
   const [loading, setLoading] = useState(true);
@@ -195,9 +195,27 @@ const AccountView = ({ theme, toggleTheme, onLogout }) => {
             <ChevronRight size={20} color="var(--text-secondary)" />
           </div>
 
-          <div 
-            className="data-card glass animate-fade-in" 
-            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.5rem', border: '1px solid rgba(239, 68, 68, 0.2)', transition: 'all 0.2s ease', animationDelay: '0.3s' }}
+          {/* Setup Guide */}
+          <div
+            className="data-card glass animate-fade-in"
+            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.5rem', transition: 'all 0.2s ease', border: '1px solid rgba(59,130,246,0.2)', animationDelay: '0.3s' }}
+            onClick={() => onOpenSetupGuide && onOpenSetupGuide()}
+            onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+            onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            <div style={{ background: 'rgba(59,130,246,0.1)', padding: '1rem', borderRadius: '50%', color: '#3b82f6' }}>
+              <Smartphone size={24} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <h3 style={{ margin: '0 0 0.25rem', color: 'var(--text-primary)' }}>Setup Guide</h3>
+              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Re-open UPI auto-tracking setup & APK download guide</p>
+            </div>
+            <ChevronRight size={20} color="var(--text-secondary)" />
+          </div>
+
+          <div
+            className="data-card glass animate-fade-in"
+            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.5rem', border: '1px solid rgba(239, 68, 68, 0.2)', transition: 'all 0.2s ease', animationDelay: '0.4s' }}
             onClick={() => setActiveSetting('danger')}
             onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
             onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
@@ -206,7 +224,7 @@ const AccountView = ({ theme, toggleTheme, onLogout }) => {
               <AlertTriangle size={24} />
             </div>
             <div style={{ flex: 1 }}>
-              <h3 style={{ margin: '0 0 0.25rem 0', color: 'var(--danger)' }}>Danger Zone</h3>
+              <h3 style={{ margin: '0 0 0.25rem', color: 'var(--danger)' }}>Danger Zone</h3>
               <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Permanently delete your account and data</p>
             </div>
             <ChevronRight size={20} color="var(--text-secondary)" />

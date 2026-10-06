@@ -54,6 +54,27 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithToken = async (newToken) => {
+    try {
+      setAuthToken(newToken);
+      const response = await api.get('/auth/me');
+      const userData = response.data;
+      
+      setToken(newToken);
+      setUser(userData);
+
+      await AsyncStorage.setItem('token', newToken);
+      await AsyncStorage.setItem('user', JSON.stringify(userData));
+      return { success: true, user: userData };
+    } catch (error) {
+      console.error('Failed to log in with token:', error);
+      return { 
+        success: false, 
+        error: error.response?.data?.error || 'Invalid or expired login token' 
+      };
+    }
+  };
+
   const logout = async () => {
     setToken(null);
     setUser(null);
@@ -64,10 +85,6 @@ export const AuthProvider = ({ children }) => {
 
   const updateLinkedBanks = async (banks) => {
     try {
-      // Assuming we had a profile update endpoint, 
-      // but for now we can just save it locally if the backend doesn't support it directly.
-      // Wait, the backend does have an endpoint? 
-      // Let's just save it to AsyncStorage for the frontend to use in filtering.
       await AsyncStorage.setItem('linkedBanks', JSON.stringify(banks));
       setUser(prev => ({ ...prev, linkedBanks: banks }));
       return true;
@@ -78,7 +95,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, logout, updateLinkedBanks }}>
+    <AuthContext.Provider value={{ user, token, isLoading, login, loginWithToken, logout, updateLinkedBanks }}>
       {children}
     </AuthContext.Provider>
   );

@@ -7,6 +7,7 @@ import AnalysisView from './components/AnalysisView';
 import AuthScreen from './components/AuthScreen';
 import AccountView from './components/AccountView';
 import BudgetView from './components/BudgetView';
+import OnboardingScreen from './components/OnboardingScreen';
 import { Wallet as WalletIcon, Home, PieChart, ArrowUpRight, ArrowDownRight, Activity, Sun, Moon, LogOut, User, Target } from 'lucide-react';
 import './index.css';
 import './App.css';
@@ -19,6 +20,7 @@ function App() {
   const [transactions, setTransactions] = useState([]);
   const [txLoading, setTxLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('home');
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const today = new Date();
   const todayString = today.toISOString().split('T')[0];
   const currentMonthString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
@@ -152,7 +154,21 @@ function App() {
   }, [txFilterType, txFilterValue, txWalletFilter, isAuthenticated]);
 
   if (!isAuthenticated) {
-    return <AuthScreen onAuthSuccess={() => setIsAuthenticated(true)} />;
+    return <AuthScreen onAuthSuccess={() => {
+      setIsAuthenticated(true);
+      if (!localStorage.getItem('onboarding_done')) setShowOnboarding(true);
+    }} />;
+  }
+
+  if (showOnboarding) {
+    return (
+      <OnboardingScreen 
+        onComplete={() => setShowOnboarding(false)} 
+        username={currentUser.username || 'there'} 
+        token={localStorage.getItem('token')}
+        user={currentUser}
+      />
+    );
   }
 
   return (
@@ -421,7 +437,7 @@ function App() {
 
           {activeTab === 'account' && (
             <div style={{ marginTop: '2rem' }}>
-              <AccountView theme={theme} toggleTheme={toggleTheme} onLogout={handleLogout} />
+              <AccountView theme={theme} toggleTheme={toggleTheme} onLogout={handleLogout} onOpenSetupGuide={() => setShowOnboarding(true)} />
             </div>
           )}
 

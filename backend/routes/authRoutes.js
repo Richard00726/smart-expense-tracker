@@ -338,4 +338,206 @@ router.delete("/account", protect, async (req, res) => {
   }
 });
 
+// @desc    Mobile QR Login Gateway
+// @route   GET /api/auth/mobile-login
+router.get("/mobile-login", async (req, res) => {
+  const { token } = req.query;
+
+  if (!token) {
+    return res.status(400).send(`
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Login Failed</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #fff; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; padding: 20px; }
+          .card { background: #1e293b; border-radius: 16px; padding: 28px; text-align: center; max-width: 400px; border: 1px solid #334155; }
+          h2 { color: #ef4444; margin-top: 0; }
+          p { color: #94a3b8; font-size: 15px; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <h2>⚠️ Missing Login Token</h2>
+          <p>This QR code appears incomplete. Please scan the QR code again from your dashboard.</p>
+        </div>
+      </body>
+      </html>
+    `);
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "default_secret");
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id },
+      select: { id: true, username: true, email: true }
+    });
+
+    if (!user) {
+      return res.status(404).send(`
+        <!DOCTYPE html>
+        <html><body style="background:#0f172a;color:#fff;font-family:sans-serif;text-align:center;padding:50px;">
+          <h2>Account Not Found</h2>
+          <p style="color:#94a3b8;">User account no longer exists.</p>
+        </body></html>
+      `);
+    }
+
+    const appDeepLink = `exp+mobile://login?token=${encodeURIComponent(token)}`;
+
+    res.send(`
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Smart Expense Tracker - Mobile Login</title>
+        <style>
+          * { box-sizing: border-box; }
+          body {
+            margin: 0;
+            padding: 24px 16px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #0b0f19 0%, #171e31 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .container {
+            width: 100%;
+            max-width: 440px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 24px;
+            padding: 32px 24px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+          }
+          .icon-badge {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #10b981, #059669);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 36px;
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
+          }
+          h1 {
+            font-size: 22px;
+            margin: 0 0 8px;
+            font-weight: 700;
+          }
+          .user-box {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            border-radius: 14px;
+            padding: 12px 16px;
+            margin: 18px 0 24px;
+          }
+          .user-name {
+            font-weight: 600;
+            font-size: 16px;
+            color: #60a5fa;
+            margin: 0 0 2px;
+          }
+          .user-email {
+            font-size: 13px;
+            color: #94a3b8;
+            margin: 0;
+          }
+          .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 16px;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            margin-bottom: 12px;
+          }
+          .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: #fff;
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+          }
+          .status-text {
+            color: #10b981;
+            font-size: 14px;
+            font-weight: 500;
+            margin: 16px 0 20px;
+          }
+          .divider {
+            height: 1px;
+            background: #334155;
+            margin: 20px 0;
+          }
+          .footer-note {
+            font-size: 12px;
+            color: #64748b;
+            line-height: 1.5;
+            margin: 0;
+          }
+        </style>
+        <script>
+          // Automatically trigger deep link to open app
+          window.addEventListener('load', function() {
+            setTimeout(function() {
+              window.location.href = "${appDeepLink}";
+            }, 600);
+          });
+        </script>
+      </head>
+      <body>
+        <div class="container">
+          <div class="icon-badge">✓</div>
+          <h1>Login Authorized!</h1>
+          <p style="color:#94a3b8;font-size:14px;margin:0 0 16px;">Opening Smart Expense Tracker on your mobile phone...</p>
+          
+          <div class="user-box">
+            <div class="user-name">${user.username}</div>
+            <div class="user-email">${user.email}</div>
+          </div>
+
+          <div class="status-text">⚡ Connecting to your app...</div>
+
+          <a href="${appDeepLink}" class="btn btn-primary" id="openAppBtn">
+            🚀 Open Smart Expense Tracker App
+          </a>
+
+          <div class="divider"></div>
+
+          <p class="footer-note">
+            If the app didn't open automatically, tap the button above.<br>
+            Make sure the Smart Expense Tracker app is installed on this device.
+          </p>
+        </div>
+      </body>
+      </html>
+    `);
+  } catch (err) {
+    console.error("QR mobile login error:", err);
+    res.status(401).send(`
+      <!DOCTYPE html>
+      <html><body style="background:#0f172a;color:#fff;font-family:sans-serif;text-align:center;padding:50px;">
+        <h2>⚠️ Session Expired or Invalid</h2>
+        <p style="color:#94a3b8;">Please refresh the setup guide on your web browser and scan the new QR code.</p>
+      </body></html>
+    `);
+  }
+});
+
 module.exports = router;
+
