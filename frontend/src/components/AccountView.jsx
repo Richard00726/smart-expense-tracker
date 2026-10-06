@@ -207,8 +207,8 @@ const AccountView = ({ theme, toggleTheme, onLogout, onOpenSetupGuide }) => {
               <Smartphone size={24} />
             </div>
             <div style={{ flex: 1 }}>
-              <h3 style={{ margin: '0 0 0.25rem', color: 'var(--text-primary)' }}>Setup Guide</h3>
-              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Re-open UPI auto-tracking setup & APK download guide</p>
+              <h3 style={{ margin: '0 0 0.25rem', color: 'var(--text-primary)' }}>Mobile App & QR Login Guide</h3>
+              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Scan QR code to auto-login on mobile, setup UPI auto-tracking & download APK</p>
             </div>
             <ChevronRight size={20} color="var(--text-secondary)" />
           </div>
