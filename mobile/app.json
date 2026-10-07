@@ -23,7 +23,13 @@
     },
     "plugins": [
       "expo-dev-client",
-      "./app.plugin.js"
+      "./app.plugin.js",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Smart Expense Tracker to access camera to scan login QR codes."
+        }
+      ]
     ]
   }
 }

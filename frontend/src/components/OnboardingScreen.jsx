@@ -52,8 +52,8 @@ const OnboardingScreen = ({ onComplete, username = 'there', token, user }) => {
   const upiSteps = [
     { 
       icon: <QrCode size={34} color="#3b82f6" />, 
-      title: 'Scan QR to Log In on Mobile', 
-      desc: 'Point your phone camera or Google Lens at this QR code to log into your account instantly.' 
+      title: 'Scan QR in Android App to Log In', 
+      desc: 'Open the Smart Expense Tracker app on your phone, tap "Scan QR Code to Log In", and point your phone at this screen.' 
     },
     { 
       icon: <Smartphone size={34} color="#10b981" />, 
@@ -294,8 +294,11 @@ const OnboardingScreen = ({ onComplete, username = 'there', token, user }) => {
                           👤 {userEmail}
                         </div>
                       )}
-                      <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0 }}>
-                        📷 Scan with Phone Camera or Google Lens to auto-login
+                      <p style={{ fontSize: '0.84rem', color: '#60a5fa', margin: '2px 0 0', fontWeight: 600 }}>
+                        📲 Open app on phone → tap "Scan QR Code to Log In"
+                      </p>
+                      <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0 }}>
+                        Or point your phone's camera at this screen
                       </p>
                       <button
                         onClick={handleCopyLink}
