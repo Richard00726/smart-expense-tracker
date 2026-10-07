@@ -8,7 +8,7 @@ import AuthScreen from './components/AuthScreen';
 import AccountView from './components/AccountView';
 import BudgetView from './components/BudgetView';
 import OnboardingScreen from './components/OnboardingScreen';
-import { Wallet as WalletIcon, Home, PieChart, ArrowUpRight, ArrowDownRight, Activity, Sun, Moon, LogOut, User, Target } from 'lucide-react';
+import { Wallet as WalletIcon, Home, PieChart, ArrowUpRight, ArrowDownRight, Activity, Sun, Moon, LogOut, User, Target, Smartphone } from 'lucide-react';
 import './index.css';
 import './App.css';
 
@@ -225,14 +225,32 @@ function App() {
 
       {/* Main Content Area */}
       <div className="app-container">
-        <header className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div className="header-title">
-            {activeTab === 'home' && 'Dashboard'}
-            {activeTab === 'spend' && 'Spend Money'}
-            {activeTab === 'add' && 'Add Money'}
-            {activeTab === 'budget' && 'Budget & Savings'}
-            {activeTab === 'analysis' && 'Analysis & Insights'}
-            {activeTab === 'account' && 'My Account'}
+        <header className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+          <div className="header-title" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <span>
+              {activeTab === 'home' && 'Dashboard'}
+              {activeTab === 'spend' && 'Spend Money'}
+              {activeTab === 'add' && 'Add Money'}
+              {activeTab === 'budget' && 'Budget & Savings'}
+              {activeTab === 'analysis' && 'Analysis & Insights'}
+              {activeTab === 'account' && 'My Account'}
+            </span>
+
+            {/* Mobile App Sync Live Chip */}
+            <div 
+              className="mobile-sync-chip animate-fade-in" 
+              onClick={() => setShowOnboarding(true)}
+              title="Mobile App Auto-Tracker is active. Click to view Mobile Setup Guide & QR Code."
+            >
+              <div className="pulse-indicator">
+                <div className="pulse-core" />
+                <div className="pulse-ring" />
+              </div>
+              <Smartphone size={14} className="mobile-sync-icon" />
+              <span className="mobile-sync-text">
+                Mobile Sync: <strong style={{ color: '#10b981' }}>Connected</strong>
+              </span>
+            </div>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button 
@@ -290,7 +308,7 @@ function App() {
         <main>
           {activeTab === 'home' && (
             <>
-              <Dashboard balances={balances} />
+              <Dashboard balances={balances} onOpenSetupGuide={() => setShowOnboarding(true)} />
 
               <div className="main-content" style={{ marginTop: '2rem' }}>
                 <div className="action-cards" style={{ gridColumn: '1 / -1' }}>
