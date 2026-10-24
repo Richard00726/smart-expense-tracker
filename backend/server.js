@@ -7,6 +7,7 @@ const walletRoutes = require("./routes/walletRoutes");
 const transactionRoutes = require("./routes/transactionRoutes");
 const authRoutes = require("./routes/authRoutes");
 const bankSyncRoutes = require("./routes/bankSyncRoutes");
+const systemRoutes = require("./routes/systemRoutes");
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.get("/", (req, res) => {
 });
 
 // Routes
+app.use("/api/system", systemRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/wallets", walletRoutes);
 app.use("/api/bank-sync", bankSyncRoutes);

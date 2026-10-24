@@ -11,6 +11,7 @@ import AccountView from './components/AccountView';
 import BudgetView from './components/BudgetView';
 import ErrorBoundary from './components/ErrorBoundary';
 import PrivacyPolicy from './components/PrivacyPolicy';
+import SystemStatusOverlay from './components/SystemStatusOverlay';
 import { Wallet as WalletIcon, Home, PieChart, Activity, Sun, Moon, LogOut, User, Target, Smartphone, Coins, CreditCard } from 'lucide-react';
 import './index.css';
 import './App.css';
@@ -167,13 +168,19 @@ function App() {
   }, [txFilterType, txFilterValue, txWalletFilter, isAuthenticated]);
 
   if (!isAuthenticated) {
-    return <AuthScreen onAuthSuccess={() => {
-      setIsAuthenticated(true);
-    }} />;
+    return (
+      <>
+        <SystemStatusOverlay />
+        <AuthScreen onAuthSuccess={() => {
+          setIsAuthenticated(true);
+        }} />
+      </>
+    );
   }
 
   return (
     <div className={`app-layout ${activeTab === 'cash' ? 'bg-blush-cash' : ''} ${activeTab === 'upi' ? 'bg-blush-upi' : ''} ${activeTab === 'account' ? 'bg-blush-account' : ''}`}>
+      <SystemStatusOverlay />
       {/* Sidebar (Desktop) */}
       <aside className="sidebar">
         <div className="sidebar-logo">

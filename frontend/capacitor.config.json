@@ -1,0 +1,14 @@
+{
+  "appId": "com.richart.cashupitracker",
+  "appName": "Smart Expense Tracker",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  },
+  "android": {
+    "backgroundColor": "#0b0f19",
+    "allowMixedContent": true
+  }
+}

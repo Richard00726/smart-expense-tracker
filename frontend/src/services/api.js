@@ -1,7 +1,15 @@
 import axios from 'axios';
 
-// Since the backend is running on 5000 and frontend usually on 5173
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Detect if running inside native Android / Capacitor APK or browser
+const isNative = typeof window !== 'undefined' && (
+  window.Capacitor?.isNativePlatform?.() || 
+  window.location.protocol === 'capacitor:' || 
+  window.location.hostname === 'localhost' && window.location.port === ''
+);
+
+export const API_URL = isNative
+  ? 'https://cash-upi-backend.onrender.com/api'
+  : (import.meta.env.VITE_API_URL || 'http://localhost:5000/api');
 
 const api = axios.create({
   baseURL: API_URL,
