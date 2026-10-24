@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths:
-      - 'frontend/android/**'
+      - 'frontend/**'
       - '.github/workflows/build-apk.yml'
 
 jobs:
@@ -18,13 +18,22 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - name: Setup Java JDK 21 (Required for AGP 8.13)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: 21
 
-      - name: Build Android APK (Debug / Direct Install)
+      - name: Install Node Dependencies (Provides Capacitor Android Library)
+        working-directory: frontend
+        run: npm install --legacy-peer-deps
+
+      - name: Build Android APK via Gradle
         working-directory: frontend/android
         run: |
           sed -i -e 's/\r$//' ./gradlew
