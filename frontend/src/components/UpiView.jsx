@@ -594,7 +594,8 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
     try {
       setAlertInfo(null);
       const redirectUri = window.location.origin + '/google-callback';
-      const res = await getGoogleAuthUrl({ redirectUri });
+      const loginHint = googleEmail || targetBankEmail || currentUser?.email;
+      const res = await getGoogleAuthUrl({ redirectUri, loginHint });
       if (res.data?.authUrl) {
         window.location.href = res.data.authUrl;
       }
@@ -1328,34 +1329,32 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                     <span>
                       Last sync: {lastSyncTime.toLocaleDateString() === new Date().toLocaleDateString() ? 'Today' : lastSyncTime.toLocaleDateString()} at {lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
+                    <button
+                      onClick={() => handleSyncGmailNow({ fullSync: false })}
+                      disabled={syncingGmail || googleTokenExpired || !hasGoogleAuth}
+                      style={{
+                        background: 'rgba(56, 189, 248, 0.08)',
+                        border: '1px solid rgba(56, 189, 248, 0.2)',
+                        color: (syncingGmail || googleTokenExpired || !hasGoogleAuth) ? 'var(--text-secondary)' : '#38bdf8',
+                        cursor: (syncingGmail || googleTokenExpired || !hasGoogleAuth) ? 'not-allowed' : 'pointer',
+                        padding: '3px 6px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '6px',
+                        transition: 'all 0.2s ease',
+                        marginLeft: '0.2rem'
+                      }}
+                      title={googleTokenExpired ? "Please re-link Gmail first" : "Check Gmail for new statements now"}
+                    >
+                      <RefreshCw size={12} style={{ animation: syncingGmail ? 'spin 1s linear infinite' : 'none' }} />
+                    </button>
                   </div>
                 )}
               </div>
 
               {/* Right: Actions */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <button
-                  onClick={() => handleSyncGmailNow({ fullSync: false })}
-                  disabled={syncingGmail || googleTokenExpired || !hasGoogleAuth}
-                  className="btn"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                    background: 'var(--empty-state-bg)',
-                    border: '1px solid var(--card-border)',
-                    color: 'var(--text-primary)',
-                    padding: '0.45rem 0.85rem',
-                    borderRadius: '8px',
-                    fontSize: '0.82rem',
-                    cursor: (syncingGmail || googleTokenExpired || !hasGoogleAuth) ? 'not-allowed' : 'pointer',
-                    opacity: (googleTokenExpired || !hasGoogleAuth) ? 0.6 : 1
-                  }}
-                  title={googleTokenExpired ? "Please re-link Gmail first" : "Check Gmail for new statement emails right now"}
-                >
-                  <RefreshCw size={13} style={{ animation: syncingGmail ? 'spin 1s linear infinite' : 'none' }} />
-                  {syncingGmail ? 'Syncing...' : 'Sync Now'}
-                </button>
                 {syncingGmail && (
                   <span
                     style={{
