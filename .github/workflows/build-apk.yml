@@ -42,7 +42,12 @@ jobs:
         run: |
           sed -i -e 's/\r$//' ./gradlew
           chmod +x ./gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          set -o pipefail
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee gradle-build.log || {
+            echo "::error::=== GRADLE BUILD FAILED LOG ==="
+            tail -n 100 gradle-build.log
+            exit 1
+          }
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
