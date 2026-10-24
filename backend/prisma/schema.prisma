@@ -21,6 +21,16 @@ model User {
   excludedCategories String[]      @default([])
   linkedBanks        String[]      @default([])
   password           String
+  mobileSyncEnabled  Boolean       @default(false)
+  mobileStatus       String?       // null | 'app_connected' | 'bank_synced' | 'error'
+  lastSyncAt         DateTime?
+  statementPassword  String?
+  googleClientId     String?
+  googleClientSecret String?
+  googleRefreshToken String?
+  googleEmail        String?
+  bankSyncActive     Boolean       @default(false)
+  lastBankSyncAt     DateTime?
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
   transactions       Transaction[]

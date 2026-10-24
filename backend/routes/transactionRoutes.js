@@ -106,7 +106,7 @@ router.get("/transactions", protect, async (req, res) => {
 // GET /api/summary
 router.get("/summary", protect, async (req, res) => {
   try {
-    const { startDate, endDate } = req.query;
+    const { startDate, endDate, wallet } = req.query;
     const filter = { userId: req.user.id };
     
     if (startDate || endDate) {
@@ -115,35 +115,16 @@ router.get("/summary", protect, async (req, res) => {
       if (endDate) filter.date.lte = new Date(endDate);
     }
 
-    // 1. UPI vs Cash Totals
-    const walletSpending = await prisma.transaction.groupBy({
-      by: ['wallet'],
-      where: { ...filter, type: 'debit' },
-      _sum: { amount: true }
-    });
-    const formattedWalletSpending = walletSpending.map(s => ({ _id: s.wallet, total: s._sum.amount }));
+    if (wallet && wallet !== 'all') {
+      filter.wallet = wallet;
+    }
 
-    const walletIncome = await prisma.transaction.groupBy({
-      by: ['wallet'],
-      where: { ...filter, type: 'credit' },
-      _sum: { amount: true }
-    });
-    const formattedWalletIncome = walletIncome.map(s => ({ _id: s.wallet, total: s._sum.amount }));
-
-    // 2. Category-wise breakdown (Debit only)
-    const categorySpending = await prisma.transaction.groupBy({
-      by: ['category'],
-      where: { ...filter, type: 'debit' },
-      _sum: { amount: true },
-      orderBy: { _sum: { amount: 'desc' } }
-    });
-    const formattedCategorySpending = categorySpending.filter(c => c.category).map(c => ({ _id: c.category, total: c._sum.amount }));
-
-    // 3. Daily aggregation & 4. Monthly Flow require raw queries because Prisma groupBy lacks robust date formatting functions for Postgres out of the box.
-    // Instead, we can fetch all filtered transactions and aggregate in memory, since personal finance data volume for a single user per month is small.
-    // This is safer and database agnostic (works on SQLite, Postgres, MySQL identically).
+    // Single fast query for all filtered transactions in the requested range
     const allFilteredTransactions = await prisma.transaction.findMany({ where: filter });
 
+    const walletSpendMap = {};
+    const walletIncomeMap = {};
+    const categorySpendMap = {};
     const dailyMap = {};
     const monthlyMap = {};
 
@@ -153,32 +134,153 @@ router.get("/summary", protect, async (req, res) => {
       const monthKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
 
       if (t.type === 'debit') {
+        walletSpendMap[t.wallet] = (walletSpendMap[t.wallet] || 0) + t.amount;
+        if (t.category) {
+          categorySpendMap[t.category] = (categorySpendMap[t.category] || 0) + t.amount;
+        }
         dailyMap[dayKey] = (dailyMap[dayKey] || 0) + t.amount;
+      } else if (t.type === 'credit') {
+        walletIncomeMap[t.wallet] = (walletIncomeMap[t.wallet] || 0) + t.amount;
       }
 
       if (!monthlyMap[monthKey]) {
-        monthlyMap[monthKey] = { income: 0, spend: 0 };
+        monthlyMap[monthKey] = {
+          income: 0,
+          spend: 0,
+          cashIncome: 0,
+          cashSpend: 0,
+          upiIncome: 0,
+          upiSpend: 0
+        };
       }
       if (t.type === 'credit') {
         monthlyMap[monthKey].income += t.amount;
+        if (t.wallet === 'Cash') monthlyMap[monthKey].cashIncome += t.amount;
+        else if (t.wallet === 'UPI') monthlyMap[monthKey].upiIncome += t.amount;
       } else {
         monthlyMap[monthKey].spend += t.amount;
+        if (t.wallet === 'Cash') monthlyMap[monthKey].cashSpend += t.amount;
+        else if (t.wallet === 'UPI') monthlyMap[monthKey].upiSpend += t.amount;
       }
     });
+
+    const formattedWalletSpending = Object.keys(walletSpendMap).map(w => ({ _id: w, total: walletSpendMap[w] }));
+    const formattedWalletIncome = Object.keys(walletIncomeMap).map(w => ({ _id: w, total: walletIncomeMap[w] }));
+    const formattedCategorySpending = Object.keys(categorySpendMap)
+      .map(c => ({ _id: c, total: categorySpendMap[c] }))
+      .sort((a, b) => b.total - a.total);
 
     const formattedDailySpending = Object.keys(dailyMap).sort().map(key => ({ _id: key, total: dailyMap[key] }));
     const formattedMonthlyFlow = Object.keys(monthlyMap).sort().map(key => ({ 
       _id: key, 
       income: monthlyMap[key].income, 
-      spend: monthlyMap[key].spend 
+      spend: monthlyMap[key].spend,
+      cashIncome: monthlyMap[key].cashIncome || 0,
+      cashSpend: monthlyMap[key].cashSpend || 0,
+      upiIncome: monthlyMap[key].upiIncome || 0,
+      upiSpend: monthlyMap[key].upiSpend || 0
     }));
+
+    // 5. Compute dynamic ledger balances concurrently
+    const start = startDate ? new Date(startDate) : new Date('1970-01-01');
+    const end = endDate ? new Date(endDate) : new Date('2099-12-31');
+
+    const [lastUpiBefore, cashPriorCredits, cashPriorDebits] = await Promise.all([
+      prisma.transaction.findFirst({
+        where: {
+          userId: req.user.id,
+          wallet: 'UPI',
+          date: { lt: start }
+        },
+        orderBy: [{ date: 'desc' }, { createdAt: 'desc' }]
+      }),
+      prisma.transaction.aggregate({
+        where: { userId: req.user.id, wallet: 'Cash', type: 'credit', date: { lt: start } },
+        _sum: { amount: true }
+      }),
+      prisma.transaction.aggregate({
+        where: { userId: req.user.id, wallet: 'Cash', type: 'debit', date: { lt: start } },
+        _sum: { amount: true }
+      })
+    ]);
+
+    let upiOpening = 0;
+    if (lastUpiBefore && lastUpiBefore.balance !== null) {
+      upiOpening = Number(lastUpiBefore.balance);
+    } else {
+      const firstUpiInPeriod = await prisma.transaction.findFirst({
+        where: {
+          userId: req.user.id,
+          wallet: 'UPI',
+          date: { gte: start, lte: end }
+        },
+        orderBy: [{ date: 'asc' }, { createdAt: 'asc' }]
+      });
+
+      if (firstUpiInPeriod && firstUpiInPeriod.balance !== null) {
+        if (firstUpiInPeriod.type === 'credit') {
+          upiOpening = Number(firstUpiInPeriod.balance) - Number(firstUpiInPeriod.amount);
+        } else {
+          upiOpening = Number(firstUpiInPeriod.balance) + Number(firstUpiInPeriod.amount);
+        }
+      } else {
+        const w = await prisma.wallet.findUnique({
+          where: { userId_type: { userId: req.user.id, type: 'UPI' } }
+        });
+        upiOpening = w ? Number(w.balance) : 0;
+      }
+    }
+
+    const cashOpening = Number((cashPriorCredits._sum.amount || 0) - (cashPriorDebits._sum.amount || 0));
+
+    // Calculate period in/out sums from allFilteredTransactions
+    let upiPeriodIn = 0;
+    let upiPeriodOut = 0;
+    let cashPeriodIn = 0;
+    let cashPeriodOut = 0;
+
+    allFilteredTransactions.forEach(t => {
+      const isCredit = t.type === 'credit';
+      if (t.wallet === 'UPI') {
+        if (isCredit) upiPeriodIn += t.amount;
+        else upiPeriodOut += t.amount;
+      } else if (t.wallet === 'Cash') {
+        if (isCredit) cashPeriodIn += t.amount;
+        else cashPeriodOut += t.amount;
+      }
+    });
+
+    const upiClosing = upiOpening + upiPeriodIn - upiPeriodOut;
+    const cashClosing = cashOpening + cashPeriodIn - cashPeriodOut;
+
+    const flowLedger = {
+      upi: {
+        opening: upiOpening,
+        inflow: upiPeriodIn,
+        outflow: upiPeriodOut,
+        closing: upiClosing
+      },
+      cash: {
+        opening: cashOpening,
+        inflow: cashPeriodIn,
+        outflow: cashPeriodOut,
+        closing: cashClosing
+      },
+      combined: {
+        opening: upiOpening + cashOpening,
+        inflow: upiPeriodIn + cashPeriodIn,
+        outflow: upiPeriodOut + cashPeriodOut,
+        closing: upiClosing + cashClosing
+      }
+    };
 
     res.json({
       walletSpending: formattedWalletSpending,
       walletIncome: formattedWalletIncome,
       categorySpending: formattedCategorySpending,
       dailySpending: formattedDailySpending,
-      monthlyFlow: formattedMonthlyFlow
+      monthlyFlow: formattedMonthlyFlow,
+      flowLedger
     });
 
   } catch (error) {
@@ -379,6 +481,12 @@ router.post("/transaction/auto", protect, async (req, res) => {
     });
 
     transaction._id = transaction.id;
+
+    // Mark bank as synced (green state on website)
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { mobileStatus: 'bank_synced', lastSyncAt: new Date() }
+    });
 
     res.status(201).json({
       message: "Auto-captured transaction recorded",

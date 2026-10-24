@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { getWallets, getTransactions, getSummary, deleteTransaction } from './services/api';
+import { getWallets, getTransactions, getSummary, deleteTransaction, getCurrency } from './services/api';
 import Dashboard from './components/Dashboard';
 import TransactionForm from './components/TransactionForm';
 import TransactionsTable from './components/TransactionsTable';
 import AnalysisView from './components/AnalysisView';
+import CashView from './components/CashView';
+import UpiView from './components/UpiView';
 import AuthScreen from './components/AuthScreen';
 import AccountView from './components/AccountView';
 import BudgetView from './components/BudgetView';
-import OnboardingScreen from './components/OnboardingScreen';
-import { Wallet as WalletIcon, Home, PieChart, ArrowUpRight, ArrowDownRight, Activity, Sun, Moon, LogOut, User, Target, Smartphone } from 'lucide-react';
+import ErrorBoundary from './components/ErrorBoundary';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import { Wallet as WalletIcon, Home, PieChart, Activity, Sun, Moon, LogOut, User, Target, Smartphone, Coins, CreditCard } from 'lucide-react';
 import './index.css';
 import './App.css';
 
@@ -19,15 +22,25 @@ function App() {
   const [balances, setBalances] = useState({ cash: 0, upi: 0, total: 0 });
   const [transactions, setTransactions] = useState([]);
   const [txLoading, setTxLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('home');
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [activeTab, setActiveTab] = useState(() => {
+    if (window.location.pathname.includes('google-callback') || window.location.search.includes('code=')) {
+      return 'upi';
+    }
+    if (window.location.hash === '#privacy' || window.location.pathname === '/privacy' || window.location.pathname === '/privacy.html') {
+      return 'privacy';
+    }
+    if (window.location.hash === '#analysis' || window.location.hash === '#cashflow') {
+      return 'analysis';
+    }
+    return 'home';
+  });
   const today = new Date();
   const todayString = today.toISOString().split('T')[0];
   const currentMonthString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
   const currentYearString = today.getFullYear().toString();
 
-  const [txFilterType, setTxFilterType] = useState('month');
-  const [txFilterValue, setTxFilterValue] = useState(currentMonthString);
+  const [txFilterType, setTxFilterType] = useState('all');
+  const [txFilterValue, setTxFilterValue] = useState('');
   const [txWalletFilter, setTxWalletFilter] = useState('all');
 
   const handleTxFilterTypeChange = (newType) => {
@@ -139,8 +152,8 @@ function App() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.clear();
+    sessionStorage.clear();
     setIsAuthenticated(false);
     setCurrentUser({});
   };
@@ -156,23 +169,11 @@ function App() {
   if (!isAuthenticated) {
     return <AuthScreen onAuthSuccess={() => {
       setIsAuthenticated(true);
-      if (!localStorage.getItem('onboarding_done')) setShowOnboarding(true);
     }} />;
   }
 
-  if (showOnboarding) {
-    return (
-      <OnboardingScreen 
-        onComplete={() => setShowOnboarding(false)} 
-        username={currentUser.username || 'there'} 
-        token={localStorage.getItem('token')}
-        user={currentUser}
-      />
-    );
-  }
-
   return (
-    <div className={`app-layout ${activeTab === 'spend' ? 'bg-blush-spend' : ''} ${activeTab === 'add' ? 'bg-blush-add' : ''}`}>
+    <div className={`app-layout ${activeTab === 'cash' ? 'bg-blush-cash' : ''} ${activeTab === 'upi' ? 'bg-blush-upi' : ''} ${activeTab === 'account' ? 'bg-blush-account' : ''}`}>
       {/* Sidebar (Desktop) */}
       <aside className="sidebar">
         <div className="sidebar-logo">
@@ -187,18 +188,18 @@ function App() {
           <span>Dashboard</span>
         </div>
         <div 
-          className={`nav-item ${activeTab === 'spend' ? 'active' : ''}`}
-          onClick={() => setActiveTab('spend')}
+          className={`nav-item ${activeTab === 'cash' ? 'active' : ''}`}
+          onClick={() => setActiveTab('cash')}
         >
-          <ArrowUpRight size={20} />
-          <span>Spend Money</span>
+          <Coins size={20} />
+          <span>Cash</span>
         </div>
         <div 
-          className={`nav-item ${activeTab === 'add' ? 'active' : ''}`}
-          onClick={() => setActiveTab('add')}
+          className={`nav-item ${activeTab === 'upi' ? 'active' : ''}`}
+          onClick={() => setActiveTab('upi')}
         >
-          <ArrowDownRight size={20} />
-          <span>Add Money</span>
+          <CreditCard size={20} />
+          <span>UPI</span>
         </div>
         <div 
           className={`nav-item ${activeTab === 'budget' ? 'active' : ''}`}
@@ -229,28 +230,12 @@ function App() {
           <div className="header-title" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <span>
               {activeTab === 'home' && 'Dashboard'}
-              {activeTab === 'spend' && 'Spend Money'}
-              {activeTab === 'add' && 'Add Money'}
+              {activeTab === 'cash' && 'Cash Management'}
+              {activeTab === 'upi' && 'UPI Transactions'}
               {activeTab === 'budget' && 'Budget & Savings'}
               {activeTab === 'analysis' && 'Analysis & Insights'}
               {activeTab === 'account' && 'My Account'}
             </span>
-
-            {/* Mobile App Sync Live Chip */}
-            <div 
-              className="mobile-sync-chip animate-fade-in" 
-              onClick={() => setShowOnboarding(true)}
-              title="Mobile App Auto-Tracker is active. Click to view Mobile Setup Guide & QR Code."
-            >
-              <div className="pulse-indicator">
-                <div className="pulse-core" />
-                <div className="pulse-ring" />
-              </div>
-              <Smartphone size={14} className="mobile-sync-icon" />
-              <span className="mobile-sync-text">
-                Mobile Sync: <strong style={{ color: '#10b981' }}>Connected</strong>
-              </span>
-            </div>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button 
@@ -308,7 +293,7 @@ function App() {
         <main>
           {activeTab === 'home' && (
             <>
-              <Dashboard balances={balances} onOpenSetupGuide={() => setShowOnboarding(true)} />
+              <Dashboard balances={balances} onOpenSetupGuide={() => setActiveTab('upi')} />
 
               <div className="main-content" style={{ marginTop: '2rem' }}>
                 <div className="action-cards" style={{ gridColumn: '1 / -1' }}>
@@ -326,119 +311,25 @@ function App() {
             </>
           )}
 
-          {activeTab === 'spend' && (
-            <div className="main-content" style={{ marginTop: '2rem' }}>
-              <div className="action-cards">
-                <TransactionForm
-                  onTransactionComplete={refreshAllData}
-                  type="debit"
-                  hideToggle={true}
-                />
-              </div>
-
-              <div className="data-cards">
-                <TransactionsTable
-                  title="Recent Expenses"
-                  transactions={transactions.filter(tx => tx.type === 'debit')}
-                  loading={txLoading}
-                  onDelete={handleDeleteTransaction}
-                  onEditComplete={refreshAllData}
-                  filterElement={
-                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                      {txFilterType === 'day' && (
-                        <input type="date" className="form-control" style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }} value={txFilterValue} onChange={e => setTxFilterValue(e.target.value)} />
-                      )}
-                      {txFilterType === 'month' && (
-                        <input type="month" className="form-control" style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }} value={txFilterValue} onChange={e => setTxFilterValue(e.target.value)} />
-                      )}
-                      {txFilterType === 'year' && (
-                        <input type="number" min="2000" max="2100" placeholder="YYYY" className="form-control" style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }} value={txFilterValue} onChange={e => setTxFilterValue(e.target.value)} />
-                      )}
-                      <select
-                        className="form-control"
-                        style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
-                        value={txWalletFilter}
-                        onChange={(e) => setTxWalletFilter(e.target.value)}
-                      >
-                        <option value="all">All</option>
-                        <option value="Cash">Cash</option>
-                        <option value="UPI">UPI</option>
-                      </select>
-                      <select
-                        className="form-control"
-                        style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
-                        value={txFilterType}
-                        onChange={(e) => handleTxFilterTypeChange(e.target.value)}
-                      >
-                        <option value="today">Today</option>
-                        <option value="day">By Day</option>
-                        <option value="month">By Month</option>
-                        <option value="year">By Year</option>
-                        <option value="all">All Time</option>
-                      </select>
-                    </div>
-                  }
-                />
-              </div>
-            </div>
+          {activeTab === 'cash' && (
+            <CashView 
+              refreshAllData={refreshAllData}
+              transactions={transactions}
+              txLoading={txLoading}
+              handleDeleteTransaction={handleDeleteTransaction}
+              getCurrency={getCurrency}
+            />
           )}
 
-          {activeTab === 'add' && (
-            <div className="main-content" style={{ marginTop: '2rem' }}>
-              <div className="action-cards">
-                <TransactionForm
-                  onTransactionComplete={refreshAllData}
-                  type="credit"
-                  hideToggle={true}
-                />
-              </div>
-
-              <div className="data-cards">
-                <TransactionsTable
-                  title="Recent Income"
-                  transactions={transactions.filter(tx => tx.type === 'credit')}
-                  loading={txLoading}
-                  onDelete={handleDeleteTransaction}
-                  onEditComplete={refreshAllData}
-                  hideCategory={true}
-                  filterElement={
-                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                      {txFilterType === 'day' && (
-                        <input type="date" className="form-control" style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }} value={txFilterValue} onChange={e => setTxFilterValue(e.target.value)} />
-                      )}
-                      {txFilterType === 'month' && (
-                        <input type="month" className="form-control" style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }} value={txFilterValue} onChange={e => setTxFilterValue(e.target.value)} />
-                      )}
-                      {txFilterType === 'year' && (
-                        <input type="number" min="2000" max="2100" placeholder="YYYY" className="form-control" style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }} value={txFilterValue} onChange={e => setTxFilterValue(e.target.value)} />
-                      )}
-                      <select
-                        className="form-control"
-                        style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
-                        value={txWalletFilter}
-                        onChange={(e) => setTxWalletFilter(e.target.value)}
-                      >
-                        <option value="all">All</option>
-                        <option value="Cash">Cash</option>
-                        <option value="UPI">UPI</option>
-                      </select>
-                      <select
-                        className="form-control"
-                        style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
-                        value={txFilterType}
-                        onChange={(e) => handleTxFilterTypeChange(e.target.value)}
-                      >
-                        <option value="today">Today</option>
-                        <option value="day">By Day</option>
-                        <option value="month">By Month</option>
-                        <option value="year">By Year</option>
-                        <option value="all">All Time</option>
-                      </select>
-                    </div>
-                  }
-                />
-              </div>
-            </div>
+          {activeTab === 'upi' && (
+            <UpiView 
+              refreshAllData={refreshAllData}
+              transactions={transactions}
+              txLoading={txLoading}
+              handleDeleteTransaction={handleDeleteTransaction}
+              getCurrency={getCurrency}
+              currentUser={currentUser}
+            />
           )}
 
           {activeTab === 'budget' && (
@@ -449,13 +340,21 @@ function App() {
 
           {activeTab === 'analysis' && (
             <div style={{ marginTop: '0.5rem', marginBottom: '2rem' }}>
-              <AnalysisView refreshTrigger={transactions} />
+              <ErrorBoundary>
+                <AnalysisView refreshTrigger={transactions} />
+              </ErrorBoundary>
             </div>
           )}
 
           {activeTab === 'account' && (
             <div style={{ marginTop: '2rem' }}>
-              <AccountView theme={theme} toggleTheme={toggleTheme} onLogout={handleLogout} onOpenSetupGuide={() => setShowOnboarding(true)} />
+              <AccountView theme={theme} toggleTheme={toggleTheme} onLogout={handleLogout} />
+            </div>
+          )}
+
+          {activeTab === 'privacy' && (
+            <div style={{ marginTop: '1rem', marginBottom: '2rem' }}>
+              <PrivacyPolicy onBack={() => setActiveTab('home')} />
             </div>
           )}
 
@@ -472,18 +371,18 @@ function App() {
           <span>Home</span>
         </div>
         <div 
-          className={`bottom-nav-item ${activeTab === 'spend' ? 'active' : ''}`}
-          onClick={() => setActiveTab('spend')}
+          className={`bottom-nav-item ${activeTab === 'cash' ? 'active' : ''}`}
+          onClick={() => setActiveTab('cash')}
         >
-          <ArrowUpRight size={22} />
-          <span>Spend</span>
+          <Coins size={22} />
+          <span>Cash</span>
         </div>
         <div 
-          className={`bottom-nav-item ${activeTab === 'add' ? 'active' : ''}`}
-          onClick={() => setActiveTab('add')}
+          className={`bottom-nav-item ${activeTab === 'upi' ? 'active' : ''}`}
+          onClick={() => setActiveTab('upi')}
         >
-          <ArrowDownRight size={22} />
-          <span>Add</span>
+          <CreditCard size={22} />
+          <span>UPI</span>
         </div>
         <div 
           className={`bottom-nav-item ${activeTab === 'budget' ? 'active' : ''}`}

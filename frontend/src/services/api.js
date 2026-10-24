@@ -44,6 +44,8 @@ export const getUser = () => api.get('/auth/me');
 export const forgotPassword = (data) => api.post('/auth/forgot-password', data);
 export const resetPassword = (data) => api.post('/auth/reset-password', data);
 export const updateProfile = (data) => api.put('/auth/profile', data);
+export const updateSyncSettings = (data) => api.put('/auth/sync-settings', data);
+export const getSyncStatus = () => api.get('/auth/sync-status');
 export const changePassword = (data) => api.put('/auth/change-password', data);
 export const deleteAccount = () => api.delete('/auth/account');
 
@@ -54,6 +56,19 @@ export const getSummary = (filters) => api.get('/summary', { params: filters });
 export const createTransaction = (data) => api.post('/transaction', data);
 export const deleteTransaction = (id) => api.delete(`/transaction/${id}`);
 export const updateTransaction = (id, data) => api.put(`/transaction/${id}`, data);
+
+// Bank & Gmail Sync Services
+export const getBankSyncSettings = () => api.get('/bank-sync/settings');
+export const getBankOverview = () => api.get('/bank-sync/overview');
+export const updateBankSyncSettings = (data) => api.put('/bank-sync/settings', data);
+export const uploadStatementPdf = (formData) => api.post('/bank-sync/upload-statement', formData, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
+export const getGoogleAuthUrl = (data) => api.post('/bank-sync/google-auth-url', data);
+export const connectGoogleAccount = (data) => api.post('/bank-sync/google-connect', data);
+export const syncGmailNow = (options = {}) => api.post('/bank-sync/sync-gmail-now', options);
+export const disconnectGmail = () => api.post('/bank-sync/disconnect');
+export const deleteBankSyncConfig = (data = {}) => api.delete('/bank-sync/configuration', { data });
 
 export const getCurrency = () => {
   try {

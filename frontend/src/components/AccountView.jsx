@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { User, Lock, AlertTriangle, Save, Check, X, Sun, Moon, Trash2, ArrowLeft, ChevronRight, Smartphone } from 'lucide-react';
-import { getUser, updateProfile, changePassword, deleteAccount } from '../services/api';
+import { User, Lock, AlertTriangle, Save, Check, X, Sun, Moon, Trash2, ArrowLeft, ChevronRight, Smartphone, RefreshCw, ShieldCheck } from 'lucide-react';
+import { getUser, updateProfile, changePassword, deleteAccount, deleteBankSyncConfig } from '../services/api';
 import profileIllustration from '../assets/profile_illustration.jpg';
 import preferencesIllustration from '../assets/preferences_illustration.jpg';
 import securityIllustration from '../assets/security_illustration.jpg';
@@ -24,7 +24,7 @@ const ToggleSwitch = ({ checked, onChange }) => (
   </div>
 );
 
-const AccountView = ({ theme, toggleTheme, onLogout, onOpenSetupGuide }) => {
+const AccountView = ({ theme, toggleTheme, onLogout }) => {
   const [activeSetting, setActiveSetting] = useState(null);
   const [profile, setProfile] = useState({ username: '', email: '', currency: '₹', createdAt: '', profileImage: '' });
   const [loading, setLoading] = useState(true);
@@ -34,6 +34,8 @@ const AccountView = ({ theme, toggleTheme, onLogout, onOpenSetupGuide }) => {
   const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [toast, setToast] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeleteSyncConfirm, setShowDeleteSyncConfirm] = useState(false);
+  const [deletingSync, setDeletingSync] = useState(false);
   
   const [privacyMode, setPrivacyMode] = useState(() => localStorage.getItem('privacyMode') === 'true');
   const [emailNotifs, setEmailNotifs] = useState(true);
@@ -123,6 +125,23 @@ const AccountView = ({ theme, toggleTheme, onLogout, onOpenSetupGuide }) => {
     }
   };
 
+  const handleDeleteSyncConfig = async () => {
+    setDeletingSync(true);
+    try {
+      // Never delete transactions - keep all transaction history safe
+      await deleteBankSyncConfig({ deleteTransactions: false });
+      localStorage.removeItem('tmb_wizard_step');
+      showToast('Bank sync configuration deleted successfully');
+      setShowDeleteSyncConfirm(false);
+      window.dispatchEvent(new Event('bank_sync_updated'));
+      window.dispatchEvent(new Event('transactions_updated'));
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to delete bank sync configuration', 'error');
+    } finally {
+      setDeletingSync(false);
+    }
+  };
+
   if (loading) {
     return <div className="data-card glass"><div className="empty-state">Loading account details...</div></div>;
   }
@@ -195,23 +214,25 @@ const AccountView = ({ theme, toggleTheme, onLogout, onOpenSetupGuide }) => {
             <ChevronRight size={20} color="var(--text-secondary)" />
           </div>
 
-          {/* Setup Guide */}
-          <div
+          <a
+            href="/privacy.html"
+            target="_blank"
+            rel="noopener noreferrer"
             className="data-card glass animate-fade-in"
-            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.5rem', transition: 'all 0.2s ease', border: '1px solid rgba(59,130,246,0.2)', animationDelay: '0.3s' }}
-            onClick={() => onOpenSetupGuide && onOpenSetupGuide()}
+            style={{ textDecoration: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.5rem', transition: 'all 0.2s ease', animationDelay: '0.3s' }}
             onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
             onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
           >
-            <div style={{ background: 'rgba(59,130,246,0.1)', padding: '1rem', borderRadius: '50%', color: '#3b82f6' }}>
-              <Smartphone size={24} />
+            <div style={{ background: 'rgba(99, 102, 241, 0.1)', padding: '1rem', borderRadius: '50%', color: '#818cf8' }}>
+              <ShieldCheck size={24} />
             </div>
             <div style={{ flex: 1 }}>
-              <h3 style={{ margin: '0 0 0.25rem', color: 'var(--text-primary)' }}>Mobile App & QR Login Guide</h3>
-              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Scan QR code to auto-login on mobile, setup UPI auto-tracking & download APK</p>
+              <h3 style={{ margin: '0 0 0.25rem 0', color: 'var(--text-primary)' }}>Privacy Policy</h3>
+              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Read our data protection and Google Limited Use policy</p>
             </div>
             <ChevronRight size={20} color="var(--text-secondary)" />
-          </div>
+          </a>
+
 
           <div
             className="data-card glass animate-fade-in"
@@ -452,20 +473,56 @@ const AccountView = ({ theme, toggleTheme, onLogout, onOpenSetupGuide }) => {
               <div className="data-header">
                 <h3 style={{ color: 'var(--danger)' }}><AlertTriangle size={20} /> Danger Zone</h3>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-                <div>
-                  <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)' }}>Delete Account</h4>
-                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '400px' }}>
-                    Once you delete your account, there is no going back. All your wallets, transactions, and personal data will be permanently erased.
-                  </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                {/* 1. Delete Bank Sync Configuration */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--card-border)' }}>
+                  <div>
+                    <h4 style={{ margin: '0 0 0.4rem 0', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <RefreshCw size={17} style={{ color: 'var(--accent-primary)' }} />
+                      Delete Bank Sync Configuration
+                    </h4>
+                    <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '420px', lineHeight: '1.45' }}>
+                      Disconnect linked Gmail account, wipe saved statement password, and delete Google Cloud auto-sync credentials. Daily sync will be deleted.
+                    </p>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => setShowDeleteSyncConfirm(true)}
+                    className="btn"
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.1)',
+                      border: '1px solid rgba(239, 68, 68, 0.35)',
+                      color: 'var(--danger)',
+                      padding: '0.55rem 1.1rem',
+                      borderRadius: '8px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.45rem',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <Trash2 size={16} /> Delete Sync Config
+                  </button>
                 </div>
-                <button 
-                  type="button"
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="btn btn-danger"
-                >
-                  <Trash2 size={18} /> Delete Account
-                </button>
+
+                {/* 2. Delete Account */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                  <div>
+                    <h4 style={{ margin: '0 0 0.4rem 0', color: 'var(--text-primary)' }}>Delete Account</h4>
+                    <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '400px', lineHeight: '1.45' }}>
+                      Once you delete your account, there is no going back. All your wallets, transactions, and personal data will be permanently erased.
+                    </p>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="btn btn-danger"
+                  >
+                    <Trash2 size={18} /> Delete Account
+                  </button>
+                </div>
               </div>
             </div>
             <div style={{ flex: '1 1 300px', display: 'flex', justifyContent: 'center' }}>
@@ -476,6 +533,58 @@ const AccountView = ({ theme, toggleTheme, onLogout, onOpenSetupGuide }) => {
       )}
 
       {/* Modals & Toasts */}
+      {/* 1. Delete Bank Sync Modal */}
+      {showDeleteSyncConfirm && createPortal(
+        <div className="modal-overlay">
+          <div className="modal-content glass animate-fade-in" style={{ maxWidth: '480px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+            <h3 style={{ marginBottom: '1rem', color: 'var(--danger)', fontSize: '1.25rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <AlertTriangle size={22} /> Delete Bank Sync Configuration?
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.25rem', lineHeight: '1.6', fontSize: '0.9rem' }}>
+              Are you sure you want to delete your bank sync configuration? This will disconnect your Gmail account, clear your statement password, and turn off background auto-sync.
+            </p>
+
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.65rem',
+              marginBottom: '1.5rem',
+              fontSize: '0.85rem',
+              color: '#10b981',
+              background: 'rgba(16, 185, 129, 0.1)',
+              padding: '0.75rem 1rem',
+              borderRadius: '8px',
+              border: '1px solid rgba(16, 185, 129, 0.25)'
+            }}>
+              <ShieldCheck size={20} style={{ flexShrink: 0 }} />
+              <span><strong>Note:</strong> All your transactions, ledger history, and balances will stay 100% safe. Only the sync connection is deleted.</span>
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+              <button 
+                type="button"
+                className="btn" 
+                style={{ background: 'var(--empty-state-bg)', color: 'var(--text-primary)' }} 
+                onClick={() => setShowDeleteSyncConfirm(false)}
+                disabled={deletingSync}
+              >
+                Cancel
+              </button>
+              <button 
+                type="button"
+                className="btn btn-danger" 
+                onClick={handleDeleteSyncConfig}
+                disabled={deletingSync}
+              >
+                {deletingSync ? 'Deleting...' : 'Yes, Delete Configuration'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* 2. Delete Account Modal */}
       {showDeleteConfirm && createPortal(
         <div className="modal-overlay">
           <div className="modal-content glass animate-fade-in">

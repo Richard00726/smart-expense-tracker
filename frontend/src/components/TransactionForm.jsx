@@ -3,8 +3,8 @@ import { createPortal } from 'react-dom';
 import { PlusCircle, MinusCircle, PartyPopper, AlertCircle, Edit2 } from 'lucide-react';
 import { createTransaction, updateTransaction, getCurrency } from '../services/api';
 
-const TransactionForm = ({ onTransactionComplete, type, onTypeChange, hideToggle, editData, onCancel }) => {
-  const [wallet, setWallet] = useState('Cash');
+const TransactionForm = ({ onTransactionComplete, type, onTypeChange, hideToggle, editData, onCancel, fixedWallet }) => {
+  const [wallet, setWallet] = useState(fixedWallet || 'Cash');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
   const [customCategory, setCustomCategory] = useState('');
@@ -15,12 +15,25 @@ const TransactionForm = ({ onTransactionComplete, type, onTypeChange, hideToggle
   const [toast, setToast] = useState(null);
 
   const categories = [
-    'Food', 'Travel', 'Shopping', 'Bills', 'Entertainment', 'Health', 'Trading', 'Other'
+    'Salary',
+    'ATM',
+    'Jewellery',
+    'Food & Groceries',
+    'Shopping and orders',
+    'Bills & Recharge',
+    'Bank Transfer',
+    'UPI Transfer',
+    'Daily Expense',
+    'Travel',
+    'Entertainment',
+    'Healthcare',
+    'Reimbursement',
+    'Other'
   ];
 
   useEffect(() => {
     if (editData) {
-      setWallet(editData.wallet || 'Cash');
+      setWallet(editData.wallet || fixedWallet || 'Cash');
       setAmount(editData.amount || '');
       
       if (editData.category) {
@@ -62,13 +75,18 @@ const TransactionForm = ({ onTransactionComplete, type, onTypeChange, hideToggle
         setError('Please enter a custom category');
         return;
       }
+    } else {
+      if (category === 'Other' && !customCategory.trim()) {
+        setError('Please enter a custom category');
+        return;
+      }
     }
 
     setLoading(true);
     setError('');
 
     try {
-      const finalCategory = type === 'debit' ? (category === 'Other' ? customCategory.trim() : category) : undefined;
+      const finalCategory = category === 'Other' ? customCategory.trim() : (category || undefined);
 
       const payload = {
         wallet,
@@ -90,10 +108,8 @@ const TransactionForm = ({ onTransactionComplete, type, onTypeChange, hideToggle
         setAmount('');
         setNote('');
         setDate('');
-        if (type === 'debit') {
-          setCategory('');
-          setCustomCategory('');
-        }
+        setCategory('');
+        setCustomCategory('');
       }
 
       // Notify parent to refresh data
@@ -149,6 +165,7 @@ const TransactionForm = ({ onTransactionComplete, type, onTypeChange, hideToggle
       )}
 
       <form onSubmit={handleSubmit}>
+      {!fixedWallet && (
         <div className="form-group">
           <label className="form-label">Wallet</label>
           <select
@@ -157,10 +174,11 @@ const TransactionForm = ({ onTransactionComplete, type, onTypeChange, hideToggle
             onChange={(e) => setWallet(e.target.value)}
             disabled={editData && editData.wallet === 'UPI'}
           >
-            {(editData && editData.wallet === 'UPI') && <option value="UPI">UPI</option>}
             <option value="Cash">Cash</option>
+            <option value="UPI">UPI</option>
           </select>
         </div>
+      )}
 
         <div className="form-group">
           <label className="form-label">Amount ({getCurrency()})</label>
@@ -173,32 +191,30 @@ const TransactionForm = ({ onTransactionComplete, type, onTypeChange, hideToggle
           />
         </div>
 
-        {type === 'debit' && (
-          <div className="form-group">
-            <label className="form-label">Category</label>
-            <select
+        <div className="form-group">
+          <label className="form-label">Category {type === 'credit' && '(Optional)'}</label>
+          <select
+            className="form-control"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            <option value="">Select Category {type === 'credit' ? '(Optional)' : ''}</option>
+            {categories.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
+          {category === 'Other' && (
+            <input
+              type="text"
               className="form-control"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            >
-              <option value="">Select Category</option>
-              {categories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-            {category === 'Other' && (
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Enter custom category"
-                value={customCategory}
-                onChange={(e) => setCustomCategory(e.target.value)}
-                style={{ marginTop: '0.75rem' }}
-                autoFocus
-              />
-            )}
-          </div>
-        )}
+              placeholder="Enter custom category"
+              value={customCategory}
+              onChange={(e) => setCustomCategory(e.target.value)}
+              style={{ marginTop: '0.75rem' }}
+              autoFocus
+            />
+          )}
+        </div>
 
         <div className="form-group">
           <label className="form-label">Note (Optional)</label>

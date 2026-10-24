@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { getSummary, getCurrency } from '../services/api';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
-import { PieChart as PieChartIcon, BarChart2, TrendingUp, Activity } from 'lucide-react';
+import { PieChart as PieChartIcon, BarChart2, TrendingUp, Activity, ArrowDownLeft, ArrowUpRight, Wallet, Landmark } from 'lucide-react';
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899'];
 
@@ -27,6 +27,7 @@ const AnalysisView = ({ refreshTrigger }) => {
 
   const [flowFilterType, setFlowFilterType] = useState('month');
   const [flowFilterValue, setFlowFilterValue] = useState(currentMonthString);
+  const [flowWalletFilter, setFlowWalletFilter] = useState('all'); // 'all' (Combined - Default), 'Cash', 'UPI'
 
   const handleFilterTypeChange = (newType, setType, setValue) => {
     setType(newType);
@@ -35,7 +36,11 @@ const AnalysisView = ({ refreshTrigger }) => {
     else if (newType === 'year') setValue(currentYearString);
   };
 
-  const [activeAnalysisTab, setActiveAnalysisTab] = useState('spending');
+  const [activeAnalysisTab, setActiveAnalysisTab] = useState(() => {
+    if (window.location.hash === '#cashflow') return 'cashflow';
+    if (window.location.hash === '#income') return 'income';
+    return 'spending';
+  });
 
   const getFilterObj = (type, value) => {
     let filters = {};
@@ -66,41 +71,55 @@ const AnalysisView = ({ refreshTrigger }) => {
     return filters;
   };
 
+  // In-flight request deduplication and local cache to make tab switching instantaneous
+  const cacheRef = useRef(new Map());
+
+  useEffect(() => {
+    cacheRef.current.clear();
+  }, [refreshTrigger]);
+
+  const fetchSummaryCached = (type, value) => {
+    const key = `${type}_${value}`;
+    if (cacheRef.current.has(key)) {
+      return cacheRef.current.get(key);
+    }
+    const promise = getSummary(getFilterObj(type, value))
+      .then(res => res.data)
+      .catch(err => {
+        cacheRef.current.delete(key);
+        throw err;
+      });
+    cacheRef.current.set(key, promise);
+    return promise;
+  };
+
   const loadSpending = async () => {
     try {
       setSpendingLoading(true);
-      const res = await getSummary(getFilterObj(spendingFilterType, spendingFilterValue));
-      setSpendingSummary(res.data);
+      const data = await fetchSummaryCached(spendingFilterType, spendingFilterValue);
+      setSpendingSummary(data);
     } catch (e) { console.error(e); } finally { setSpendingLoading(false); }
   };
 
   const loadIncome = async () => {
     try {
       setIncomeLoading(true);
-      const res = await getSummary(getFilterObj(incomeFilterType, incomeFilterValue));
-      setIncomeSummary(res.data);
+      const data = await fetchSummaryCached(incomeFilterType, incomeFilterValue);
+      setIncomeSummary(data);
     } catch (e) { console.error(e); } finally { setIncomeLoading(false); }
   };
 
   const loadFlow = async () => {
     try {
       setFlowLoading(true);
-      const res = await getSummary(getFilterObj(flowFilterType, flowFilterValue));
-      setFlowSummary(res.data);
+      const data = await fetchSummaryCached(flowFilterType, flowFilterValue);
+      setFlowSummary(data);
     } catch (e) { console.error(e); } finally { setFlowLoading(false); }
   };
 
   useEffect(() => { loadSpending(); }, [spendingFilterType, spendingFilterValue, refreshTrigger]);
   useEffect(() => { loadIncome(); }, [incomeFilterType, incomeFilterValue, refreshTrigger]);
   useEffect(() => { loadFlow(); }, [flowFilterType, flowFilterValue, refreshTrigger]);
-
-  if (!spendingSummary && !incomeSummary && !flowSummary) {
-    return (
-      <div className="data-card glass">
-        <div className="empty-state">Loading analysis...</div>
-      </div>
-    );
-  }
 
   // Format data for Recharts
   const categoryData = spendingSummary?.categorySpending ? spendingSummary.categorySpending.map(item => ({
@@ -118,11 +137,102 @@ const AnalysisView = ({ refreshTrigger }) => {
     value: item.total
   })) : [];
 
-  const monthlyFlowData = flowSummary?.monthlyFlow ? flowSummary.monthlyFlow.map(item => ({
-    name: item._id,
-    income: item.income,
-    spend: item.spend
-  })) : [];
+  const monthlyFlowData = flowSummary?.monthlyFlow ? flowSummary.monthlyFlow.map(item => {
+    const cashIn = item.cashIncome ?? 0;
+    const cashOut = item.cashSpend ?? 0;
+    const upiIn = item.upiIncome ?? 0;
+    const upiOut = item.upiSpend ?? 0;
+
+    let activeIncome = item.income ?? 0;
+    let activeSpend = item.spend ?? 0;
+
+    if (flowWalletFilter === 'Cash') {
+      activeIncome = cashIn;
+      activeSpend = cashOut;
+    } else if (flowWalletFilter === 'UPI') {
+      activeIncome = upiIn;
+      activeSpend = upiOut;
+    }
+
+    return {
+      name: item._id,
+      income: activeIncome,
+      spend: activeSpend,
+      net: activeIncome - activeSpend,
+      combinedIncome: item.income ?? 0,
+      combinedSpend: item.spend ?? 0,
+      cashIncome: cashIn,
+      cashSpend: cashOut,
+      upiIncome: upiIn,
+      upiSpend: upiOut
+    };
+  }) : [];
+
+  let inTotal = 0;
+  let outTotal = 0;
+  let cashInTotal = 0;
+  let cashOutTotal = 0;
+  let upiInTotal = 0;
+  let upiOutTotal = 0;
+
+  (flowSummary?.monthlyFlow || []).forEach(item => {
+    inTotal += item.income || 0;
+    outTotal += item.spend || 0;
+    cashInTotal += item.cashIncome || 0;
+    cashOutTotal += item.cashSpend || 0;
+    upiInTotal += item.upiIncome || 0;
+    upiOutTotal += item.upiSpend || 0;
+  });
+
+  let activeIn = inTotal;
+  let activeOut = outTotal;
+  if (flowWalletFilter === 'Cash') {
+    activeIn = cashInTotal;
+    activeOut = cashOutTotal;
+  } else if (flowWalletFilter === 'UPI') {
+    activeIn = upiInTotal;
+    activeOut = upiOutTotal;
+  }
+
+  const flowTotals = {
+    income: activeIn,
+    spend: activeOut,
+    net: activeIn - activeOut,
+    totalIn: inTotal,
+    totalOut: outTotal,
+    cashIn: cashInTotal,
+    cashOut: cashOutTotal,
+    upiIn: upiInTotal,
+    upiOut: upiOutTotal
+  };
+
+  const formatAmt = (val) => {
+    const num = Number(val ?? 0);
+    return isNaN(num) ? '0.00' : num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const fallbackLedger = {
+    opening: 0,
+    inflow: Number(activeIn || 0),
+    outflow: Number(activeOut || 0),
+    closing: Number((activeIn || 0) - (activeOut || 0))
+  };
+
+  let activeLedger = fallbackLedger;
+  if (flowSummary?.flowLedger) {
+    let target = flowSummary.flowLedger.combined;
+    if (flowWalletFilter === 'Cash') target = flowSummary.flowLedger.cash;
+    else if (flowWalletFilter === 'UPI') target = flowSummary.flowLedger.upi;
+
+    if (target) {
+      activeLedger = {
+        opening: Number(target.opening ?? 0),
+        inflow: Number(target.inflow ?? activeIn ?? 0),
+        outflow: Number(target.outflow ?? activeOut ?? 0),
+        closing: Number(target.closing ?? ((target.opening ?? 0) + (target.inflow ?? 0) - (target.outflow ?? 0)))
+      };
+    }
+  }
 
   const hasSpendingData = categoryData.length > 0 || walletSpendingData.length > 0;
   const hasIncomeData = walletIncomeData.length > 0;
@@ -184,9 +294,26 @@ const AnalysisView = ({ refreshTrigger }) => {
       {/* SPENDING ANALYSIS */}
       {activeAnalysisTab === 'spending' && (
       <div className="data-card glass animate-fade-in" style={{ position: 'relative' }}>
-        {spendingLoading && <div style={{ position: 'absolute', top: '1rem', left: '1rem', color: 'var(--text-secondary)' }}>Loading...</div>}
         <div className="data-header">
-          <h3><PieChartIcon size={20} className="text-danger" /> Spending Analysis</h3>
+          <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <PieChartIcon size={20} className="text-danger" />
+            <span>Spending Analysis</span>
+            {spendingLoading && (
+              <span style={{
+                fontSize: '0.75rem',
+                fontWeight: 500,
+                padding: '2px 8px',
+                borderRadius: '12px',
+                background: 'rgba(239, 68, 68, 0.12)',
+                color: 'var(--danger)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}>
+                <span className="spinner" style={{ width: '10px', height: '10px', border: '2px solid rgba(239, 68, 68, 0.3)', borderTopColor: 'var(--danger)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', display: 'inline-block' }} /> Loading...
+              </span>
+            )}
+          </h3>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
             {spendingFilterType === 'day' && (
               <input type="date" className="form-control" style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }} value={spendingFilterValue} onChange={e => setSpendingFilterValue(e.target.value)} />
@@ -212,7 +339,12 @@ const AnalysisView = ({ refreshTrigger }) => {
         </div>
 
 
-        {!hasSpendingData ? (
+        {spendingLoading && !spendingSummary ? (
+          <div className="empty-state" style={{ padding: '3.5rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ width: '28px', height: '28px', border: '3px solid rgba(255,255,255,0.15)', borderTopColor: 'var(--danger)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Loading spending analysis...</p>
+          </div>
+        ) : !hasSpendingData ? (
           <div className="empty-state" style={{ padding: '3rem 1rem' }}>
             <p style={{ color: 'var(--text-secondary)' }}>No spending recorded for this period.</p>
           </div>
@@ -288,9 +420,26 @@ const AnalysisView = ({ refreshTrigger }) => {
       {/* INCOME ANALYSIS */}
       {activeAnalysisTab === 'income' && (
       <div className="data-card glass animate-fade-in" style={{ position: 'relative' }}>
-        {incomeLoading && <div style={{ position: 'absolute', top: '1rem', left: '1rem', color: 'var(--text-secondary)' }}>Loading...</div>}
         <div className="data-header">
-          <h3><TrendingUp size={20} className="text-success" /> Income Analysis</h3>
+          <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <TrendingUp size={20} className="text-success" />
+            <span>Income Analysis</span>
+            {incomeLoading && (
+              <span style={{
+                fontSize: '0.75rem',
+                fontWeight: 500,
+                padding: '2px 8px',
+                borderRadius: '12px',
+                background: 'rgba(16, 185, 129, 0.12)',
+                color: 'var(--success)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}>
+                <span className="spinner" style={{ width: '10px', height: '10px', border: '2px solid rgba(16, 185, 129, 0.3)', borderTopColor: 'var(--success)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', display: 'inline-block' }} /> Loading...
+              </span>
+            )}
+          </h3>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
             {incomeFilterType === 'day' && (
               <input type="date" className="form-control" style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }} value={incomeFilterValue} onChange={e => setIncomeFilterValue(e.target.value)} />
@@ -316,7 +465,12 @@ const AnalysisView = ({ refreshTrigger }) => {
         </div>
 
 
-        {!hasIncomeData ? (
+        {incomeLoading && !incomeSummary ? (
+          <div className="empty-state" style={{ padding: '3.5rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ width: '28px', height: '28px', border: '3px solid rgba(255,255,255,0.15)', borderTopColor: 'var(--success)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Loading income analysis...</p>
+          </div>
+        ) : !hasIncomeData ? (
           <div className="empty-state" style={{ padding: '3rem 1rem' }}>
             <p style={{ color: 'var(--text-secondary)' }}>No income recorded for this period.</p>
           </div>
@@ -361,10 +515,61 @@ const AnalysisView = ({ refreshTrigger }) => {
       {/* MONTHLY CASH FLOW */}
       {activeAnalysisTab === 'cashflow' && (
       <div className="data-card glass animate-fade-in" style={{ position: 'relative' }}>
-        {flowLoading && <div style={{ position: 'absolute', top: '1rem', left: '1rem', color: 'var(--text-secondary)' }}>Loading...</div>}
-        <div className="data-header">
-          <h3><Activity size={20} className="text-accent-primary" /> Monthly Cash Flow</h3>
+        <div className="data-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div>
+            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <Activity size={20} className="text-accent-primary" />
+              <span>
+                {flowWalletFilter === 'all' && 'Monthly Cash & UPI Flow'}
+                {flowWalletFilter === 'Cash' && 'Monthly Cash Flow (Cash Only)'}
+                {flowWalletFilter === 'UPI' && 'Monthly UPI Flow (Bank & UPI Only)'}
+              </span>
+              {flowLoading && (
+                <span style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  background: 'rgba(59, 130, 246, 0.12)',
+                  color: 'var(--accent-primary)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px'
+                }}>
+                  <span className="spinner" style={{ width: '10px', height: '10px', border: '2px solid rgba(59, 130, 246, 0.3)', borderTopColor: 'var(--accent-primary)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', display: 'inline-block' }} /> Loading...
+                </span>
+              )}
+            </h3>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              {flowWalletFilter === 'all' && 'Aggregated income vs spending across all payment modes'}
+              {flowWalletFilter === 'Cash' && 'Physical cash in-hand inflow vs outflow'}
+              {flowWalletFilter === 'UPI' && 'Digital UPI & Bank account inflow vs outflow'}
+            </span>
+          </div>
+
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            {/* Wallet Flow Mode Filter Dropdown */}
+            <select
+              className="form-control"
+              style={{
+                width: 'auto',
+                padding: '0.3rem 0.75rem',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                background: 'var(--empty-state-bg)',
+                color: 'var(--text-primary)',
+                borderColor: 'var(--accent-primary)',
+                cursor: 'pointer'
+              }}
+              value={flowWalletFilter}
+              onChange={(e) => setFlowWalletFilter(e.target.value)}
+              title="Filter Cash Flow by Wallet Mode"
+            >
+              <option value="all">⚡ Combined Flow (Cash + UPI)</option>
+              <option value="Cash">💵 Cash Flow (Cash Only)</option>
+              <option value="UPI">💳 UPI Flow (UPI Only)</option>
+            </select>
+
             {flowFilterType === 'day' && (
               <input type="date" className="form-control" style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }} value={flowFilterValue} onChange={e => setFlowFilterValue(e.target.value)} />
             )}
@@ -387,14 +592,22 @@ const AnalysisView = ({ refreshTrigger }) => {
             </select>
           </div>
         </div>
-        {!hasFlowData || monthlyFlowData.length === 0 ? (
+
+        {flowLoading && !flowSummary ? (
+          <div className="empty-state" style={{ padding: '3.5rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ width: '28px', height: '28px', border: '3px solid rgba(255,255,255,0.15)', borderTopColor: 'var(--accent-primary)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Loading cash flow analysis...</p>
+          </div>
+        ) : !hasFlowData || monthlyFlowData.length === 0 ? (
           <div className="empty-state" style={{ padding: '3rem 1rem' }}>
             <p style={{ color: 'var(--text-secondary)' }}>No cash flow data for this period.</p>
           </div>
         ) : (
           <div className="chart-wrapper" style={{ padding: '1rem' }}>
             <h4 style={{ textAlign: 'center', marginBottom: '1rem', color: 'var(--text-secondary)' }}>
-              Income vs Spending Over Time
+              {flowWalletFilter === 'all' && 'Combined Income vs Spending Over Time'}
+              {flowWalletFilter === 'Cash' && 'Cash Inflow vs Outflow Over Time'}
+              {flowWalletFilter === 'UPI' && 'UPI & Bank Inflow vs Outflow Over Time'}
             </h4>
             <div className="chart-container" style={{ height: '350px' }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -405,14 +618,260 @@ const AnalysisView = ({ refreshTrigger }) => {
                   <Tooltip 
                     cursor={{ fill: 'var(--hover-bg)' }}
                     contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', color: 'var(--text-primary)' }}
-                    formatter={(value) => `${getCurrency()}${value}`}
+                    formatter={(value) => `${getCurrency()}${Number(value).toFixed(2)}`}
                   />
                   <Legend />
-                  <Bar dataKey="income" name="Income" fill="#10b981" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="spend" name="Spend" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                  <Bar
+                    dataKey="income"
+                    name={flowWalletFilter === 'Cash' ? 'Cash Inflow' : flowWalletFilter === 'UPI' ? 'UPI Inflow' : 'Income'}
+                    fill="#10b981"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <Bar
+                    dataKey="spend"
+                    name={flowWalletFilter === 'Cash' ? 'Cash Outflow' : flowWalletFilter === 'UPI' ? 'UPI Outflow' : 'Spend'}
+                    fill="#ef4444"
+                    radius={[4, 4, 0, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
+
+            {/* 4-Card Complete Ledger Flow */}
+            <div style={{
+              marginTop: '1.5rem',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '1rem'
+            }}>
+              {/* Card 1: Opening Balance */}
+              <div style={{
+                background: 'rgba(99, 102, 241, 0.08)',
+                border: '1px solid rgba(99, 102, 241, 0.25)',
+                borderRadius: '12px',
+                padding: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.85rem'
+              }}>
+                <div style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '10px',
+                  background: 'rgba(99, 102, 241, 0.15)',
+                  color: '#6366f1',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <Landmark size={20} />
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block' }}>
+                    {flowWalletFilter === 'all' && 'Opening Balance (Combined)'}
+                    {flowWalletFilter === 'Cash' && 'Cash Opening Balance'}
+                    {flowWalletFilter === 'UPI' && 'Bank Opening Balance'}
+                  </span>
+                  <strong style={{ fontSize: '1.2rem', color: '#6366f1' }}>
+                    {getCurrency()}{formatAmt(activeLedger.opening)}
+                  </strong>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
+                    Start of selected period
+                  </span>
+                </div>
+              </div>
+
+              {/* Card 2: Total Inflow (+) */}
+              <div style={{
+                background: 'rgba(16, 185, 129, 0.08)',
+                border: '1px solid rgba(16, 185, 129, 0.25)',
+                borderRadius: '12px',
+                padding: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.85rem'
+              }}>
+                <div style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '10px',
+                  background: 'rgba(16, 185, 129, 0.15)',
+                  color: '#10b981',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <ArrowDownLeft size={20} />
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block' }}>
+                    {flowWalletFilter === 'all' && 'Total Inflow (Combined)'}
+                    {flowWalletFilter === 'Cash' && 'Cash Inflow'}
+                    {flowWalletFilter === 'UPI' && 'UPI Inflow'}
+                  </span>
+                  <strong style={{ fontSize: '1.2rem', color: '#10b981' }}>
+                    +{getCurrency()}{formatAmt(activeLedger.inflow)}
+                  </strong>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
+                    Deposits & incoming funds
+                  </span>
+                </div>
+              </div>
+
+              {/* Card 3: Total Outflow (-) */}
+              <div style={{
+                background: 'rgba(239, 68, 68, 0.08)',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+                borderRadius: '12px',
+                padding: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.85rem'
+              }}>
+                <div style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '10px',
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  color: '#ef4444',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <ArrowUpRight size={20} />
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block' }}>
+                    {flowWalletFilter === 'all' && 'Total Outflow (Combined)'}
+                    {flowWalletFilter === 'Cash' && 'Cash Outflow'}
+                    {flowWalletFilter === 'UPI' && 'UPI Outflow'}
+                  </span>
+                  <strong style={{ fontSize: '1.2rem', color: '#ef4444' }}>
+                    -{getCurrency()}{formatAmt(activeLedger.outflow)}
+                  </strong>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
+                    Payments & spent money
+                  </span>
+                </div>
+              </div>
+
+              {/* Card 4: Ending / Available Balance */}
+              <div style={{
+                background: activeLedger.closing >= 0 ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                border: `1px solid ${activeLedger.closing >= 0 ? 'rgba(16, 185, 129, 0.35)' : 'rgba(239, 68, 68, 0.35)'}`,
+                borderRadius: '12px',
+                padding: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.85rem'
+              }}>
+                <div style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '10px',
+                  background: activeLedger.closing >= 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                  color: activeLedger.closing >= 0 ? '#10b981' : '#ef4444',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <Wallet size={20} />
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block' }}>
+                    {flowWalletFilter === 'all' && 'Current Available Balance'}
+                    {flowWalletFilter === 'Cash' && 'Cash Available Balance'}
+                    {flowWalletFilter === 'UPI' && 'Current Bank Balance'}
+                  </span>
+                  <strong style={{ fontSize: '1.25rem', color: activeLedger.closing >= 0 ? '#10b981' : '#ef4444' }}>
+                    {getCurrency()}{formatAmt(activeLedger.closing)}
+                  </strong>
+                  <span style={{ fontSize: '0.7rem', color: '#10b981', display: 'block', marginTop: '2px', fontWeight: 600 }}>
+                    Active & verified in account
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Complete Balance Reconciliation Equation */}
+            <div style={{
+              marginTop: '1rem',
+              padding: '0.85rem 1.25rem',
+              borderRadius: '12px',
+              background: 'var(--empty-state-bg)',
+              border: '1px solid var(--card-border)',
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '1rem',
+              fontSize: '0.88rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Ledger Reconciliation:</span>
+                <span style={{ fontWeight: 600, color: '#6366f1' }}>
+                  {getCurrency()}{formatAmt(activeLedger.opening)}
+                </span>
+                <span style={{ color: 'var(--text-muted)' }}>+</span>
+                <span style={{ fontWeight: 600, color: '#10b981' }}>
+                  {getCurrency()}{formatAmt(activeLedger.inflow)}
+                </span>
+                <span style={{ color: 'var(--text-muted)' }}>-</span>
+                <span style={{ fontWeight: 600, color: '#ef4444' }}>
+                  {getCurrency()}{formatAmt(activeLedger.outflow)}
+                </span>
+                <span style={{ color: 'var(--text-muted)' }}>=</span>
+                <span style={{
+                  fontWeight: 700,
+                  color: '#10b981',
+                  background: 'rgba(16, 185, 129, 0.15)',
+                  padding: '2px 8px',
+                  borderRadius: '6px',
+                  border: '1px solid rgba(16, 185, 129, 0.3)'
+                }}>
+                  {getCurrency()}{formatAmt(activeLedger.closing)}
+                </span>
+              </div>
+
+              <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                Period Net Change: <strong style={{ color: (activeLedger.inflow - activeLedger.outflow) >= 0 ? '#10b981' : '#f97316' }}>
+                  {(activeLedger.inflow - activeLedger.outflow) >= 0 ? '+' : '-'}{getCurrency()}{formatAmt(Math.abs(activeLedger.inflow - activeLedger.outflow))}
+                </strong>
+                <span style={{ color: 'var(--text-muted)', marginLeft: '6px' }}>
+                  {(activeLedger.inflow - activeLedger.outflow) >= 0 ? '(Saved)' : '(Drawn from balance)'}
+                </span>
+              </div>
+            </div>
+
+            {/* Wallet Sub-breakdown Banner when Combined Flow is active */}
+            {flowWalletFilter === 'all' && (
+              <div style={{
+                marginTop: '1rem',
+                padding: '0.75rem 1.25rem',
+                borderRadius: '10px',
+                background: 'var(--empty-state-bg)',
+                border: '1px solid var(--card-border)',
+                fontSize: '0.85rem',
+                display: 'flex',
+                justifyContent: 'space-around',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '1rem',
+                color: 'var(--text-secondary)'
+              }}>
+                <div>
+                  💵 <strong style={{ color: 'var(--text-primary)' }}>Cash Flow:</strong> In <span style={{ color: '#10b981', fontWeight: 600 }}>+{getCurrency()}{flowTotals.cashIn.toFixed(2)}</span> | Out <span style={{ color: '#ef4444', fontWeight: 600 }}>-{getCurrency()}{flowTotals.cashOut.toFixed(2)}</span>
+                </div>
+                <div style={{ height: '16px', width: '1px', background: 'var(--card-border)' }} />
+                <div>
+                  💳 <strong style={{ color: 'var(--text-primary)' }}>UPI Flow:</strong> In <span style={{ color: '#10b981', fontWeight: 600 }}>+{getCurrency()}{flowTotals.upiIn.toFixed(2)}</span> | Out <span style={{ color: '#ef4444', fontWeight: 600 }}>-{getCurrency()}{flowTotals.upiOut.toFixed(2)}</span>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
