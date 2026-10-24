@@ -403,6 +403,13 @@ async function processStatement(pdfBuffer, password) {
   // 3. Parse transactions with mathematical balance check
   const parsedTxns = parseStatementLines(lines, metadata.openingBalance);
 
+  // Attach extracted account number to each parsed transaction
+  if (metadata.accountNo) {
+    for (const t of parsedTxns) {
+      t.accountNo = metadata.accountNo;
+    }
+  }
+
   // 4. Calculate total deposits and withdrawals
   let totalDeposits = 0;
   let totalWithdrawals = 0;

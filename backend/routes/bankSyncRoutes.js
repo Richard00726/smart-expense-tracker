@@ -178,6 +178,7 @@ router.post('/upload-statement', upload.single('statementPdf'), async (req, res)
           refNo: item.refNo,
           balance: item.balance,
           bank: item.bank || 'TMB Bank',
+          accountNo: item.accountNo || parseResult.metadata?.accountNo || null,
           entryMode: 'auto',
           txnDate: item.txnDate || new Date(),
           date: item.txnDate || new Date()
