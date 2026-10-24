@@ -18,8 +18,38 @@
     "email": "kallimandayam@tmb.bank.in",
     "customerCare": "+91-9842461461"
   },
-  "latestClosingBalance": 648.03,
+  "latestClosingBalance": 11.53,
   "dailySummaries": [
+    {
+      "statementDate": "23-10-2026",
+      "period": "23-10-2026 to 23-10-2026",
+      "openingBalance": 35.78,
+      "totalDeposits": 0,
+      "totalWithdrawals": 24.25,
+      "closingBalance": 11.53,
+      "txnCount": 1,
+      "updatedAt": "2026-10-24T12:36:58.760Z"
+    },
+    {
+      "statementDate": "20-10-2026",
+      "period": "20-10-2026 to 20-10-2026",
+      "openingBalance": 60.03,
+      "totalDeposits": 0,
+      "totalWithdrawals": 24.25,
+      "closingBalance": 35.78,
+      "txnCount": 1,
+      "updatedAt": "2026-10-24T12:36:57.520Z"
+    },
+    {
+      "statementDate": "19-10-2026",
+      "period": "19-10-2026 to 19-10-2026",
+      "openingBalance": 648.03,
+      "totalDeposits": 0,
+      "totalWithdrawals": 588,
+      "closingBalance": 60.03,
+      "txnCount": 1,
+      "updatedAt": "2026-10-24T12:36:56.413Z"
+    },
     {
       "statementDate": "17-10-2026",
       "period": "17-10-2026 to 17-10-2026",

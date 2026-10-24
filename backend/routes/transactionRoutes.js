@@ -482,10 +482,10 @@ router.post("/transaction/auto", protect, async (req, res) => {
 
     transaction._id = transaction.id;
 
-    // Mark bank as synced (green state on website)
+    // Update last bank sync timestamp
     await prisma.user.update({
       where: { id: req.user.id },
-      data: { mobileStatus: 'bank_synced', lastSyncAt: new Date() }
+      data: { lastBankSyncAt: new Date() }
     });
 
     res.status(201).json({

@@ -6,6 +6,19 @@ const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const { protect } = require("../middleware/authMiddleware");
 
+// In-memory OTP storage with 5-minute TTL (avoids unnecessary database table)
+const otpStore = new Map();
+
+// Periodic cleanup of expired OTPs every 10 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [email, record] of otpStore.entries()) {
+    if (record.expiresAt < now) {
+      otpStore.delete(email);
+    }
+  }
+}, 10 * 60 * 1000);
+
 // Configure Nodemailer Transporter
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -31,17 +44,19 @@ router.post("/send-otp", async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ error: "Please provide an email" });
 
-    const userExists = await prisma.user.findUnique({ where: { email } });
+    const normalizedEmail = email.trim().toLowerCase();
+    const userExists = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (userExists) return res.status(400).json({ error: "This email is already registered. Please log in instead." });
 
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-
-    await prisma.oTP.deleteMany({ where: { email } });
-    await prisma.oTP.create({ data: { email, code } });
+    otpStore.set(normalizedEmail, {
+      code,
+      expiresAt: Date.now() + 5 * 60 * 1000 // 5 minutes
+    });
 
     const mailOptions = {
       from: `"Cash & UPI Tracker" <${process.env.EMAIL_USER}>`,
-      to: email,
+      to: normalizedEmail,
       subject: "Your Verification Code",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px;">
@@ -74,13 +89,12 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ error: "Please add all fields including OTP" });
     }
 
-    const userExists = await prisma.user.findUnique({ where: { email } });
+    const normalizedEmail = email.trim().toLowerCase();
+    const userExists = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (userExists) return res.status(400).json({ error: "User already exists" });
 
-    const validOtp = await prisma.oTP.findFirst({ where: { email, code: otp } });
-    
-    // Check if OTP exists and is within 5 minutes
-    if (!validOtp || new Date() - validOtp.createdAt > 5 * 60 * 1000) {
+    const storedOtp = otpStore.get(normalizedEmail);
+    if (!storedOtp || storedOtp.code !== String(otp).trim() || Date.now() > storedOtp.expiresAt) {
       return res.status(400).json({ error: "Invalid or expired verification code" });
     }
 
@@ -89,14 +103,14 @@ router.post("/register", async (req, res) => {
 
     const user = await prisma.user.create({
       data: {
-        username,
-        email,
+        username: username.trim(),
+        email: normalizedEmail,
         password: hashedPassword,
       },
     });
 
     if (user) {
-      await prisma.oTP.delete({ where: { id: validOtp.id } });
+      otpStore.delete(normalizedEmail);
       await prisma.wallet.createMany({
         data: [
           { userId: user.id, type: "Cash", balance: 0 },
@@ -172,9 +186,6 @@ router.get("/me", protect, async (req, res) => {
         monthlyLimit: true,
         yearlyLimit: true,
         excludedCategories: true,
-        mobileSyncEnabled: true,
-        mobileStatus: true,
-        lastSyncAt: true
       }
     });
     if (user) {
@@ -186,25 +197,6 @@ router.get("/me", protect, async (req, res) => {
   }
 });
 
-// @desc    Get Mobile Sync Status (for polling)
-// @route   GET /api/auth/sync-status
-// @access  Private
-router.get("/sync-status", protect, async (req, res) => {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: req.user.id },
-      select: {
-        mobileSyncEnabled: true,
-        mobileStatus: true,
-        lastSyncAt: true
-      }
-    });
-    res.json(user);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to get sync status" });
-  }
-});
-
 // @desc    Forgot Password
 // @route   POST /api/auth/forgot-password
 router.post("/forgot-password", async (req, res) => {
@@ -212,16 +204,19 @@ router.post("/forgot-password", async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ error: "Please provide an email" });
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (!user) return res.status(404).json({ error: "User not found with this email" });
 
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    await prisma.oTP.deleteMany({ where: { email } });
-    await prisma.oTP.create({ data: { email, code } });
+    otpStore.set(`reset_${normalizedEmail}`, {
+      code,
+      expiresAt: Date.now() + 5 * 60 * 1000 // 5 minutes
+    });
 
     const mailOptions = {
       from: `"Cash & UPI Tracker" <${process.env.EMAIL_USER}>`,
-      to: email,
+      to: normalizedEmail,
       subject: "Password Reset Code",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px;">
@@ -251,23 +246,24 @@ router.post("/reset-password", async (req, res) => {
     const { email, otp, newPassword } = req.body;
     if (!email || !otp || !newPassword) return res.status(400).json({ error: "Please provide all fields" });
 
-    const validOtp = await prisma.oTP.findFirst({ where: { email, code: otp } });
-    if (!validOtp || new Date() - validOtp.createdAt > 5 * 60 * 1000) {
+    const normalizedEmail = email.trim().toLowerCase();
+    const storedOtp = otpStore.get(`reset_${normalizedEmail}`);
+    if (!storedOtp || storedOtp.code !== String(otp).trim() || Date.now() > storedOtp.expiresAt) {
       return res.status(400).json({ error: "Invalid or expired verification code" });
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (!user) return res.status(404).json({ error: "User not found" });
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
 
     await prisma.user.update({
-      where: { email },
+      where: { email: normalizedEmail },
       data: { password: hashedPassword }
     });
 
-    await prisma.oTP.delete({ where: { id: validOtp.id } });
+    otpStore.delete(`reset_${normalizedEmail}`);
 
     res.status(200).json({ message: "Password updated successfully!" });
   } catch (error) {
@@ -313,38 +309,6 @@ router.put("/profile", protect, async (req, res) => {
   } catch (error) {
     console.error("Profile update error:", error);
     res.status(500).json({ error: "Failed to update profile" });
-  }
-});
-
-// @desc    Update Mobile Sync Settings
-// @route   PUT /api/auth/sync-settings
-// @access  Private
-router.put("/sync-settings", protect, async (req, res) => {
-  try {
-    const { enabled } = req.body;
-    
-    // Using string comparison because frontend might send 'true'/'false' or boolean
-    const isEnabled = enabled === true || enabled === 'true';
-    
-    const user = await prisma.user.update({
-      where: { id: req.user.id },
-      data: {
-        mobileSyncEnabled: isEnabled,
-        lastSyncAt: isEnabled ? new Date() : null
-      },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        mobileSyncEnabled: true,
-        lastSyncAt: true
-      }
-    });
-
-    res.json({ message: "Sync settings updated", user });
-  } catch (error) {
-    console.error("Sync settings error:", error);
-    res.status(500).json({ error: "Failed to update sync settings" });
   }
 });
 

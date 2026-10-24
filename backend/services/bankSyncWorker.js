@@ -89,7 +89,7 @@ async function syncUserBankStatements(user, options = {}) {
           where: { id: user.id },
           data: {
             googleRefreshToken: null,
-            mobileStatus: 'gmail_token_expired'
+            googleTokenExpired: true
           }
         });
         try {

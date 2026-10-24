@@ -21,9 +21,7 @@ model User {
   excludedCategories String[]      @default([])
   linkedBanks        String[]      @default([])
   password           String
-  mobileSyncEnabled  Boolean       @default(false)
-  mobileStatus       String?       // null | 'app_connected' | 'bank_synced' | 'error'
-  lastSyncAt         DateTime?
+  googleTokenExpired Boolean       @default(false)
   statementPassword  String?
   googleClientId     String?
   googleClientSecret String?
@@ -72,11 +70,4 @@ model Wallet {
   updatedAt DateTime @updatedAt
 
   @@unique([userId, type])
-}
-
-model OTP {
-  id        String   @id @default(uuid())
-  email     String
-  code      String
-  createdAt DateTime @default(now())
 }

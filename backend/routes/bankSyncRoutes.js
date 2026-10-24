@@ -39,7 +39,7 @@ router.get('/settings', async (req, res) => {
       googleEmail: user.googleEmail || null,
       hasGoogleCredentials: Boolean(user.googleClientId && (user.googleClientSecret || process.env.GOOGLE_CLIENT_SECRET)),
       hasGoogleAuth: Boolean(user.googleRefreshToken),
-      googleTokenExpired: user.mobileStatus === 'gmail_token_expired',
+      googleTokenExpired: Boolean(user.googleTokenExpired),
       googleClientId: user.googleClientId || process.env.GOOGLE_CLIENT_ID || null,
       bankSyncActive: user.bankSyncActive,
       lastBankSyncAt: user.lastBankSyncAt
@@ -228,6 +228,7 @@ router.post('/google-auth-url', async (req, res) => {
     const clientId = user?.googleClientId || process.env.GOOGLE_CLIENT_ID;
     const clientSecret = user?.googleClientSecret || process.env.GOOGLE_CLIENT_SECRET;
     const redirectUri = req.body.redirectUri || `${req.protocol}://${req.get('host')}/api/bank-sync/google-callback-popup`;
+    const loginHint = req.body.loginHint || user?.googleEmail || user?.email;
 
     if (!clientId || !clientSecret) {
       return res.status(400).json({
@@ -236,7 +237,7 @@ router.post('/google-auth-url', async (req, res) => {
       });
     }
 
-    const authUrl = generateAuthUrl(clientId, clientSecret, redirectUri);
+    const authUrl = generateAuthUrl(clientId, clientSecret, redirectUri, loginHint);
     res.json({ authUrl });
   } catch (err) {
     console.error('Error generating Google auth URL:', err);
@@ -259,6 +260,7 @@ router.post('/google-connect', async (req, res) => {
         data: {
           googleRefreshToken: refreshToken,
           googleEmail: googleEmail || 'connected@gmail.com',
+          googleTokenExpired: false,
           bankSyncActive: true
         }
       });
@@ -275,7 +277,7 @@ router.post('/google-connect', async (req, res) => {
       const updateData = {
         googleEmail: email,
         bankSyncActive: true,
-        mobileStatus: 'bank_synced'
+        googleTokenExpired: false
       };
       if (tokens.refresh_token) {
         updateData.googleRefreshToken = tokens.refresh_token;

@@ -19,13 +19,17 @@ function createOAuth2Client(clientId, clientSecret, redirectUri) {
 /**
  * Generates OAuth authentication URL for user
  */
-function generateAuthUrl(clientId, clientSecret, redirectUri) {
+function generateAuthUrl(clientId, clientSecret, redirectUri, loginHint = null) {
   const oauth2Client = createOAuth2Client(clientId, clientSecret, redirectUri);
-  return oauth2Client.generateAuthUrl({
+  const authConfig = {
     access_type: 'offline',
     prompt: 'consent select_account',
     scope: ['https://www.googleapis.com/auth/gmail.readonly']
-  });
+  };
+  if (loginHint) {
+    authConfig.login_hint = loginHint;
+  }
+  return oauth2Client.generateAuthUrl(authConfig);
 }
 
 /**
