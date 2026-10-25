@@ -10,6 +10,7 @@ const bankSyncRoutes = require("./routes/bankSyncRoutes");
 const systemRoutes = require("./routes/systemRoutes");
 
 const app = express();
+app.set('trust proxy', 1);
 
 // Middleware
 app.use(cors());

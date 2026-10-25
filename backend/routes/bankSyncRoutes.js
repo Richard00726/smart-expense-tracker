@@ -55,9 +55,8 @@ router.get(['/google-callback', '/google-callback-popup'], async (req, res) => {
       return res.status(404).send('User not found.');
     }
 
-    const clientId = user.googleClientId || process.env.GOOGLE_CLIENT_ID;
-    const clientSecret = user.googleClientSecret || process.env.GOOGLE_CLIENT_SECRET;
-    const redirectUri = `${req.protocol}://${req.get('host')}${req.baseUrl}${req.path}`;
+    const protocol = req.headers['x-forwarded-proto'] || (req.get('host').includes('localhost') ? 'http' : 'https');
+    const redirectUri = `${protocol}://${req.get('host')}${req.baseUrl}${req.path}`;
 
     const { tokens, email } = await exchangeCodeForTokens(code, clientId, clientSecret, redirectUri);
 
@@ -312,9 +311,8 @@ router.post('/google-auth-url', async (req, res) => {
       where: { id: req.user.id }
     });
 
-    const clientId = user?.googleClientId || process.env.GOOGLE_CLIENT_ID;
-    const clientSecret = user?.googleClientSecret || process.env.GOOGLE_CLIENT_SECRET;
-    const redirectUri = req.body.redirectUri || `${req.protocol}://${req.get('host')}/api/bank-sync/google-callback`;
+    const protocol = req.headers['x-forwarded-proto'] || (req.get('host').includes('localhost') ? 'http' : 'https');
+    const redirectUri = req.body.redirectUri || `${protocol}://${req.get('host')}/api/bank-sync/google-callback`;
     const loginHint = req.body.loginHint || user?.googleEmail || user?.email;
 
     if (!clientId || !clientSecret) {
