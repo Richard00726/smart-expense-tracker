@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Detect if running inside native Android / Capacitor APK or browser
-const isNative = typeof window !== 'undefined' && (
+export const isNative = typeof window !== 'undefined' && (
   window.Capacitor?.isNativePlatform?.() || 
   window.location.protocol === 'capacitor:' || 
   window.location.hostname === 'localhost' && window.location.port === ''

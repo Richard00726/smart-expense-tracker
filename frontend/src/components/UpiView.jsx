@@ -16,7 +16,8 @@ import {
   disconnectGmail,
   deleteBankSyncConfig,
   getGoogleAuthUrl,
-  connectGoogleAccount
+  connectGoogleAccount,
+  isNative
 } from '../services/api';
 
 // Supported & Upcoming Indian Banks
@@ -567,7 +568,9 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
 
       // Close modal and redirect directly to Google OAuth
       setShowConsentModal(false);
-      const redirectUri = window.location.origin + '/google-callback';
+      const redirectUri = isNative
+        ? 'https://cash-upi-backend.onrender.com/api/bank-sync/google-callback'
+        : (window.location.origin + '/google-callback');
       const res = await getGoogleAuthUrl({ redirectUri });
       if (res.data?.authUrl) {
         window.location.href = res.data.authUrl;
@@ -593,7 +596,9 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
   const handleConnectGmail = async () => {
     try {
       setAlertInfo(null);
-      const redirectUri = window.location.origin + '/google-callback';
+      const redirectUri = isNative
+        ? 'https://cash-upi-backend.onrender.com/api/bank-sync/google-callback'
+        : (window.location.origin + '/google-callback');
       const loginHint = googleEmail || targetBankEmail || currentUser?.email;
       const res = await getGoogleAuthUrl({ redirectUri, loginHint });
       if (res.data?.authUrl) {

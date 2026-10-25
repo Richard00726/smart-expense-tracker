@@ -18,7 +18,93 @@ const upload = multer({
   limits: { fileSize: 15 * 1024 * 1024 }
 });
 
-// Protect all routes with protect middleware
+/**
+ * GET /api/bank-sync/google-callback and /api/bank-sync/google-callback-popup
+ * Public redirect target from Google OAuth
+ */
+router.get(['/google-callback', '/google-callback-popup'], async (req, res) => {
+  const { code, state: userId, error } = req.query;
+
+  if (error) {
+    return res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head><meta name="viewport" content="width=device-width, initial-scale=1"><title>Authorization Cancelled</title></head>
+      <body style="font-family:system-ui, -apple-system, sans-serif; background:#0b0f19; color:#f8fafc; display:flex; align-items:center; justify-content:center; height:100vh; margin:0; text-align:center; padding:20px;">
+        <div style="background:#1e293b; padding:32px; border-radius:18px; border:1px solid rgba(239, 68, 68, 0.4); max-width:400px;">
+          <h2 style="color:#ef4444; margin-top:0;">Authorization Cancelled</h2>
+          <p style="color:#94a3b8; font-size:14px;">Google authorization was cancelled or denied: ${error}</p>
+          <p style="color:#64748b; font-size:13px; margin-top:20px;">You can return to the Cash & UPI Tracker app.</p>
+        </div>
+      </body>
+      </html>
+    `);
+  }
+
+  if (!code) {
+    return res.status(400).send('Authorization code is missing.');
+  }
+
+  try {
+    if (!userId) {
+      return res.status(400).send('Missing session state identifier.');
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return res.status(404).send('User not found.');
+    }
+
+    const clientId = user.googleClientId || process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = user.googleClientSecret || process.env.GOOGLE_CLIENT_SECRET;
+    const redirectUri = `${req.protocol}://${req.get('host')}${req.baseUrl}${req.path}`;
+
+    const { tokens, email } = await exchangeCodeForTokens(code, clientId, clientSecret, redirectUri);
+
+    const updateData = {
+      googleEmail: email,
+      bankSyncActive: true,
+      googleTokenExpired: false
+    };
+    if (tokens.refresh_token) {
+      updateData.googleRefreshToken = tokens.refresh_token;
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: updateData
+    });
+
+    invalidateUserCache(user.id);
+
+    return res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head><meta name="viewport" content="width=device-width, initial-scale=1"><title>Account Connected</title></head>
+      <body style="font-family:system-ui, -apple-system, sans-serif; background:#0b0f19; color:#f8fafc; display:flex; align-items:center; justify-content:center; height:100vh; margin:0; text-align:center; padding:20px;">
+        <div style="background:#1e293b; padding:36px; border-radius:20px; border:1px solid rgba(16,185,129,0.3); max-width:440px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
+          <div style="font-size:48px; margin-bottom:12px;">🎉</div>
+          <h2 style="color:#10b981; margin:0 0 10px 0; font-size:24px;">Google Account Connected!</h2>
+          <p style="color:#cbd5e1; font-size:15px; margin-bottom:16px;">
+            Successfully connected: <b style="color:#ffffff;">${email}</b>
+          </p>
+          <p style="color:#94a3b8; font-size:13px; line-height:1.6;">
+            Your bank statement emails will now automatically sync to your Smart Expense Tracker app!
+          </p>
+          <p style="color:#64748b; font-size:13px; margin-top:24px;">
+            You can close this tab and return to the app.
+          </p>
+        </div>
+      </body>
+      </html>
+    `);
+  } catch (err) {
+    console.error('Error exchanging Google OAuth code in callback:', err);
+    return res.status(500).send(`Failed to complete authorization: ${err.message}`);
+  }
+});
+
+// Protect all routes below with protect middleware
 router.use(protect);
 
 /**
@@ -228,7 +314,7 @@ router.post('/google-auth-url', async (req, res) => {
 
     const clientId = user?.googleClientId || process.env.GOOGLE_CLIENT_ID;
     const clientSecret = user?.googleClientSecret || process.env.GOOGLE_CLIENT_SECRET;
-    const redirectUri = req.body.redirectUri || `${req.protocol}://${req.get('host')}/api/bank-sync/google-callback-popup`;
+    const redirectUri = req.body.redirectUri || `${req.protocol}://${req.get('host')}/api/bank-sync/google-callback`;
     const loginHint = req.body.loginHint || user?.googleEmail || user?.email;
 
     if (!clientId || !clientSecret) {
@@ -238,7 +324,7 @@ router.post('/google-auth-url', async (req, res) => {
       });
     }
 
-    const authUrl = generateAuthUrl(clientId, clientSecret, redirectUri, loginHint);
+    const authUrl = generateAuthUrl(clientId, clientSecret, redirectUri, loginHint, req.user.id);
     res.json({ authUrl });
   } catch (err) {
     console.error('Error generating Google auth URL:', err);

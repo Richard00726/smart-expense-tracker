@@ -19,7 +19,7 @@ function createOAuth2Client(clientId, clientSecret, redirectUri) {
 /**
  * Generates OAuth authentication URL for user
  */
-function generateAuthUrl(clientId, clientSecret, redirectUri, loginHint = null) {
+function generateAuthUrl(clientId, clientSecret, redirectUri, loginHint = null, state = null) {
   const oauth2Client = createOAuth2Client(clientId, clientSecret, redirectUri);
   const authConfig = {
     access_type: 'offline',
@@ -28,6 +28,9 @@ function generateAuthUrl(clientId, clientSecret, redirectUri, loginHint = null) 
   };
   if (loginHint) {
     authConfig.login_hint = loginHint;
+  }
+  if (state) {
+    authConfig.state = state;
   }
   return oauth2Client.generateAuthUrl(authConfig);
 }
