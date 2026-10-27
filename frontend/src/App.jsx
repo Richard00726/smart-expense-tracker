@@ -140,7 +140,19 @@ function App() {
   };
 
   useEffect(() => {
-    const handleAuthError = () => setIsAuthenticated(false);
+    const handleAuthError = () => {
+      const savedTheme = localStorage.getItem('theme');
+      localStorage.clear();
+      sessionStorage.clear();
+      if (savedTheme) localStorage.setItem('theme', savedTheme);
+      setIsAuthenticated(false);
+      setCurrentUser({});
+      setBalances({ cash: 0, upi: 0, total: 0 });
+      setTransactions([]);
+      setTxLoading(true);
+      setActiveTab('home');
+      setShowProfileTooltip(false);
+    };
     const handleUserUpdate = () => setCurrentUser(JSON.parse(localStorage.getItem('user') || '{}'));
     
     window.addEventListener('auth_error', handleAuthError);
@@ -153,33 +165,54 @@ function App() {
   }, []);
 
   const handleLogout = () => {
+    const savedTheme = localStorage.getItem('theme');
     localStorage.clear();
     sessionStorage.clear();
+    if (savedTheme) localStorage.setItem('theme', savedTheme);
     setIsAuthenticated(false);
     setCurrentUser({});
+    setBalances({ cash: 0, upi: 0, total: 0 });
+    setTransactions([]);
+    setTxLoading(true);
+    setActiveTab('home');
+    setShowProfileTooltip(false);
+    setTxFilterType('all');
+    setTxFilterValue('');
+    setTxWalletFilter('all');
+  };
+
+  const handleAuthSuccess = (userData) => {
+    const user = userData || JSON.parse(localStorage.getItem('user') || '{}');
+    setCurrentUser(user);
+    setBalances({ cash: 0, upi: 0, total: 0 });
+    setTransactions([]);
+    setTxLoading(true);
+    setActiveTab('home');
+    setIsAuthenticated(true);
   };
 
   useEffect(() => {
     if (isAuthenticated) loadWallets();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, currentUser?.email, currentUser?._id, currentUser?.id]);
 
   useEffect(() => {
     if (isAuthenticated) loadTransactions();
-  }, [txFilterType, txFilterValue, txWalletFilter, isAuthenticated]);
+  }, [txFilterType, txFilterValue, txWalletFilter, isAuthenticated, currentUser?.email, currentUser?._id, currentUser?.id]);
 
   if (!isAuthenticated) {
     return (
       <>
         <SystemStatusOverlay />
-        <AuthScreen onAuthSuccess={() => {
-          setIsAuthenticated(true);
-        }} />
+        <AuthScreen onAuthSuccess={handleAuthSuccess} />
       </>
     );
   }
 
   return (
-    <div className={`app-layout ${activeTab === 'cash' ? 'bg-blush-cash' : ''} ${activeTab === 'upi' ? 'bg-blush-upi' : ''} ${activeTab === 'account' ? 'bg-blush-account' : ''}`}>
+    <div 
+      key={currentUser?._id || currentUser?.id || currentUser?.email || 'authenticated-app'}
+      className={`app-layout ${activeTab === 'cash' ? 'bg-blush-cash' : ''} ${activeTab === 'upi' ? 'bg-blush-upi' : ''} ${activeTab === 'account' ? 'bg-blush-account' : ''}`}
+    >
       <SystemStatusOverlay />
       {/* Sidebar (Desktop) */}
       <aside className="sidebar">
