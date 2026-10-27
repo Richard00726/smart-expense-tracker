@@ -101,24 +101,26 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
     localStorage.setItem('tmb_wizard_step', String(step));
   };
 
+  const userCacheKey = currentUser?.email || currentUser?._id || currentUser?.id || 'default';
+
   // Settings & Connection state (initialized instantly from localStorage cache if available)
   const cachedSettings = useMemo(() => {
     try {
-      const saved = localStorage.getItem('bank_sync_settings_cache');
+      const saved = localStorage.getItem(`bank_sync_settings_cache_${userCacheKey}`) || localStorage.getItem('bank_sync_settings_cache');
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
     }
-  }, []);
+  }, [userCacheKey]);
 
   const cachedOverview = useMemo(() => {
     try {
-      const saved = localStorage.getItem('bank_overview_cache');
+      const saved = localStorage.getItem(`bank_overview_cache_${userCacheKey}`) || localStorage.getItem('bank_overview_cache');
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
     }
-  }, []);
+  }, [userCacheKey]);
 
   const [settingsLoading, setSettingsLoading] = useState(() => !cachedSettings);
   const [hasPassword, setHasPassword] = useState(() => Boolean(cachedSettings?.hasPassword));
@@ -376,6 +378,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
       const data = res.data;
       
       try {
+        localStorage.setItem(`bank_sync_settings_cache_${userCacheKey}`, JSON.stringify(data));
         localStorage.setItem('bank_sync_settings_cache', JSON.stringify(data));
       } catch {}
 
@@ -1468,9 +1471,21 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
           )}
 
           {/* ══════════════════════════════════════════════════════════════
+              LOADING SKELETON (While checking bank sync status)
+          ══════════════════════════════════════════════════════════════ */}
+          {settingsLoading && !isConfigured && (
+            <div className="data-card glass animate-fade-in" style={{ padding: '2.5rem 1.5rem', textAlign: 'center', borderRadius: '14px', border: '1px solid var(--card-border)' }}>
+              <div style={{ display: 'inline-block', width: '28px', height: '28px', border: '3px solid var(--card-border)', borderTopColor: 'var(--accent-primary)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: '0.75rem' }} />
+              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 500 }}>
+                Connecting to Bank Sync Hub...
+              </p>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════
               STATE B: STEP-BY-STEP SETUP WIZARD (When Not Configured)
           ══════════════════════════════════════════════════════════════ */}
-          {!isConfigured && (
+          {!settingsLoading && !isConfigured && (
             <div className="data-card glass animate-fade-in" style={{ padding: '2rem', border: '1px solid var(--card-border)' }}>
 
               {/* Wizard Steps Navigation Bar */}

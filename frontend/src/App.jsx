@@ -141,10 +141,12 @@ function App() {
 
   useEffect(() => {
     const handleAuthError = () => {
-      const savedTheme = localStorage.getItem('theme');
-      localStorage.clear();
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('bank_sync_settings_cache');
+      localStorage.removeItem('bank_overview_cache');
+      localStorage.removeItem('tmb_wizard_step');
       sessionStorage.clear();
-      if (savedTheme) localStorage.setItem('theme', savedTheme);
       setIsAuthenticated(false);
       setCurrentUser({});
       setBalances({ cash: 0, upi: 0, total: 0 });
@@ -165,10 +167,12 @@ function App() {
   }, []);
 
   const handleLogout = () => {
-    const savedTheme = localStorage.getItem('theme');
-    localStorage.clear();
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('bank_sync_settings_cache');
+    localStorage.removeItem('bank_overview_cache');
+    localStorage.removeItem('tmb_wizard_step');
     sessionStorage.clear();
-    if (savedTheme) localStorage.setItem('theme', savedTheme);
     setIsAuthenticated(false);
     setCurrentUser({});
     setBalances({ cash: 0, upi: 0, total: 0 });
