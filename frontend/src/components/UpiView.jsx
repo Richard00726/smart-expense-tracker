@@ -829,7 +829,31 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
   const [txFilterType, setTxFilterType] = useState('month');
   const [txFilterValue, setTxFilterValue] = useState(currentLocalMonthStr);
 
-  const [showInitialNotice, setShowInitialNotice] = useState(() => !localStorage.getItem('bank_initial_sync_dismissed'));
+  const isNoticeDismissed = useMemo(() => {
+    try {
+      const userDismissed = localStorage.getItem(`bank_initial_sync_dismissed_${userCacheKey}`);
+      const globalDismissed = localStorage.getItem('bank_initial_sync_dismissed');
+      return userDismissed === 'true' || globalDismissed === 'true';
+    } catch {
+      return false;
+    }
+  }, [userCacheKey]);
+
+  const [showInitialNotice, setShowInitialNotice] = useState(() => !isNoticeDismissed);
+
+  useEffect(() => {
+    if (isNoticeDismissed) {
+      setShowInitialNotice(false);
+    }
+  }, [isNoticeDismissed]);
+
+  const handleDismissNotice = () => {
+    setShowInitialNotice(false);
+    try {
+      localStorage.setItem(`bank_initial_sync_dismissed_${userCacheKey}`, 'true');
+      localStorage.setItem('bank_initial_sync_dismissed', 'true');
+    } catch {}
+  };
 
   const handleLedgerFilterTypeChange = (newType) => {
     setLedgerFilterType(newType);
@@ -874,6 +898,18 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
     });
     return Array.from(monthsMap.values()).sort((a, b) => b.key.localeCompare(a.key));
   }, [upiTransactions, bankOverview?.dailySummaries]);
+
+  const statementRangeText = useMemo(() => {
+    if (!availableMonths || availableMonths.length === 0) {
+      return 'Bank e-statement is fetched!';
+    }
+    const oldest = availableMonths[availableMonths.length - 1]?.label;
+    const newest = availableMonths[0]?.label;
+    if (!oldest || !newest || oldest === newest) {
+      return `Bank e-statement (${newest || oldest}) is fetched!`;
+    }
+    return `Bank e-statement (${oldest} to ${newest}) is fetched!`;
+  }, [availableMonths]);
 
   const displayedAutoTransactions = useMemo(() => {
     if (txFilterType === 'all') return autoTransactions;
@@ -2290,7 +2326,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
               )}
 
               {/* Dismissible Initial Inbox Sync Notice */}
-              {showInitialNotice && isConfigured && (
+              {showInitialNotice && isConfigured && (availableMonths.length > 0 || (bankOverview?.dailySummaries && bankOverview.dailySummaries.length > 0)) && (
                 <div
                   className="data-card glass animate-fade-in"
                   style={{
@@ -2308,15 +2344,12 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                     <CheckCircle2 size={20} style={{ color: '#10b981', flexShrink: 0 }} />
                     <span style={{ fontSize: '0.88rem', color: 'var(--text-primary)', fontWeight: 500 }}>
-                      Bank e-statement ({availableMonths[availableMonths.length - 1]?.label || 'July 2026'} to {availableMonths[0]?.label || 'October 2026'}) is fetched! Now daily transactions will automatically fetch as they come tomorrow.
+                      {statementRangeText} Now daily transactions will automatically fetch as they come tomorrow.
                     </span>
                   </div>
                   <button
                     type="button"
-                    onClick={() => {
-                      setShowInitialNotice(false);
-                      localStorage.setItem('bank_initial_sync_dismissed', 'true');
-                    }}
+                    onClick={handleDismissNotice}
                     className="btn btn-success"
                     style={{
                       padding: '0.35rem 1.25rem',
