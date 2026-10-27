@@ -158,6 +158,10 @@ router.post("/login", async (req, res) => {
         monthlyLimit: user.monthlyLimit,
         yearlyLimit: user.yearlyLimit,
         excludedCategories: user.excludedCategories,
+        bankSyncActive: user.bankSyncActive || false,
+        hasPassword: Boolean(user.statementPassword),
+        hasGoogleAuth: Boolean(user.googleRefreshToken),
+        linkedBanks: user.linkedBanks || [],
         token: generateToken(user.id),
       });
     } else {
@@ -186,10 +190,18 @@ router.get("/me", protect, async (req, res) => {
         monthlyLimit: true,
         yearlyLimit: true,
         excludedCategories: true,
+        bankSyncActive: true,
+        linkedBanks: true,
+        statementPassword: true,
+        googleRefreshToken: true,
       }
     });
     if (user) {
       user._id = user.id;
+      user.hasPassword = Boolean(user.statementPassword);
+      user.hasGoogleAuth = Boolean(user.googleRefreshToken);
+      delete user.statementPassword;
+      delete user.googleRefreshToken;
     }
     res.status(200).json(user);
   } catch(error) {

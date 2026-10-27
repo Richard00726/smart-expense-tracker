@@ -122,8 +122,23 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
     }
   }, [userCacheKey]);
 
-  const [settingsLoading, setSettingsLoading] = useState(() => !cachedSettings);
-  const [hasPassword, setHasPassword] = useState(() => Boolean(cachedSettings?.hasPassword));
+  const [settingsLoading, setSettingsLoading] = useState(() => {
+    if (cachedSettings) return false;
+    try {
+      const u = (currentUser && currentUser.email) ? currentUser : JSON.parse(localStorage.getItem('user') || '{}');
+      if (u.bankSyncActive || u.hasPassword || (u.linkedBanks && u.linkedBanks.length > 0)) return false;
+    } catch {}
+    return true;
+  });
+  const [hasPassword, setHasPassword] = useState(() => {
+    if (cachedSettings) return Boolean(cachedSettings?.hasPassword);
+    try {
+      const u = (currentUser && currentUser.email) ? currentUser : JSON.parse(localStorage.getItem('user') || '{}');
+      return Boolean(u.hasPassword || u.statementPassword);
+    } catch {
+      return false;
+    }
+  });
   const [maskedPassword, setMaskedPassword] = useState(() => cachedSettings?.maskedPassword || '');
   const [passwordInput, setPasswordInput] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -131,7 +146,15 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
   // Google credentials & Bank Email
   const [googleEmail, setGoogleEmail] = useState(() => cachedSettings?.googleEmail || null);
   const [targetBankEmail, setTargetBankEmail] = useState(() => cachedSettings?.googleEmail || currentUser?.email || '');
-  const [hasGoogleAuth, setHasGoogleAuth] = useState(() => Boolean(cachedSettings?.hasGoogleAuth));
+  const [hasGoogleAuth, setHasGoogleAuth] = useState(() => {
+    if (cachedSettings) return Boolean(cachedSettings?.hasGoogleAuth);
+    try {
+      const u = (currentUser && currentUser.email) ? currentUser : JSON.parse(localStorage.getItem('user') || '{}');
+      return Boolean(u.hasGoogleAuth);
+    } catch {
+      return false;
+    }
+  });
   const [googleTokenExpired, setGoogleTokenExpired] = useState(() => Boolean(cachedSettings?.googleTokenExpired));
   const [hasGoogleCredentials, setHasGoogleCredentials] = useState(() => Boolean(cachedSettings?.hasGoogleCredentials || cachedSettings?.googleClientId));
   const [googleClientId, setGoogleClientId] = useState(() => cachedSettings?.googleClientId || '');
@@ -160,12 +183,9 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
       return Boolean(cachedSettings?.hasPassword && (cachedSettings?.hasGoogleAuth || cachedSettings?.bankSyncActive));
     }
     try {
-      const userStr = localStorage.getItem('user');
-      if (userStr) {
-        const u = JSON.parse(userStr);
-        if (u.bankSyncActive || u.statementPassword || (u.linkedBanks && u.linkedBanks.length > 0)) {
-          return true;
-        }
+      const u = (currentUser && currentUser.email) ? currentUser : JSON.parse(localStorage.getItem('user') || '{}');
+      if (u.bankSyncActive || u.statementPassword || u.hasPassword || (u.linkedBanks && u.linkedBanks.length > 0)) {
+        return true;
       }
     } catch {}
     if (transactions && transactions.some(t => t.source === 'bank_sync' || t.source === 'statement_import')) {
@@ -359,14 +379,6 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
     `);
     printWindow.document.close();
   };
-
-  // 1.5s maximum fallback timer so UI never hangs
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setSettingsLoading(false);
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, []);
 
   // Fetch bank sync settings on mount
   const fetchSettings = async () => {
