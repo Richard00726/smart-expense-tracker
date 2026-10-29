@@ -247,6 +247,10 @@ const AuthScreen = ({ onAuthSuccess }) => {
           ==================================================================== */}
       <div className="split-auth-right">
         
+        {/* Soft mint glow reflected on right side */}
+        <div className="blob-right-1" />
+        <div className="blob-right-2" />
+        
         <div className="split-form-card">
           
           {/* Header */}
