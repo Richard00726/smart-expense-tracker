@@ -173,7 +173,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
         <div className="map-pattern" />
         <div className="left-ambient-glow" />
 
-        {/* Top Brand Logo (Pinned Top Left) */}
+        {/* Top Brand Logo (Clean In-Flow, Never Overlapping Tracker) */}
         <div 
           className="split-logo-block"
           onClick={() => setShowSplash(true)}
@@ -192,13 +192,13 @@ const AuthScreen = ({ onAuthSuccess }) => {
           </div>
         </div>
 
-        {/* Center Content Flow: Vertically Centered in Left Panel */}
+        {/* Center Content Flow */}
         <div className="split-left-center-flow">
 
-          {/* Hero Value Proposition: Headline Continued as Requested */}
+          {/* Hero Value Proposition: Clean headline without extra added sentences */}
           <div className="split-hero-block">
             <h1 className="split-hero-title">
-              Know where every rupee goes, <span className="hero-cyan-accent">automatically.</span> Track daily cash, sync bank accounts, and reconcile with ease.
+              Know where every rupee goes, <span className="hero-cyan-accent">automatically.</span>
             </h1>
             <p className="split-hero-desc">
               The unified expense manager that brings your Cash wallet and Bank statement sync together.
@@ -206,7 +206,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
           </div>
 
           {/* ==================================================================
-              CONSTELLATION ARCHITECTURE STAGE (True Center of Left Panel)
+              CONSTELLATION ARCHITECTURE STAGE (100% Preserved)
               ================================================================== */}
           <div className="constellation-stage">
             
@@ -310,7 +310,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
 
         </div>
 
-        {/* Left Footer (Pinned Bottom Left) */}
+        {/* Left Footer */}
         <div className="split-left-footer">
           Smart Expense Tracker • Next-Gen Automated Finance
         </div>
