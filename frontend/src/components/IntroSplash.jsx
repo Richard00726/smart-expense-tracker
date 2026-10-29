@@ -14,7 +14,7 @@ const TAGLINES = [
 
 /**
  * IntroSplash Component (Full Screen View)
- * Displays a snappy, high-energy brand animation on site entrance with rotating taglines.
+ * Displays the full-screen brand animation on site entrance with rotating taglines.
  */
 const IntroSplash = ({ onFinish }) => {
   const [isExiting, setIsExiting] = useState(false);
@@ -36,14 +36,14 @@ const IntroSplash = ({ onFinish }) => {
     setIsExiting(true);
     setTimeout(() => {
       if (onFinish) onFinish();
-    }, 350); // Snappy exit dissolve
+    }, 600);
   };
 
   useEffect(() => {
-    // Fast, user-friendly auto-transition (~1.4s)
+    // Automatically transition to login after animation completes
     const timer = setTimeout(() => {
       handleProceed();
-    }, 1400);
+    }, 3200);
 
     return () => clearTimeout(timer);
   }, []);

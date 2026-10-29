@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { loginUser, registerUser, sendOTP, forgotPassword, resetPassword } from '../services/api';
-import { LogIn, UserPlus, Mail, ArrowLeft, Eye, EyeOff, Zap, PieChart, ShieldCheck } from 'lucide-react';
+import { Mail, Eye, EyeOff, Zap, BarChart2, ShieldCheck, ArrowRight, ArrowLeft, User, KeyRound } from 'lucide-react';
 import IntroSplash from './IntroSplash';
 import './AuthScreen.css';
 
 const AuthScreen = ({ onAuthSuccess }) => {
   const [showSplash, setShowSplash] = useState(true);
   const [isLogin, setIsLogin] = useState(true);
-  const [step, setStep] = useState(1); // 1: Email/Username, 2: OTP/Password
+  const [step, setStep] = useState(1); // 1: Form details, 2: OTP / Password
   
   const [formData, setFormData] = useState({
     username: '',
@@ -23,8 +23,8 @@ const AuthScreen = ({ onAuthSuccess }) => {
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [mathChallenge, setMathChallenge] = useState({ num1: 5, num2: 3, answer: '' });
   const [rememberMe, setRememberMe] = useState(true);
+  const [mathChallenge, setMathChallenge] = useState({ num1: 5, num2: 3, answer: '' });
 
   const generateMathChallenge = () => {
     setMathChallenge({
@@ -70,7 +70,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
       window.dispatchEvent(new Event('user_updated'));
       onAuthSuccess();
     } catch (err) {
-      setError(err.response?.data?.error || 'Authentication failed. Please check your credentials.');
+      setError(err.response?.data?.error || 'Authentication failed');
     } finally {
       setLoading(false);
     }
@@ -96,7 +96,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
 
   const handleForgotPasswordOTP = async (e) => {
     e.preventDefault();
-    if (parseInt(mathChallenge.answer, 10) !== mathChallenge.num1 + mathChallenge.num2) {
+    if (parseInt(mathChallenge.answer) !== mathChallenge.num1 + mathChallenge.num2) {
       setError('Incorrect math answer. Please verify you are human.');
       generateMathChallenge();
       return;
@@ -153,137 +153,147 @@ const AuthScreen = ({ onAuthSuccess }) => {
     setConfirmPassword('');
   };
 
+  // Show animated splash first
   if (showSplash) {
     return <IntroSplash onFinish={() => setShowSplash(false)} />;
   }
 
   return (
-    <div className="auth-split-fullscreen">
+    <div className="split-auth-container">
       
-      {/* ==========================================================================
-          LEFT SIDE: Brand Showcase & Content
-          ========================================================================== */}
-      <div className="auth-split-left">
+      {/* ====================================================================
+          LEFT SIDE: Brand Showcase & Value Proposition (Exact match to reference)
+          ==================================================================== */}
+      <div className="split-auth-left">
         
-        {/* Top Brand Logo */}
-        <div className="auth-left-brand">
-          <h2 className="auth-left-logo-text">Smart Expense</h2>
-          <div className="auth-left-swoosh">
+        {/* Ambient mint glow blobs */}
+        <div className="split-mint-blob blob-1" />
+        <div className="split-mint-blob blob-2" />
+        <div className="split-mint-blob blob-3" />
+
+        {/* Top Left Brand Logo */}
+        <div 
+          className="split-logo-wrapper"
+          onClick={() => setShowSplash(true)}
+          title="Click to replay animation"
+          style={{ cursor: 'pointer' }}
+        >
+          <h2 className="split-logo-title">Smart Expense</h2>
+          <div className="split-logo-swoosh">
             <svg viewBox="0 0 460 48" fill="none" style={{ width: '100%', height: 'auto', overflow: 'visible' }}>
               <path d="M 12 22 C 145 42, 315 42, 438 12" stroke="#00d68f" strokeWidth="5.5" strokeLinecap="round" />
               <circle cx="441" cy="11" r="6.5" fill="#00d68f" />
             </svg>
           </div>
-          <div className="auth-left-tracker-text">
+          <div className="split-logo-tracker">
             <span>T</span><span>R</span><span>A</span><span>C</span><span>K</span><span>E</span><span>R</span>
           </div>
         </div>
 
-        {/* Hero Copy & Value Propositions */}
-        <div className="auth-left-content">
-          <h1 className="auth-left-headline">
-            Know where every rupee goes, <span>automatically.</span>
+        {/* Center Hero Proposition */}
+        <div className="split-hero-content">
+          <h1 className="split-hero-headline">
+            Know where every rupee goes, automatically.
           </h1>
-          <p className="auth-left-subtext">
-            The unified expense manager that brings your manual cash wallet and automated bank sync together in real time.
+          <p className="split-hero-subtitle">
+            The unified expense manager that brings your Cash wallet and Bank statement sync together.
           </p>
 
-          <div className="auth-feature-list">
+          {/* 3 Frosted Feature Cards */}
+          <div className="split-feature-stack">
             
-            {/* Feature 1: Bank Instance Sync (no specific bank named) */}
-            <div className="auth-feature-card">
-              <div className="auth-feature-icon">
-                <Zap size={22} />
+            {/* Card 1: Live Bank Sync */}
+            <div className="split-feature-card">
+              <div className="split-feature-icon-box">
+                <Zap size={22} strokeWidth={2.2} />
               </div>
-              <div className="auth-feature-text">
-                <h4>Smart Bank Sync</h4>
-                <p>Automated daily statement reconciliation directly from your connected bank emails.</p>
-              </div>
-            </div>
-
-            {/* Feature 2: Smart Analytics */}
-            <div className="auth-feature-card">
-              <div className="auth-feature-icon">
-                <PieChart size={22} />
-              </div>
-              <div className="auth-feature-text">
-                <h4>Cash Flow & Visual Analytics</h4>
-                <p>Visual category spending breakdowns and real-time cash vs digital tracking.</p>
+              <div className="split-feature-text">
+                <strong>Live Bank Sync</strong> <span>— Automated TMB daily statement reconciliation</span>
               </div>
             </div>
 
-            {/* Feature 3: Privacy & Security (Changed from bank-grade as requested) */}
-            <div className="auth-feature-card">
-              <div className="auth-feature-icon">
-                <ShieldCheck size={22} />
+            {/* Card 2: Smart Analytics */}
+            <div className="split-feature-card">
+              <div className="split-feature-icon-box">
+                <BarChart2 size={22} strokeWidth={2.2} />
               </div>
-              <div className="auth-feature-text">
-                <h4>100% Private & Encrypted</h4>
-                <p>Your financial records stay secure, confidential, and completely under your control.</p>
+              <div className="split-feature-text">
+                <strong>Smart Analytics</strong> <span>— Real-time cash flow & spending breakdown</span>
+              </div>
+            </div>
+
+            {/* Card 3: Bank-grade Encryption */}
+            <div className="split-feature-card">
+              <div className="split-feature-icon-box">
+                <ShieldCheck size={22} strokeWidth={2.2} />
+              </div>
+              <div className="split-feature-text">
+                <strong>Bank-grade 256-bit Encryption</strong> <span>& Local Privacy</span>
               </div>
             </div>
 
           </div>
         </div>
 
-        {/* Left Footer Guarantee */}
-        <div className="auth-left-footer">
-          <span>🔒 Privacy-first architecture · Local data ownership · Zero third-party tracking</span>
+        {/* Bottom Left Footer */}
+        <div className="split-left-footer">
+          Smart Expense Tracker • Next-Gen Automated Finance
         </div>
 
       </div>
 
-      {/* ==========================================================================
-          RIGHT SIDE: Clean Minimal White Auth Form
-          ========================================================================== */}
-      <div className="auth-split-right">
-        <div className="auth-form-card">
+      {/* ====================================================================
+          RIGHT SIDE: Clean Authentication Form (Exact match to reference)
+          ==================================================================== */}
+      <div className="split-auth-right">
+        
+        <div className="split-form-card">
           
-          {/* Mobile-Only Brand Header */}
-          <div className="auth-mobile-brand-header">
-            <h2 style={{ fontSize: '1.8rem', fontWeight: '800', letterSpacing: '-0.03em', margin: 0, color: '#0f172a' }}>
-              Smart Expense
-            </h2>
-            <div style={{ width: '180px', marginTop: '0.2rem', marginBottom: '0.4rem' }}>
-              <svg viewBox="0 0 460 48" fill="none" style={{ width: '100%', height: 'auto', overflow: 'visible' }}>
-                <path d="M 12 22 C 145 42, 315 42, 438 12" stroke="#00d68f" strokeWidth="5.5" strokeLinecap="round" />
-                <circle cx="441" cy="11" r="6.5" fill="#00d68f" />
-              </svg>
-            </div>
-            <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.72rem', fontWeight: '700', letterSpacing: '0.45em', color: '#64748b' }}>
-              <span>T</span><span>R</span><span>A</span><span>C</span><span>K</span><span>E</span><span>R</span>
-            </div>
-          </div>
-
-          {/* Form Header */}
-          <div className="auth-form-header">
-            <h3 className="auth-form-title">
+          {/* Header */}
+          <div className="split-form-header">
+            <h2 className="split-form-title">
               {isForgotPassword 
                 ? 'Reset Password' 
                 : (isLogin ? 'Welcome back' : 'Create an account')}
-            </h3>
-            <p className="auth-form-subtitle">
+            </h2>
+            <p className="split-form-desc">
               {isForgotPassword 
-                ? 'Enter your email to receive a verification code' 
-                : (isLogin ? 'Sign in to access your financial dashboard' : 'Join Smart Expense Tracker in a few clicks')}
+                ? 'Enter your email to receive a recovery code' 
+                : (isLogin ? 'Sign in to access your dashboard' : 'Join Smart Expense Tracker in seconds')}
             </p>
           </div>
 
           {/* Alerts */}
-          {error && <div className="auth-alert-error">{error}</div>}
-          {successMsg && <div className="auth-alert-success">{successMsg}</div>}
+          {error && (
+            <div className="split-alert split-alert-error">
+              {error}
+            </div>
+          )}
+          
+          {successMsg && (
+            <div className="split-alert split-alert-success">
+              {successMsg}
+            </div>
+          )}
 
-          {/* 1. LOGIN FORM */}
+          {/* ---------------------------------------------------------------
+              1. LOGIN FORM (Matches Reference Image)
+              --------------------------------------------------------------- */}
           {isLogin && !isForgotPassword && (
-            <form onSubmit={handleLogin}>
-              <div className="auth-input-group">
-                <label className="auth-input-label">Email Address</label>
-                <div className="auth-input-wrapper">
+            <form onSubmit={handleLogin} className="split-form">
+              
+              {/* Email Address */}
+              <div className="split-input-group">
+                <label className="split-label">Email Address</label>
+                <div className="split-input-wrapper">
+                  <span className="split-input-icon">
+                    <Mail size={18} />
+                  </span>
                   <input
                     type="email"
                     name="email"
-                    className="auth-input"
-                    placeholder="name@example.com"
+                    className="split-input with-left-icon"
+                    placeholder="you@example.com"
                     value={formData.email}
                     onChange={handleChange}
                     required
@@ -291,24 +301,25 @@ const AuthScreen = ({ onAuthSuccess }) => {
                 </div>
               </div>
 
-              <div className="auth-input-group">
-                <label className="auth-input-label">Password</label>
-                <div className="auth-input-wrapper">
+              {/* Password */}
+              <div className="split-input-group">
+                <label className="split-label">Password</label>
+                <div className="split-input-wrapper">
                   <input
                     type={showPassword ? "text" : "password"}
                     name="password"
-                    className="auth-input"
-                    placeholder="Enter your password"
+                    className="split-input with-right-icon"
+                    placeholder="••••••••••••"
                     value={formData.password}
                     onChange={handleChange}
                     required
-                    style={{ paddingRight: '2.5rem' }}
                   />
                   {formData.password.length > 0 && (
                     <button
                       type="button"
-                      className="auth-input-eye-btn"
                       onClick={() => setShowPassword(!showPassword)}
+                      className="split-input-eye-btn"
+                      aria-label="Toggle password visibility"
                     >
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
@@ -316,18 +327,20 @@ const AuthScreen = ({ onAuthSuccess }) => {
                 </div>
               </div>
 
-              <div className="auth-actions-bar">
-                <label className="auth-checkbox-label">
+              {/* Options Row: Remember Me & Forgot Password */}
+              <div className="split-options-row">
+                <label className="split-checkbox-label">
                   <input 
                     type="checkbox" 
                     checked={rememberMe} 
-                    onChange={(e) => setRememberMe(e.target.checked)} 
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="split-checkbox" 
                   />
                   <span>Remember me</span>
                 </label>
+
                 <button
                   type="button"
-                  className="auth-forgot-link"
                   onClick={() => {
                     setIsForgotPassword(true);
                     setStep(1);
@@ -335,111 +348,114 @@ const AuthScreen = ({ onAuthSuccess }) => {
                     setError('');
                     setSuccessMsg('');
                   }}
+                  className="split-forgot-link"
                 >
-                  Forgot Password?
+                  Forgot password?
                 </button>
               </div>
 
+              {/* Submit CTA Button */}
               <button
                 type="submit"
-                className="auth-submit-btn"
+                className="split-submit-btn"
                 disabled={loading}
               >
-                <LogIn size={18} />
-                <span>{loading ? 'Signing In...' : 'Sign In →'}</span>
+                <span>{loading ? 'Signing In...' : 'Sign In'}</span>
+                <ArrowRight size={18} />
               </button>
+
             </form>
           )}
 
-          {/* 2. FORGOT PASSWORD FORM */}
+          {/* ---------------------------------------------------------------
+              2. FORGOT PASSWORD FLOW
+              --------------------------------------------------------------- */}
           {isForgotPassword && (
-            <form onSubmit={step === 1 ? handleForgotPasswordOTP : handleResetPassword}>
+            <form onSubmit={step === 1 ? handleForgotPasswordOTP : handleResetPassword} className="split-form">
               {step === 1 && (
-                <div>
-                  <div className="auth-input-group">
-                    <label className="auth-input-label">Email Address</label>
-                    <input
-                      type="email"
-                      name="email"
-                      className="auth-input"
-                      placeholder="name@example.com"
-                      value={formData.email}
-                      onChange={handleChange}
-                      required
-                    />
+                <>
+                  <div className="split-input-group">
+                    <label className="split-label">Registered Email</label>
+                    <div className="split-input-wrapper">
+                      <span className="split-input-icon">
+                        <Mail size={18} />
+                      </span>
+                      <input
+                        type="email"
+                        name="email"
+                        className="split-input with-left-icon"
+                        placeholder="you@example.com"
+                        value={formData.email}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
                   </div>
 
-                  <div className="auth-input-group">
-                    <label className="auth-input-label">Human Check: What is {mathChallenge.num1} + {mathChallenge.num2}?</label>
+                  <div className="split-input-group">
+                    <label className="split-label">Human Check: What is {mathChallenge.num1} + {mathChallenge.num2}?</label>
                     <input
                       type="number"
-                      className="auth-input"
-                      placeholder="Answer"
+                      className="split-input"
+                      placeholder="Your answer"
                       value={mathChallenge.answer}
                       onChange={(e) => setMathChallenge({ ...mathChallenge, answer: e.target.value })}
                       required
                     />
                   </div>
 
-                  <button
-                    type="submit"
-                    className="auth-submit-btn"
-                    disabled={loading}
-                  >
-                    <Mail size={18} />
-                    <span>{loading ? 'Sending Code...' : 'Send Reset Code'}</span>
+                  <button type="submit" className="split-submit-btn" disabled={loading}>
+                    <span>{loading ? 'Sending Code...' : 'Send Recovery Code'}</span>
+                    <ArrowRight size={18} />
                   </button>
 
-                  <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-                    <button
-                      type="button"
-                      className="auth-forgot-link"
+                  <div style={{ textAlign: 'center', marginTop: '0.5rem' }}>
+                    <button 
+                      type="button" 
                       onClick={() => { setIsForgotPassword(false); setError(''); setSuccessMsg(''); }}
+                      className="split-forgot-link"
                     >
                       ← Back to Login
                     </button>
                   </div>
-                </div>
+                </>
               )}
 
               {step === 2 && (
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                    <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
-                      Sent to: <strong>{formData.email}</strong>
-                    </span>
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', color: '#64748b' }}>
+                    <span>Sending code to: <strong>{formData.email}</strong></span>
                     <button 
-                      type="button"
-                      onClick={() => { setStep(1); setError(''); setSuccessMsg(''); generateMathChallenge(); }}
-                      className="auth-forgot-link"
-                      style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                      type="button" 
+                      onClick={() => { setStep(1); generateMathChallenge(); }}
+                      className="split-forgot-link"
                     >
-                      <ArrowLeft size={14} /> Back
+                      Change
                     </button>
                   </div>
 
-                  <div className="auth-input-group">
-                    <label className="auth-input-label">Verification Code (OTP)</label>
+                  <div className="split-input-group">
+                    <label className="split-label">6-Digit Verification Code</label>
                     <input
                       type="text"
                       name="otp"
-                      className="auth-input"
-                      placeholder="000000"
+                      className="split-input"
+                      placeholder="••••••"
+                      maxLength={6}
                       value={formData.otp}
                       onChange={handleChange}
+                      style={{ letterSpacing: '0.3em', textAlign: 'center', fontSize: '1.25rem' }}
                       required
-                      maxLength={6}
-                      style={{ letterSpacing: '0.25em', textAlign: 'center', fontSize: '1.25rem', fontWeight: '700' }}
                     />
                   </div>
 
-                  <div className="auth-input-group">
-                    <label className="auth-input-label">New Password</label>
+                  <div className="split-input-group">
+                    <label className="split-label">New Password</label>
                     <input
-                      type={showPassword ? "text" : "password"}
+                      type="password"
                       name="password"
-                      className="auth-input"
-                      placeholder="Minimum 6 characters"
+                      className="split-input"
+                      placeholder="At least 6 characters"
                       value={formData.password}
                       onChange={handleChange}
                       required
@@ -447,11 +463,11 @@ const AuthScreen = ({ onAuthSuccess }) => {
                     />
                   </div>
 
-                  <div className="auth-input-group">
-                    <label className="auth-input-label">Confirm New Password</label>
+                  <div className="split-input-group">
+                    <label className="split-label">Confirm New Password</label>
                     <input
-                      type={showConfirmPassword ? "text" : "password"}
-                      className="auth-input"
+                      type="password"
+                      className="split-input"
                       placeholder="Re-enter password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
@@ -460,131 +476,144 @@ const AuthScreen = ({ onAuthSuccess }) => {
                     />
                   </div>
 
-                  <button
-                    type="submit"
-                    className="auth-submit-btn"
-                    disabled={loading}
-                  >
-                    <span>{loading ? 'Resetting...' : 'Reset Password & Log In'}</span>
+                  <button type="submit" className="split-submit-btn" disabled={loading}>
+                    <span>{loading ? 'Updating...' : 'Reset Password'}</span>
+                    <ArrowRight size={18} />
                   </button>
-                </div>
+                </>
               )}
             </form>
           )}
 
-          {/* 3. REGISTRATION FORM */}
+          {/* ---------------------------------------------------------------
+              3. REGISTRATION FLOW
+              --------------------------------------------------------------- */}
           {!isLogin && !isForgotPassword && (
-            <form onSubmit={step === 1 ? handleSendOTP : handleRegister}>
+            <form onSubmit={step === 1 ? handleSendOTP : handleRegister} className="split-form">
+              
               {step === 1 && (
-                <div>
-                  <div className="auth-input-group">
-                    <label className="auth-input-label">Full Name / Username</label>
-                    <input
-                      type="text"
-                      name="username"
-                      className="auth-input"
-                      placeholder="e.g. John Doe"
-                      value={formData.username}
-                      onChange={handleChange}
-                      required
-                    />
+                <>
+                  <div className="split-input-group">
+                    <label className="split-label">Your Name</label>
+                    <div className="split-input-wrapper">
+                      <span className="split-input-icon">
+                        <User size={18} />
+                      </span>
+                      <input
+                        type="text"
+                        name="username"
+                        className="split-input with-left-icon"
+                        placeholder="John Doe"
+                        value={formData.username}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
                   </div>
 
-                  <div className="auth-input-group">
-                    <label className="auth-input-label">Email Address</label>
-                    <input
-                      type="email"
-                      name="email"
-                      className="auth-input"
-                      placeholder="name@example.com"
-                      value={formData.email}
-                      onChange={handleChange}
-                      required
-                    />
+                  <div className="split-input-group">
+                    <label className="split-label">Email Address</label>
+                    <div className="split-input-wrapper">
+                      <span className="split-input-icon">
+                        <Mail size={18} />
+                      </span>
+                      <input
+                        type="email"
+                        name="email"
+                        className="split-input with-left-icon"
+                        placeholder="you@example.com"
+                        value={formData.email}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
                   </div>
 
-                  <button
-                    type="submit"
-                    className="auth-submit-btn"
-                    disabled={loading}
-                  >
-                    <Mail size={18} />
-                    <span>{loading ? 'Sending Code...' : 'Send Verification Code'}</span>
+                  <button type="submit" className="split-submit-btn" disabled={loading}>
+                    <span>{loading ? 'Sending Code...' : 'Continue'}</span>
+                    <ArrowRight size={18} />
                   </button>
-                </div>
+                </>
               )}
 
               {step === 2 && (
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                    <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
-                      Sending to: <strong>{formData.email}</strong>
-                    </span>
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', color: '#64748b' }}>
+                    <span>Code sent to: <strong>{formData.email}</strong></span>
                     <button 
-                      type="button"
-                      onClick={() => { setStep(1); setError(''); setSuccessMsg(''); }}
-                      className="auth-forgot-link"
-                      style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                      type="button" 
+                      onClick={() => setStep(1)}
+                      className="split-forgot-link"
                     >
-                      <ArrowLeft size={14} /> Change Email
+                      Change
                     </button>
                   </div>
 
-                  <div className="auth-input-group">
-                    <label className="auth-input-label">Verification Code (OTP)</label>
+                  <div className="split-input-group">
+                    <label className="split-label">6-Digit Verification Code</label>
                     <input
                       type="text"
                       name="otp"
-                      className="auth-input"
-                      placeholder="000000"
+                      className="split-input"
+                      placeholder="••••••"
+                      maxLength={6}
                       value={formData.otp}
                       onChange={handleChange}
+                      style={{ letterSpacing: '0.3em', textAlign: 'center', fontSize: '1.25rem' }}
                       required
-                      maxLength={6}
-                      style={{ letterSpacing: '0.25em', textAlign: 'center', fontSize: '1.25rem', fontWeight: '700' }}
                     />
                   </div>
 
-                  <div className="auth-input-group">
-                    <label className="auth-input-label">Create a Password</label>
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      name="password"
-                      className="auth-input"
-                      placeholder="Minimum 6 characters"
-                      value={formData.password}
-                      onChange={handleChange}
-                      required
-                      minLength={6}
-                    />
+                  <div className="split-input-group">
+                    <label className="split-label">Create a Strong Password</label>
+                    <div className="split-input-wrapper">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        className="split-input with-right-icon"
+                        placeholder="At least 6 characters"
+                        value={formData.password}
+                        onChange={handleChange}
+                        required
+                        minLength={6}
+                      />
+                      {formData.password.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="split-input-eye-btn"
+                          aria-label="Toggle password visibility"
+                        >
+                          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                      )}
+                    </div>
                   </div>
 
-                  <button
-                    type="submit"
-                    className="auth-submit-btn"
-                    disabled={loading}
-                  >
-                    <UserPlus size={18} />
-                    <span>{loading ? 'Verifying...' : 'Create Account'}</span>
+                  <button type="submit" className="split-submit-btn" disabled={loading}>
+                    <span>{loading ? 'Creating...' : 'Create Account'}</span>
+                    <ArrowRight size={18} />
                   </button>
-                </div>
+                </>
               )}
+
             </form>
           )}
 
-          {/* Bottom Switcher */}
-          <div className="auth-switch-prompt">
-            <span>{isLogin ? "Don't have an account?" : "Already have an account?"}</span>
+          {/* Switch Mode Footer (Matches "Don't have an account? Create an account") */}
+          <div className="split-footer">
+            {isLogin ? "Don't have an account?" : "Already have an account?"}
             <button
               type="button"
-              className="auth-switch-btn"
               onClick={resetForm}
+              className="split-switch-btn"
             >
-              {isLogin ? 'Sign up' : 'Sign in'}
+              {isLogin ? 'Create an account' : 'Sign in'}
             </button>
           </div>
 
         </div>
+
       </div>
 
     </div>
