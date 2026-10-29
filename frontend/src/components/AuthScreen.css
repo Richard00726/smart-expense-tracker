@@ -346,14 +346,14 @@
 }
 
 /* ==========================================================================
-   RIGHT PANEL (42%): Clean Off-White Canvas with Framed Login Form Card
+   RIGHT PANEL (42%): Pure White Full-Width Canvas (Matching Left Side)
    ========================================================================== */
 .split-right-panel {
   flex: 0 0 42%;
   width: 42%;
   height: 100vh;
-  background: #f8fafc;
-  padding: 2.5rem 3rem;
+  background: #ffffff;
+  padding: 3rem 4.5rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -362,21 +362,17 @@
   box-sizing: border-box;
   overflow-y: auto;
   scrollbar-width: none;
+  border-left: 1px solid #e2e8f0;
 }
 
 .split-right-panel::-webkit-scrollbar {
   display: none;
 }
 
-/* THE LOGIN FORM CARD WITH CLEAN BORDER ACCORDINGLY */
+/* Form Container inside Right Panel: Takes full available width seamlessly */
 .split-form-inner {
   width: 100%;
-  max-width: 400px;
-  background: #ffffff;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 20px;
-  padding: 2.25rem 2rem;
-  box-shadow: 0 12px 35px -8px rgba(15, 23, 42, 0.06), 0 0 1px rgba(15, 23, 42, 0.08);
+  max-width: 440px;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -385,13 +381,13 @@
 
 /* Header */
 .auth-header-block {
-  margin-bottom: 1.65rem;
+  margin-bottom: 1.85rem;
   text-align: left;
 }
 
 .auth-header-title {
   margin: 0;
-  font-size: 1.85rem;
+  font-size: 2rem;
   font-weight: 800;
   color: #0f172a;
   letter-spacing: -0.03em;
@@ -399,8 +395,8 @@
 }
 
 .auth-header-subtitle {
-  margin: 0.35rem 0 0 0;
-  font-size: 0.86rem;
+  margin: 0.4rem 0 0 0;
+  font-size: 0.88rem;
   color: #64748b;
   font-weight: 400;
 }
@@ -691,11 +687,11 @@
   }
 
   .split-right-panel {
-    padding: 2rem 1rem;
+    padding: 2.5rem 1.25rem;
   }
 
   .split-form-inner {
-    padding: 1.75rem 1.25rem;
-    border-radius: 16px;
+    width: 100%;
+    max-width: 100%;
   }
 }
