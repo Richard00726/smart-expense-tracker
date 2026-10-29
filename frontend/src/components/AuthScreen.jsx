@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { loginUser, registerUser, sendOTP, forgotPassword, resetPassword } from '../services/api';
-import { Wallet, LogIn, UserPlus, Mail, ArrowRight, ArrowLeft, Building2, Eye, EyeOff } from 'lucide-react';
+import { LogIn, UserPlus, Mail, ArrowLeft, Eye, EyeOff, Zap, PieChart, ShieldCheck } from 'lucide-react';
 import IntroSplash from './IntroSplash';
+import './AuthScreen.css';
 
 const AuthScreen = ({ onAuthSuccess }) => {
   const [showSplash, setShowSplash] = useState(true);
@@ -23,6 +24,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [mathChallenge, setMathChallenge] = useState({ num1: 5, num2: 3, answer: '' });
+  const [rememberMe, setRememberMe] = useState(true);
 
   const generateMathChallenge = () => {
     setMathChallenge({
@@ -68,7 +70,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
       window.dispatchEvent(new Event('user_updated'));
       onAuthSuccess();
     } catch (err) {
-      setError(err.response?.data?.error || 'Authentication failed');
+      setError(err.response?.data?.error || 'Authentication failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -94,7 +96,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
 
   const handleForgotPasswordOTP = async (e) => {
     e.preventDefault();
-    if (parseInt(mathChallenge.answer) !== mathChallenge.num1 + mathChallenge.num2) {
+    if (parseInt(mathChallenge.answer, 10) !== mathChallenge.num1 + mathChallenge.num2) {
       setError('Incorrect math answer. Please verify you are human.');
       generateMathChallenge();
       return;
@@ -156,415 +158,435 @@ const AuthScreen = ({ onAuthSuccess }) => {
   }
 
   return (
-    <div style={{ 
-      display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', padding: '1rem',
-      background: 'radial-gradient(circle at 50% 0%, #1a365d 0%, #0f172a 100%)',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      <div style={{ position: 'absolute', top: '-10%', left: '-10%', width: '40%', height: '40%', background: 'radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
-      <div style={{ position: 'absolute', bottom: '-10%', right: '-5%', width: '50%', height: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
+    <div className="auth-split-fullscreen">
       
-      <div className="data-card glass animate-fade-in" style={{ width: '100%', maxWidth: '440px', padding: '2.5rem', position: 'relative', zIndex: 1, borderRadius: '24px', border: '1px solid var(--card-border)', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
+      {/* ==========================================================================
+          LEFT SIDE: Brand Showcase & Content
+          ========================================================================== */}
+      <div className="auth-split-left">
         
-        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', color: 'var(--accent-primary)', marginBottom: '1.5rem' }}>
-            <Building2 size={56} strokeWidth={1.5} />
+        {/* Top Brand Logo */}
+        <div className="auth-left-brand">
+          <h2 className="auth-left-logo-text">Smart Expense</h2>
+          <div className="auth-left-swoosh">
+            <svg viewBox="0 0 460 48" fill="none" style={{ width: '100%', height: 'auto', overflow: 'visible' }}>
+              <path d="M 12 22 C 145 42, 315 42, 438 12" stroke="#00d68f" strokeWidth="5.5" strokeLinecap="round" />
+              <circle cx="441" cy="11" r="6.5" fill="#00d68f" />
+            </svg>
           </div>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: '700', letterSpacing: '-0.5px' }}>Smart Expense Tracker</h2>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.75rem', fontSize: '0.95rem' }}>
-            {isForgotPassword ? 'Reset your password' : (isLogin ? 'Securely access your accounts' : 'Open a new digital account')}
-          </p>
+          <div className="auth-left-tracker-text">
+            <span>T</span><span>R</span><span>A</span><span>C</span><span>K</span><span>E</span><span>R</span>
+          </div>
         </div>
 
-        {error && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem', textAlign: 'center', fontSize: '0.9rem' }}>
-            {error}
-          </div>
-        )}
-        
-        {successMsg && (
-          <div style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem', textAlign: 'center', fontSize: '0.9rem' }}>
-            {successMsg}
-          </div>
-        )}
+        {/* Hero Copy & Value Propositions */}
+        <div className="auth-left-content">
+          <h1 className="auth-left-headline">
+            Know where every rupee goes, <span>automatically.</span>
+          </h1>
+          <p className="auth-left-subtext">
+            The unified expense manager that brings your manual cash wallet and automated bank sync together in real time.
+          </p>
 
-        {/* LOGIN FORM */}
-        {isLogin && !isForgotPassword && (
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div className="form-group">
-              <label className="form-label">Email Address</label>
-              <input
-                type="email"
-                name="email"
-                className="form-control"
-                value={formData.email}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Password</label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  className="form-control"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                  style={{ paddingRight: formData.password ? '2.5rem' : '1rem' }}
-                />
-                {formData.password.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    style={{
-                      position: 'absolute',
-                      right: '0.75rem',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--text-secondary)',
-                      cursor: 'pointer',
-                      padding: '4px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'color 0.2s'
-                    }}
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                )}
+          <div className="auth-feature-list">
+            
+            {/* Feature 1: Bank Instance Sync (no specific bank named) */}
+            <div className="auth-feature-card">
+              <div className="auth-feature-icon">
+                <Zap size={22} />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                <button type="button" onClick={() => { setIsForgotPassword(true); setStep(1); generateMathChallenge(); setError(''); setSuccessMsg(''); }} style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '0.85rem', cursor: 'pointer' }}>
-                  Forgot Password?
-                </button>
+              <div className="auth-feature-text">
+                <h4>Smart Bank Sync</h4>
+                <p>Automated daily statement reconciliation directly from your connected bank emails.</p>
               </div>
             </div>
 
-            <button
-              type="submit"
-              className="btn btn-primary"
-              style={{ width: '100%', marginTop: '0.5rem', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}
-              disabled={loading}
-            >
-              <LogIn size={20} />
-              {loading ? 'Processing...' : 'Sign In'}
-            </button>
-          </form>
-        )}
+            {/* Feature 2: Smart Analytics */}
+            <div className="auth-feature-card">
+              <div className="auth-feature-icon">
+                <PieChart size={22} />
+              </div>
+              <div className="auth-feature-text">
+                <h4>Cash Flow & Visual Analytics</h4>
+                <p>Visual category spending breakdowns and real-time cash vs digital tracking.</p>
+              </div>
+            </div>
 
-        {/* FORGOT PASSWORD FORM */}
-        {isForgotPassword && (
-          <form onSubmit={step === 1 ? handleForgotPasswordOTP : handleResetPassword} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {step === 1 && (
-              <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div className="form-group">
-                  <label className="form-label">Email Address</label>
+            {/* Feature 3: Privacy & Security (Changed from bank-grade as requested) */}
+            <div className="auth-feature-card">
+              <div className="auth-feature-icon">
+                <ShieldCheck size={22} />
+              </div>
+              <div className="auth-feature-text">
+                <h4>100% Private & Encrypted</h4>
+                <p>Your financial records stay secure, confidential, and completely under your control.</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Left Footer Guarantee */}
+        <div className="auth-left-footer">
+          <span>🔒 Privacy-first architecture · Local data ownership · Zero third-party tracking</span>
+        </div>
+
+      </div>
+
+      {/* ==========================================================================
+          RIGHT SIDE: Clean Minimal White Auth Form
+          ========================================================================== */}
+      <div className="auth-split-right">
+        <div className="auth-form-card">
+          
+          {/* Mobile-Only Brand Header */}
+          <div className="auth-mobile-brand-header">
+            <h2 style={{ fontSize: '1.8rem', fontWeight: '800', letterSpacing: '-0.03em', margin: 0, color: '#0f172a' }}>
+              Smart Expense
+            </h2>
+            <div style={{ width: '180px', marginTop: '0.2rem', marginBottom: '0.4rem' }}>
+              <svg viewBox="0 0 460 48" fill="none" style={{ width: '100%', height: 'auto', overflow: 'visible' }}>
+                <path d="M 12 22 C 145 42, 315 42, 438 12" stroke="#00d68f" strokeWidth="5.5" strokeLinecap="round" />
+                <circle cx="441" cy="11" r="6.5" fill="#00d68f" />
+              </svg>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.72rem', fontWeight: '700', letterSpacing: '0.45em', color: '#64748b' }}>
+              <span>T</span><span>R</span><span>A</span><span>C</span><span>K</span><span>E</span><span>R</span>
+            </div>
+          </div>
+
+          {/* Form Header */}
+          <div className="auth-form-header">
+            <h3 className="auth-form-title">
+              {isForgotPassword 
+                ? 'Reset Password' 
+                : (isLogin ? 'Welcome back' : 'Create an account')}
+            </h3>
+            <p className="auth-form-subtitle">
+              {isForgotPassword 
+                ? 'Enter your email to receive a verification code' 
+                : (isLogin ? 'Sign in to access your financial dashboard' : 'Join Smart Expense Tracker in a few clicks')}
+            </p>
+          </div>
+
+          {/* Alerts */}
+          {error && <div className="auth-alert-error">{error}</div>}
+          {successMsg && <div className="auth-alert-success">{successMsg}</div>}
+
+          {/* 1. LOGIN FORM */}
+          {isLogin && !isForgotPassword && (
+            <form onSubmit={handleLogin}>
+              <div className="auth-input-group">
+                <label className="auth-input-label">Email Address</label>
+                <div className="auth-input-wrapper">
                   <input
                     type="email"
                     name="email"
-                    className="form-control"
+                    className="auth-input"
+                    placeholder="name@example.com"
                     value={formData.email}
                     onChange={handleChange}
                     required
                   />
                 </div>
-                
-                <div className="form-group">
-                  <label className="form-label">Verify you are human: What is {mathChallenge.num1} + {mathChallenge.num2}?</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    value={mathChallenge.answer}
-                    onChange={(e) => setMathChallenge({ ...mathChallenge, answer: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  style={{ width: '100%', marginTop: '0.5rem', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}
-                  disabled={loading}
-                >
-                  <Mail size={20} />
-                  {loading ? 'Sending Code...' : 'Send Reset Code'}
-                </button>
               </div>
-            )}
 
-            {step === 2 && (
-              <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                    Sending to: <strong>{formData.email}</strong>
-                  </span>
-                  <button 
-                    type="button"
-                    onClick={() => { setStep(1); setError(''); setSuccessMsg(''); generateMathChallenge(); }}
-                    style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                  >
-                    <ArrowLeft size={14} /> Back
-                  </button>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Verification Code</label>
+              <div className="auth-input-group">
+                <label className="auth-input-label">Password</label>
+                <div className="auth-input-wrapper">
                   <input
-                    type="text"
-                    name="otp"
-                    className="form-control"
-                    value={formData.otp}
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    className="auth-input"
+                    placeholder="Enter your password"
+                    value={formData.password}
                     onChange={handleChange}
                     required
-                    maxLength={6}
-                    style={{ letterSpacing: '0.2em', textAlign: 'center', fontSize: '1.2rem' }}
+                    style={{ paddingRight: '2.5rem' }}
                   />
+                  {formData.password.length > 0 && (
+                    <button
+                      type="button"
+                      className="auth-input-eye-btn"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  )}
                 </div>
-                
-                <div className="form-group">
-                  <label className="form-label">New Password</label>
-                  <div style={{ position: 'relative' }}>
+              </div>
+
+              <div className="auth-actions-bar">
+                <label className="auth-checkbox-label">
+                  <input 
+                    type="checkbox" 
+                    checked={rememberMe} 
+                    onChange={(e) => setRememberMe(e.target.checked)} 
+                  />
+                  <span>Remember me</span>
+                </label>
+                <button
+                  type="button"
+                  className="auth-forgot-link"
+                  onClick={() => {
+                    setIsForgotPassword(true);
+                    setStep(1);
+                    generateMathChallenge();
+                    setError('');
+                    setSuccessMsg('');
+                  }}
+                >
+                  Forgot Password?
+                </button>
+              </div>
+
+              <button
+                type="submit"
+                className="auth-submit-btn"
+                disabled={loading}
+              >
+                <LogIn size={18} />
+                <span>{loading ? 'Signing In...' : 'Sign In →'}</span>
+              </button>
+            </form>
+          )}
+
+          {/* 2. FORGOT PASSWORD FORM */}
+          {isForgotPassword && (
+            <form onSubmit={step === 1 ? handleForgotPasswordOTP : handleResetPassword}>
+              {step === 1 && (
+                <div>
+                  <div className="auth-input-group">
+                    <label className="auth-input-label">Email Address</label>
+                    <input
+                      type="email"
+                      name="email"
+                      className="auth-input"
+                      placeholder="name@example.com"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="auth-input-group">
+                    <label className="auth-input-label">Human Check: What is {mathChallenge.num1} + {mathChallenge.num2}?</label>
+                    <input
+                      type="number"
+                      className="auth-input"
+                      placeholder="Answer"
+                      value={mathChallenge.answer}
+                      onChange={(e) => setMathChallenge({ ...mathChallenge, answer: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="auth-submit-btn"
+                    disabled={loading}
+                  >
+                    <Mail size={18} />
+                    <span>{loading ? 'Sending Code...' : 'Send Reset Code'}</span>
+                  </button>
+
+                  <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+                    <button
+                      type="button"
+                      className="auth-forgot-link"
+                      onClick={() => { setIsForgotPassword(false); setError(''); setSuccessMsg(''); }}
+                    >
+                      ← Back to Login
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {step === 2 && (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                    <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                      Sent to: <strong>{formData.email}</strong>
+                    </span>
+                    <button 
+                      type="button"
+                      onClick={() => { setStep(1); setError(''); setSuccessMsg(''); generateMathChallenge(); }}
+                      className="auth-forgot-link"
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                    >
+                      <ArrowLeft size={14} /> Back
+                    </button>
+                  </div>
+
+                  <div className="auth-input-group">
+                    <label className="auth-input-label">Verification Code (OTP)</label>
+                    <input
+                      type="text"
+                      name="otp"
+                      className="auth-input"
+                      placeholder="000000"
+                      value={formData.otp}
+                      onChange={handleChange}
+                      required
+                      maxLength={6}
+                      style={{ letterSpacing: '0.25em', textAlign: 'center', fontSize: '1.25rem', fontWeight: '700' }}
+                    />
+                  </div>
+
+                  <div className="auth-input-group">
+                    <label className="auth-input-label">New Password</label>
                     <input
                       type={showPassword ? "text" : "password"}
                       name="password"
-                      className="form-control"
+                      className="auth-input"
+                      placeholder="Minimum 6 characters"
                       value={formData.password}
                       onChange={handleChange}
                       required
                       minLength={6}
-                      style={{ paddingRight: formData.password ? '2.5rem' : '1rem' }}
                     />
-                    {formData.password.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        style={{
-                          position: 'absolute',
-                          right: '0.75rem',
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          background: 'none',
-                          border: 'none',
-                          color: 'var(--text-secondary)',
-                          cursor: 'pointer',
-                          padding: '4px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'color 0.2s'
-                        }}
-                      >
-                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
-                    )}
                   </div>
-                </div>
 
-                <div className="form-group">
-                  <label className="form-label">Confirm New Password</label>
-                  <div style={{ position: 'relative' }}>
+                  <div className="auth-input-group">
+                    <label className="auth-input-label">Confirm New Password</label>
                     <input
                       type={showConfirmPassword ? "text" : "password"}
-                      className="form-control"
+                      className="auth-input"
+                      placeholder="Re-enter password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
                       minLength={6}
-                      style={{ paddingRight: confirmPassword ? '2.5rem' : '1rem' }}
                     />
-                    {confirmPassword.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        style={{
-                          position: 'absolute',
-                          right: '0.75rem',
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          background: 'none',
-                          border: 'none',
-                          color: 'var(--text-secondary)',
-                          cursor: 'pointer',
-                          padding: '4px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'color 0.2s'
-                        }}
-                      >
-                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
-                    )}
                   </div>
-                </div>
 
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  style={{ width: '100%', marginTop: '0.5rem', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}
-                  disabled={loading}
-                >
-                  <LogIn size={20} />
-                  {loading ? 'Resetting...' : 'Reset Password'}
-                </button>
-              </div>
-            )}
-          </form>
-        )}
-
-        {/* REGISTRATION FORM */}
-        {!isLogin && !isForgotPassword && (
-          <form onSubmit={step === 1 ? handleSendOTP : handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            
-            {/* Step 1: User details */}
-            {step === 1 && (
-              <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div className="form-group">
-                  <label className="form-label">Username</label>
-                  <input
-                    type="text"
-                    name="username"
-                    className="form-control"
-                    value={formData.username}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Email Address</label>
-                  <input
-                    type="email"
-                    name="email"
-                    className="form-control"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  style={{ width: '100%', marginTop: '0.5rem', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}
-                  disabled={loading}
-                >
-                  <Mail size={20} />
-                  {loading ? 'Sending Code...' : 'Send Verification Code'}
-                </button>
-              </div>
-            )}
-
-            {/* Step 2: Verification and Password */}
-            {step === 2 && (
-              <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                    Sending to: <strong>{formData.email}</strong>
-                  </span>
-                  <button 
-                    type="button"
-                    onClick={() => { setStep(1); setError(''); setSuccessMsg(''); }}
-                    style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                  <button
+                    type="submit"
+                    className="auth-submit-btn"
+                    disabled={loading}
                   >
-                    <ArrowLeft size={14} /> Change Email
+                    <span>{loading ? 'Resetting...' : 'Reset Password & Log In'}</span>
                   </button>
                 </div>
+              )}
+            </form>
+          )}
 
-                <div className="form-group">
-                  <label className="form-label">Verification Code</label>
-                  <input
-                    type="text"
-                    name="otp"
-                    className="form-control"
-                    value={formData.otp}
-                    onChange={handleChange}
-                    required
-                    maxLength={6}
-                    style={{ letterSpacing: '0.2em', textAlign: 'center', fontSize: '1.2rem' }}
-                  />
+          {/* 3. REGISTRATION FORM */}
+          {!isLogin && !isForgotPassword && (
+            <form onSubmit={step === 1 ? handleSendOTP : handleRegister}>
+              {step === 1 && (
+                <div>
+                  <div className="auth-input-group">
+                    <label className="auth-input-label">Full Name / Username</label>
+                    <input
+                      type="text"
+                      name="username"
+                      className="auth-input"
+                      placeholder="e.g. John Doe"
+                      value={formData.username}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="auth-input-group">
+                    <label className="auth-input-label">Email Address</label>
+                    <input
+                      type="email"
+                      name="email"
+                      className="auth-input"
+                      placeholder="name@example.com"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="auth-submit-btn"
+                    disabled={loading}
+                  >
+                    <Mail size={18} />
+                    <span>{loading ? 'Sending Code...' : 'Send Verification Code'}</span>
+                  </button>
                 </div>
-                
-                <div className="form-group">
-                  <label className="form-label">Create a Password</label>
-                  <div style={{ position: 'relative' }}>
+              )}
+
+              {step === 2 && (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                    <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                      Sending to: <strong>{formData.email}</strong>
+                    </span>
+                    <button 
+                      type="button"
+                      onClick={() => { setStep(1); setError(''); setSuccessMsg(''); }}
+                      className="auth-forgot-link"
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                    >
+                      <ArrowLeft size={14} /> Change Email
+                    </button>
+                  </div>
+
+                  <div className="auth-input-group">
+                    <label className="auth-input-label">Verification Code (OTP)</label>
+                    <input
+                      type="text"
+                      name="otp"
+                      className="auth-input"
+                      placeholder="000000"
+                      value={formData.otp}
+                      onChange={handleChange}
+                      required
+                      maxLength={6}
+                      style={{ letterSpacing: '0.25em', textAlign: 'center', fontSize: '1.25rem', fontWeight: '700' }}
+                    />
+                  </div>
+
+                  <div className="auth-input-group">
+                    <label className="auth-input-label">Create a Password</label>
                     <input
                       type={showPassword ? "text" : "password"}
                       name="password"
-                      className="form-control"
+                      className="auth-input"
+                      placeholder="Minimum 6 characters"
                       value={formData.password}
                       onChange={handleChange}
                       required
                       minLength={6}
-                      style={{ paddingRight: formData.password ? '2.5rem' : '1rem' }}
                     />
-                    {formData.password.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        style={{
-                          position: 'absolute',
-                          right: '0.75rem',
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          background: 'none',
-                          border: 'none',
-                          color: 'var(--text-secondary)',
-                          cursor: 'pointer',
-                          padding: '4px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'color 0.2s'
-                        }}
-                      >
-                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
-                    )}
                   </div>
+
+                  <button
+                    type="submit"
+                    className="auth-submit-btn"
+                    disabled={loading}
+                  >
+                    <UserPlus size={18} />
+                    <span>{loading ? 'Verifying...' : 'Create Account'}</span>
+                  </button>
                 </div>
+              )}
+            </form>
+          )}
 
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  style={{ width: '100%', marginTop: '0.5rem', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}
-                  disabled={loading}
-                >
-                  <UserPlus size={20} />
-                  {loading ? 'Verifying...' : 'Create Account'}
-                </button>
-              </div>
-            )}
-
-          </form>
-        )}
-
-        <div style={{ textAlign: 'center', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-color)' }}>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-            {isLogin ? "Don't have an account? " : "Already have an account? "}
+          {/* Bottom Switcher */}
+          <div className="auth-switch-prompt">
+            <span>{isLogin ? "Don't have an account?" : "Already have an account?"}</span>
             <button
+              type="button"
+              className="auth-switch-btn"
               onClick={resetForm}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--accent-primary)',
-                fontWeight: '500',
-                cursor: 'pointer',
-                padding: 0,
-                fontSize: '0.9rem'
-              }}
             >
-              {isLogin ? 'Sign up' : 'Log in'}
+              {isLogin ? 'Sign up' : 'Sign in'}
             </button>
-          </p>
-        </div>
+          </div>
 
+        </div>
       </div>
+
     </div>
   );
 };
