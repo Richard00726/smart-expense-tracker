@@ -173,7 +173,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
         <div className="map-pattern" />
         <div className="left-ambient-glow" />
 
-        {/* Top Brand Logo */}
+        {/* Top Brand Logo (Pinned Top Left) */}
         <div 
           className="split-logo-block"
           onClick={() => setShowSplash(true)}
@@ -192,142 +192,125 @@ const AuthScreen = ({ onAuthSuccess }) => {
           </div>
         </div>
 
-        {/* Hero Value Proposition with Rich Content to Eliminate Empty Space */}
-        <div className="split-hero-block">
-          <div className="hero-badge">
-            <span className="badge-dot"></span>
-            <span>Next-Gen Financial Operating System</span>
-          </div>
-          
-          <h1 className="split-hero-title">
-            Know where every rupee goes, <span className="hero-cyan-accent">automatically.</span>
-          </h1>
-          
-          <p className="split-hero-desc">
-            The unified personal finance tracker that seamlessly reconciles your daily bank statements, tracks every cash transaction, and brings complete clarity to your net worth.
-          </p>
+        {/* Center Content Flow: Vertically Centered in Left Panel */}
+        <div className="split-left-center-flow">
 
-          {/* Quick Highlight Feature Chips */}
-          <div className="hero-highlights-row">
-            <div className="highlight-chip">
-              <Zap size={13} color="#00e5ff" />
-              <span>Automated Bank Sync</span>
-            </div>
-            <div className="highlight-chip">
-              <Coins size={13} color="#00e5ff" />
-              <span>Cash & UPI Reconcile</span>
-            </div>
-            <div className="highlight-chip">
-              <Target size={13} color="#00e5ff" />
-              <span>Smart Spend Insights</span>
-            </div>
-          </div>
-        </div>
-
-        {/* ==================================================================
-            CONSTELLATION ARCHITECTURE STAGE (Expanded 680x360 Canvas, Proud & Centered)
-            ================================================================== */}
-        <div className="constellation-stage">
-          
-          {/* Ambient center radial glow */}
-          <div className="hub-ambient" />
-
-          {/* Geometry Lines, Rings & Ellipse (680 x 360 coordinate space) */}
-          <svg className="constellation-svg" viewBox="0 0 680 360" fill="none">
-            <defs>
-              <linearGradient id="cyanLineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#00e5ff" stopOpacity="0.9" />
-                <stop offset="100%" stopColor="#0284c7" stopOpacity="0.4" />
-              </linearGradient>
-              <filter id="glowCyan" x="-20%" y="-20%" width="140%" height="140%">
-                <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#00e5ff" floodOpacity="0.6" />
-              </filter>
-            </defs>
-
-            {/* 1. Large Outer Faint Ellipse (Spanning 580px wide) */}
-            <ellipse cx="340" cy="180" rx="290" ry="135" stroke="rgba(56, 189, 248, 0.22)" strokeWidth="1.2" fill="none" />
-
-            {/* 2. Mid Dashed Cyan Orbit Ring */}
-            <circle cx="340" cy="180" r="76" stroke="#00e5ff" strokeWidth="1.4" strokeDasharray="5 7" className="orbit-cw" />
-
-            {/* 3. Inner Solid Cyan Ring */}
-            <circle cx="340" cy="180" r="64" stroke="#00e5ff" strokeWidth="1.6" filter="url(#glowCyan)" />
-
-            {/* 4. Symmetrical Radiating Connecting Lines to the 6 Pills */}
-            {/* Top Left -> Bank Sync */}
-            <line x1="340" y1="180" x2="160" y2="63" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line-rev" />
-            {/* Top Right -> Reconciliation */}
-            <line x1="340" y1="180" x2="520" y2="63" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line" />
-            {/* Middle Right -> UPI Payments */}
-            <line x1="340" y1="180" x2="535" y2="180" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line" />
-            {/* Bottom Right -> Cash Wallet */}
-            <line x1="340" y1="180" x2="520" y2="297" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line-rev" />
-            {/* Bottom Left -> Budget Goals */}
-            <line x1="340" y1="180" x2="160" y2="297" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line" />
-            {/* Middle Left -> Spend Insights */}
-            <line x1="340" y1="180" x2="145" y2="180" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line-rev" />
-          </svg>
-
-          {/* Central Circular Hub with Space in "Smart Expense" (Prominent 110px Diameter) */}
-          <div className="hub-center-container">
-            <div className="hub-center-circle">
-              <span className="hub-center-title">Smart Expense</span>
-              <span className="hub-center-subtitle">TRACKER</span>
-            </div>
+          {/* Hero Value Proposition: Headline Continued as Requested */}
+          <div className="split-hero-block">
+            <h1 className="split-hero-title">
+              Know where every rupee goes, <span className="hero-cyan-accent">automatically.</span> Track daily cash, sync bank accounts, and reconcile with ease.
+            </h1>
+            <p className="split-hero-desc">
+              The unified expense manager that brings your Cash wallet and Bank statement sync together.
+            </p>
           </div>
 
-          {/* 6 Connected Feature Pills */}
-          {/* 1. Top Left: Bank Sync */}
-          <div className="stage-pill pill-pos-1 bob-1">
-            <div className="pill-content">
-              <Zap size={14} color="#00e5ff" strokeWidth={2.4} />
-              <span className="pill-text">Bank Sync</span>
-            </div>
-          </div>
+          {/* ==================================================================
+              CONSTELLATION ARCHITECTURE STAGE (True Center of Left Panel)
+              ================================================================== */}
+          <div className="constellation-stage">
+            
+            {/* Ambient center radial glow */}
+            <div className="hub-ambient" />
 
-          {/* 2. Top Right: Reconciliation */}
-          <div className="stage-pill pill-pos-2 bob-2">
-            <div className="pill-content">
-              <BarChart2 size={14} color="#00e5ff" strokeWidth={2.4} />
-              <span className="pill-text">Reconciliation</span>
-            </div>
-          </div>
+            {/* Geometry Lines, Rings & Ellipse (680 x 360 coordinate space) */}
+            <svg className="constellation-svg" viewBox="0 0 680 360" fill="none">
+              <defs>
+                <linearGradient id="cyanLineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#00e5ff" stopOpacity="0.9" />
+                  <stop offset="100%" stopColor="#0284c7" stopOpacity="0.4" />
+                </linearGradient>
+                <filter id="glowCyan" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#00e5ff" floodOpacity="0.6" />
+                </filter>
+              </defs>
 
-          {/* 3. Middle Right: UPI Payments */}
-          <div className="stage-pill pill-pos-3 bob-3">
-            <div className="pill-content">
-              <Smartphone size={14} color="#00e5ff" strokeWidth={2.4} />
-              <span className="pill-text">UPI Payments</span>
-            </div>
-          </div>
+              {/* 1. Large Outer Faint Ellipse (Spanning 580px wide) */}
+              <ellipse cx="340" cy="180" rx="290" ry="135" stroke="rgba(56, 189, 248, 0.22)" strokeWidth="1.2" fill="none" />
 
-          {/* 4. Bottom Right: Cash Wallet */}
-          <div className="stage-pill pill-pos-4 bob-4">
-            <div className="pill-content">
-              <Coins size={14} color="#00e5ff" strokeWidth={2.4} />
-              <span className="pill-text">Cash Wallet</span>
-            </div>
-          </div>
+              {/* 2. Mid Dashed Cyan Orbit Ring */}
+              <circle cx="340" cy="180" r="76" stroke="#00e5ff" strokeWidth="1.4" strokeDasharray="5 7" className="orbit-cw" />
 
-          {/* 5. Bottom Left: Budget Goals */}
-          <div className="stage-pill pill-pos-5 bob-5">
-            <div className="pill-content">
-              <Target size={14} color="#00e5ff" strokeWidth={2.4} />
-              <span className="pill-text">Budget Goals</span>
-            </div>
-          </div>
+              {/* 3. Inner Solid Cyan Ring */}
+              <circle cx="340" cy="180" r="64" stroke="#00e5ff" strokeWidth="1.6" filter="url(#glowCyan)" />
 
-          {/* 6. Middle Left: Spend Insights */}
-          <div className="stage-pill pill-pos-6 bob-6">
-            <div className="pill-content">
-              <PieChart size={14} color="#00e5ff" strokeWidth={2.4} />
-              <span className="pill-text">Spend Insights</span>
+              {/* 4. Symmetrical Radiating Connecting Lines to the 6 Pills */}
+              {/* Top Left -> Bank Sync */}
+              <line x1="340" y1="180" x2="160" y2="63" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line-rev" />
+              {/* Top Right -> Reconciliation */}
+              <line x1="340" y1="180" x2="520" y2="63" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line" />
+              {/* Middle Right -> UPI Payments */}
+              <line x1="340" y1="180" x2="535" y2="180" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line" />
+              {/* Bottom Right -> Cash Wallet */}
+              <line x1="340" y1="180" x2="520" y2="297" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line-rev" />
+              {/* Bottom Left -> Budget Goals */}
+              <line x1="340" y1="180" x2="160" y2="297" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line" />
+              {/* Middle Left -> Spend Insights */}
+              <line x1="340" y1="180" x2="145" y2="180" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line-rev" />
+            </svg>
+
+            {/* Central Circular Hub with Space in "Smart Expense" (Prominent 110px Diameter) */}
+            <div className="hub-center-container">
+              <div className="hub-center-circle">
+                <span className="hub-center-title">Smart Expense</span>
+                <span className="hub-center-subtitle">TRACKER</span>
+              </div>
             </div>
+
+            {/* 6 Connected Feature Pills */}
+            {/* 1. Top Left: Bank Sync */}
+            <div className="stage-pill pill-pos-1 bob-1">
+              <div className="pill-content">
+                <Zap size={14} color="#00e5ff" strokeWidth={2.4} />
+                <span className="pill-text">Bank Sync</span>
+              </div>
+            </div>
+
+            {/* 2. Top Right: Reconciliation */}
+            <div className="stage-pill pill-pos-2 bob-2">
+              <div className="pill-content">
+                <BarChart2 size={14} color="#00e5ff" strokeWidth={2.4} />
+                <span className="pill-text">Reconciliation</span>
+              </div>
+            </div>
+
+            {/* 3. Middle Right: UPI Payments */}
+            <div className="stage-pill pill-pos-3 bob-3">
+              <div className="pill-content">
+                <Smartphone size={14} color="#00e5ff" strokeWidth={2.4} />
+                <span className="pill-text">UPI Payments</span>
+              </div>
+            </div>
+
+            {/* 4. Bottom Right: Cash Wallet */}
+            <div className="stage-pill pill-pos-4 bob-4">
+              <div className="pill-content">
+                <Coins size={14} color="#00e5ff" strokeWidth={2.4} />
+                <span className="pill-text">Cash Wallet</span>
+              </div>
+            </div>
+
+            {/* 5. Bottom Left: Budget Goals */}
+            <div className="stage-pill pill-pos-5 bob-5">
+              <div className="pill-content">
+                <Target size={14} color="#00e5ff" strokeWidth={2.4} />
+                <span className="pill-text">Budget Goals</span>
+              </div>
+            </div>
+
+            {/* 6. Middle Left: Spend Insights */}
+            <div className="stage-pill pill-pos-6 bob-6">
+              <div className="pill-content">
+                <PieChart size={14} color="#00e5ff" strokeWidth={2.4} />
+                <span className="pill-text">Spend Insights</span>
+              </div>
+            </div>
+
           </div>
 
         </div>
 
-        {/* Left Footer */}
+        {/* Left Footer (Pinned Bottom Left) */}
         <div className="split-left-footer">
           Smart Expense Tracker • Next-Gen Automated Finance
         </div>

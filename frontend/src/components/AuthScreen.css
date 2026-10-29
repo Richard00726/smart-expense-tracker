@@ -1,7 +1,7 @@
 /* ==========================================================================
    SMART EXPENSE TRACKER — FULLSCREEN SPLIT LOGIN
-   - True 100vw x 100vh Edge-to-Edge Canvas (No outer borders or dead margin)
-   - Left Panel (58%): Deep Navy Constellation Hub with Dotted World Map
+   - True 100vw x 100vh Edge-to-Edge Canvas
+   - Left Panel (58%): Vertically Centered Architecture Hub & Dotted World Map
    - Right Panel (42%): Pure Modern White Full-Height Auth Panel
    - Mathematically Symmetrical Connector Lines to all 6 Feature Nodes
    ========================================================================== */
@@ -22,17 +22,18 @@
 }
 
 /* ==========================================================================
-   LEFT PANEL (58%): Full-Height Deep Navy Architecture Hub
+   LEFT PANEL (58%): Vertically Centered Architecture Hub
    ========================================================================== */
 .split-left-panel {
   flex: 0 0 58%;
   width: 58%;
   height: 100vh;
   background: #061224;
-  padding: 2.25rem 3.5rem 1.75rem 3.5rem;
+  padding: 2.25rem 3.5rem;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
+  align-items: center;
   position: relative;
   overflow: hidden;
   color: #ffffff;
@@ -63,15 +64,17 @@
   filter: blur(70px);
   pointer-events: none;
   z-index: 1;
-  bottom: 5%;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
 }
 
-/* Top Brand Logo */
+/* Top Brand Logo (Pinned Top Left) */
 .split-logo-block {
-  position: relative;
-  z-index: 10;
+  position: absolute;
+  top: 2.25rem;
+  left: 3.5rem;
+  z-index: 20;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -105,45 +108,32 @@
   padding-left: 2px;
 }
 
-/* Hero Value Proposition with Reduced Dead Space */
-.split-hero-block {
+/* Center Flow: Vertically Centered in Left Panel */
+.split-left-center-flow {
+  width: 100%;
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
   position: relative;
   z-index: 10;
-  margin-top: 1.1rem;
-  margin-bottom: 0.25rem;
-  max-width: 580px;
+  margin-top: 1.5rem;
 }
 
-.hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.3rem 0.75rem;
-  background: rgba(0, 229, 255, 0.09);
-  border: 1px solid rgba(0, 229, 255, 0.28);
-  border-radius: 20px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #00e5ff;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  margin-bottom: 0.75rem;
-}
-
-.badge-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #00e5ff;
-  box-shadow: 0 0 8px #00e5ff;
+/* Hero Value Proposition: Headline Continued directly as requested */
+.split-hero-block {
+  width: 100%;
+  margin-bottom: 1.5rem;
+  text-align: left;
 }
 
 .split-hero-title {
   margin: 0 0 0.65rem 0;
-  font-size: clamp(1.85rem, 2.4vw, 2.35rem);
+  font-size: clamp(1.85rem, 2.4vw, 2.4rem);
   font-weight: 800;
   color: #ffffff;
-  line-height: 1.18;
+  line-height: 1.2;
   letter-spacing: -0.025em;
 }
 
@@ -152,34 +142,15 @@
 }
 
 .split-hero-desc {
-  margin: 0 0 0.9rem 0;
-  font-size: 0.9rem;
+  margin: 0;
+  font-size: 0.94rem;
   color: #94a3b8;
   line-height: 1.55;
-  max-width: 530px;
-}
-
-.hero-highlights-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-}
-
-.highlight-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.28rem 0.65rem;
-  background: rgba(15, 23, 42, 0.65);
-  border: 1px solid rgba(56, 189, 248, 0.2);
-  border-radius: 8px;
-  font-size: 0.74rem;
-  color: #cbd5e1;
-  font-weight: 500;
+  max-width: 600px;
 }
 
 /* ==========================================================================
-   CONSTELLATION ARCHITECTURE STAGE (Expanded 680x360 Canvas, Proud & Centered)
+   CONSTELLATION ARCHITECTURE STAGE (680x360 Canvas, True Center)
    ========================================================================== */
 .constellation-stage {
   position: relative;
@@ -187,7 +158,7 @@
   width: 100%;
   max-width: 680px;
   height: 360px;
-  margin: 1.25rem auto 0 auto;
+  margin: 0 auto;
   flex-shrink: 0;
 }
 
@@ -364,13 +335,14 @@
   50% { transform: translateY(-4px); }
 }
 
-/* Left Footer */
+/* Left Footer (Pinned Bottom Left) */
 .split-left-footer {
-  position: relative;
-  z-index: 10;
-  font-size: 0.74rem;
+  position: absolute;
+  bottom: 1.75rem;
+  left: 3.5rem;
+  z-index: 20;
+  font-size: 0.75rem;
   color: #64748b;
-  margin-top: 0.5rem;
 }
 
 /* ==========================================================================
@@ -657,10 +629,23 @@
     flex: 1 1 auto;
     width: 100%;
     height: auto;
-    min-height: 520px;
+    min-height: 540px;
     border-right: none;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 2.5rem 2rem 2rem 2rem;
+    padding: 6rem 2rem 3rem 2rem;
+  }
+
+  .split-logo-block {
+    top: 1.5rem;
+    left: 2rem;
+  }
+
+  .split-left-footer {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    margin-top: 2rem;
+    text-align: center;
   }
 
   .constellation-stage {
@@ -679,7 +664,12 @@
 
 @media (max-width: 640px) {
   .split-left-panel {
-    padding: 2rem 1.25rem 1.5rem 1.25rem;
+    padding: 5.5rem 1.25rem 2rem 1.25rem;
+  }
+
+  .split-logo-block {
+    top: 1.25rem;
+    left: 1.25rem;
   }
 
   .split-hero-title {
