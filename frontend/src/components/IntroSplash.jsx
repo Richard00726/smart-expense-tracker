@@ -1,12 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import './IntroSplash.css';
 
+// Inspiring rotating tagline collection
+const TAGLINES = [
+  "Know where every rupee goes.",
+  "Track today. Save tomorrow.",
+  "Simple spending, smarter savings.",
+  "Every transaction counts, every rupee matters.",
+  "Master your cash, conquer your bank.",
+  "Spend with clarity, save with confidence.",
+  "Your personal finance, beautifully organized."
+];
+
 /**
  * IntroSplash Component (Full Screen View)
- * Displays the full-screen brand animation on site entrance.
+ * Displays the full-screen brand animation on site entrance with rotating taglines.
  */
 const IntroSplash = ({ onFinish }) => {
   const [isExiting, setIsExiting] = useState(false);
+
+  // Rotate through taglines on every refresh or visit
+  const [tagline] = useState(() => {
+    try {
+      const lastIndex = parseInt(localStorage.getItem('splash_tagline_idx') || '-1', 10);
+      const nextIndex = (lastIndex + 1) % TAGLINES.length;
+      localStorage.setItem('splash_tagline_idx', nextIndex.toString());
+      return TAGLINES[nextIndex];
+    } catch {
+      return TAGLINES[Math.floor(Math.random() * TAGLINES.length)];
+    }
+  });
 
   const handleProceed = () => {
     if (isExiting) return;
@@ -30,7 +53,7 @@ const IntroSplash = ({ onFinish }) => {
       className={`intro-splash-fullscreen ${isExiting ? 'fade-exit' : ''}`}
       onClick={handleProceed}
     >
-      {/* Center Branding Content */}
+      {/* Mathematically Centered Content */}
       <div className="intro-center-content">
         
         {/* Main Title: Smart Expense */}
@@ -84,8 +107,8 @@ const IntroSplash = ({ onFinish }) => {
 
       </div>
 
-      {/* Bottom Tagline */}
-      <p className="intro-tagline">Know where every rupee goes.</p>
+      {/* Rotating Bottom Tagline */}
+      <p className="intro-tagline">{tagline}</p>
 
     </div>
   );
