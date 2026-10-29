@@ -261,7 +261,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
             {/* 1. Top Left: Bank Sync */}
             <div className="stage-pill pill-pos-1 bob-1">
               <div className="pill-content">
-                <Zap size={14} color="#00e5ff" strokeWidth={2.4} />
+                <Zap size={16} color="#00e5ff" strokeWidth={2.4} />
                 <span className="pill-text">Bank Sync</span>
               </div>
             </div>
@@ -269,7 +269,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
             {/* 2. Top Right: Reconciliation */}
             <div className="stage-pill pill-pos-2 bob-2">
               <div className="pill-content">
-                <BarChart2 size={14} color="#00e5ff" strokeWidth={2.4} />
+                <BarChart2 size={16} color="#00e5ff" strokeWidth={2.4} />
                 <span className="pill-text">Reconciliation</span>
               </div>
             </div>
@@ -277,7 +277,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
             {/* 3. Middle Right: UPI Payments */}
             <div className="stage-pill pill-pos-3 bob-3">
               <div className="pill-content">
-                <Smartphone size={14} color="#00e5ff" strokeWidth={2.4} />
+                <Smartphone size={16} color="#00e5ff" strokeWidth={2.4} />
                 <span className="pill-text">UPI Payments</span>
               </div>
             </div>
@@ -285,7 +285,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
             {/* 4. Bottom Right: Cash Wallet */}
             <div className="stage-pill pill-pos-4 bob-4">
               <div className="pill-content">
-                <Coins size={14} color="#00e5ff" strokeWidth={2.4} />
+                <Coins size={16} color="#00e5ff" strokeWidth={2.4} />
                 <span className="pill-text">Cash Wallet</span>
               </div>
             </div>
@@ -293,7 +293,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
             {/* 5. Bottom Left: Budget Goals */}
             <div className="stage-pill pill-pos-5 bob-5">
               <div className="pill-content">
-                <Target size={14} color="#00e5ff" strokeWidth={2.4} />
+                <Target size={16} color="#00e5ff" strokeWidth={2.4} />
                 <span className="pill-text">Budget Goals</span>
               </div>
             </div>
@@ -301,7 +301,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
             {/* 6. Middle Left: Spend Insights */}
             <div className="stage-pill pill-pos-6 bob-6">
               <div className="pill-content">
-                <PieChart size={14} color="#00e5ff" strokeWidth={2.4} />
+                <PieChart size={16} color="#00e5ff" strokeWidth={2.4} />
                 <span className="pill-text">Spend Insights</span>
               </div>
             </div>
