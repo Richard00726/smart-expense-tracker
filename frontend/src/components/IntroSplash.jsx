@@ -36,14 +36,14 @@ const IntroSplash = ({ onFinish }) => {
     setIsExiting(true);
     setTimeout(() => {
       if (onFinish) onFinish();
-    }, 600);
+    }, 350);
   };
 
   useEffect(() => {
-    // Automatically transition to login after animation completes
+    // Automatically transition to login after 1 second (1000ms)
     const timer = setTimeout(() => {
       handleProceed();
-    }, 3200);
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, []);
