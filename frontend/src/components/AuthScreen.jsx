@@ -192,26 +192,48 @@ const AuthScreen = ({ onAuthSuccess }) => {
           </div>
         </div>
 
-        {/* Hero Value Proposition */}
+        {/* Hero Value Proposition with Rich Content to Eliminate Empty Space */}
         <div className="split-hero-block">
+          <div className="hero-badge">
+            <span className="badge-dot"></span>
+            <span>Next-Gen Financial Operating System</span>
+          </div>
+          
           <h1 className="split-hero-title">
             Know where every rupee goes, <span className="hero-cyan-accent">automatically.</span>
           </h1>
+          
           <p className="split-hero-desc">
-            The unified expense manager that brings your Cash wallet and Bank statement sync together.
+            The unified personal finance tracker that seamlessly reconciles your daily bank statements, tracks every cash transaction, and brings complete clarity to your net worth.
           </p>
+
+          {/* Quick Highlight Feature Chips */}
+          <div className="hero-highlights-row">
+            <div className="highlight-chip">
+              <Zap size={13} color="#00e5ff" />
+              <span>Automated Bank Sync</span>
+            </div>
+            <div className="highlight-chip">
+              <Coins size={13} color="#00e5ff" />
+              <span>Cash & UPI Reconcile</span>
+            </div>
+            <div className="highlight-chip">
+              <Target size={13} color="#00e5ff" />
+              <span>Smart Spend Insights</span>
+            </div>
+          </div>
         </div>
 
         {/* ==================================================================
-            CONSTELLATION ARCHITECTURE STAGE (Exact 540x320 Canvas with Perfect Symmetrical Alignment)
+            CONSTELLATION ARCHITECTURE STAGE (Expanded 680x360 Canvas, Proud & Centered)
             ================================================================== */}
         <div className="constellation-stage">
           
           {/* Ambient center radial glow */}
           <div className="hub-ambient" />
 
-          {/* Geometry Lines, Rings & Ellipse */}
-          <svg className="constellation-svg" viewBox="0 0 540 320" fill="none">
+          {/* Geometry Lines, Rings & Ellipse (680 x 360 coordinate space) */}
+          <svg className="constellation-svg" viewBox="0 0 680 360" fill="none">
             <defs>
               <linearGradient id="cyanLineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#00e5ff" stopOpacity="0.9" />
@@ -222,31 +244,31 @@ const AuthScreen = ({ onAuthSuccess }) => {
               </filter>
             </defs>
 
-            {/* 1. Large Outer Faint Ellipse */}
-            <ellipse cx="270" cy="160" rx="225" ry="110" stroke="rgba(56, 189, 248, 0.22)" strokeWidth="1.2" fill="none" />
+            {/* 1. Large Outer Faint Ellipse (Spanning 580px wide) */}
+            <ellipse cx="340" cy="180" rx="290" ry="135" stroke="rgba(56, 189, 248, 0.22)" strokeWidth="1.2" fill="none" />
 
             {/* 2. Mid Dashed Cyan Orbit Ring */}
-            <circle cx="270" cy="160" r="60" stroke="#00e5ff" strokeWidth="1.4" strokeDasharray="4 6" className="orbit-cw" />
+            <circle cx="340" cy="180" r="76" stroke="#00e5ff" strokeWidth="1.4" strokeDasharray="5 7" className="orbit-cw" />
 
             {/* 3. Inner Solid Cyan Ring */}
-            <circle cx="270" cy="160" r="50" stroke="#00e5ff" strokeWidth="1.6" filter="url(#glowCyan)" />
+            <circle cx="340" cy="180" r="64" stroke="#00e5ff" strokeWidth="1.6" filter="url(#glowCyan)" />
 
             {/* 4. Symmetrical Radiating Connecting Lines to the 6 Pills */}
             {/* Top Left -> Bank Sync */}
-            <line x1="270" y1="160" x2="120" y2="62" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line-rev" />
+            <line x1="340" y1="180" x2="160" y2="63" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line-rev" />
             {/* Top Right -> Reconciliation */}
-            <line x1="270" y1="160" x2="420" y2="62" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line" />
+            <line x1="340" y1="180" x2="520" y2="63" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line" />
             {/* Middle Right -> UPI Payments */}
-            <line x1="270" y1="160" x2="395" y2="160" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line" />
+            <line x1="340" y1="180" x2="535" y2="180" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line" />
             {/* Bottom Right -> Cash Wallet */}
-            <line x1="270" y1="160" x2="420" y2="258" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line-rev" />
+            <line x1="340" y1="180" x2="520" y2="297" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line-rev" />
             {/* Bottom Left -> Budget Goals */}
-            <line x1="270" y1="160" x2="120" y2="258" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line" />
+            <line x1="340" y1="180" x2="160" y2="297" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line" />
             {/* Middle Left -> Spend Insights */}
-            <line x1="270" y1="160" x2="145" y2="160" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line-rev" />
+            <line x1="340" y1="180" x2="145" y2="180" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line-rev" />
           </svg>
 
-          {/* Central Circular Hub with space in "Smart Expense" */}
+          {/* Central Circular Hub with Space in "Smart Expense" (Prominent 110px Diameter) */}
           <div className="hub-center-container">
             <div className="hub-center-circle">
               <span className="hub-center-title">Smart Expense</span>
