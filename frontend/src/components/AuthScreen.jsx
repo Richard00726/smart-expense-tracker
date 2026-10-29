@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { loginUser, registerUser, sendOTP, forgotPassword, resetPassword } from '../services/api';
-import { Wallet, LogIn, UserPlus, Mail, ArrowRight, ArrowLeft, Building2, Eye, EyeOff } from 'lucide-react';
+import { Wallet, LogIn, UserPlus, Mail, ArrowRight, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import IntroSplash from './IntroSplash';
 
 const AuthScreen = ({ onAuthSuccess }) => {
+  const [showSplash, setShowSplash] = useState(true);
   const [isLogin, setIsLogin] = useState(true);
   const [step, setStep] = useState(1); // 1: Email/Username, 2: OTP/Password
   
@@ -149,6 +151,10 @@ const AuthScreen = ({ onAuthSuccess }) => {
     setConfirmPassword('');
   };
 
+  if (showSplash) {
+    return <IntroSplash onFinish={() => setShowSplash(false)} />;
+  }
+
   return (
     <div style={{ 
       display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', padding: '1rem',
@@ -161,12 +167,28 @@ const AuthScreen = ({ onAuthSuccess }) => {
       
       <div className="data-card glass animate-fade-in" style={{ width: '100%', maxWidth: '440px', padding: '2.5rem', position: 'relative', zIndex: 1, borderRadius: '24px', border: '1px solid var(--card-border)', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
         
-        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', color: 'var(--accent-primary)', marginBottom: '1.5rem' }}>
-            <Building2 size={56} strokeWidth={1.5} />
+        <div style={{ textAlign: 'center', marginBottom: '2.25rem' }}>
+          <div 
+            onClick={() => setShowSplash(true)} 
+            title="Click to replay intro animation" 
+            style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '0.75rem', userSelect: 'none', transition: 'transform 0.2s ease' }}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            <h2 style={{ fontSize: '1.85rem', fontWeight: '800', letterSpacing: '-0.03em', margin: 0, color: 'var(--text-primary)' }}>
+              Smart Expense
+            </h2>
+            <div style={{ width: '100%', maxWidth: '210px', marginTop: '0.2rem', marginBottom: '0.55rem' }}>
+              <svg viewBox="0 0 460 48" fill="none" style={{ width: '100%', height: 'auto', overflow: 'visible' }}>
+                <path d="M 12 22 C 145 42, 315 42, 438 12" stroke="#00d68f" strokeWidth="5.5" strokeLinecap="round" />
+                <circle cx="441" cy="11" r="6.5" fill="#00d68f" />
+              </svg>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.55rem', fontSize: '0.72rem', fontWeight: '700', letterSpacing: '0.45em', color: 'var(--text-secondary)' }}>
+              <span>T</span><span>R</span><span>A</span><span>C</span><span>K</span><span>E</span><span>R</span>
+            </div>
           </div>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: '700', letterSpacing: '-0.5px' }}>Smart Expense Tracker</h2>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.75rem', fontSize: '0.95rem' }}>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem', fontSize: '0.92rem' }}>
             {isForgotPassword ? 'Reset your password' : (isLogin ? 'Securely access your accounts' : 'Open a new digital account')}
           </p>
         </div>
