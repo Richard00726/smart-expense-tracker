@@ -1,72 +1,46 @@
 /* ==========================================================================
-   SMART EXPENSE TRACKER — EXACT SPLIT LOGIN DESIGN
-   Inspired by IntegrationGo / CargoWise Architecture Hub Reference
-   Left: Deep Navy Constellation Hub with Dotted Map & Energy Orbits (54%)
-   Right: Crisp Modern White Authentication Card (46%)
+   SMART EXPENSE TRACKER — FULLSCREEN SPLIT LOGIN
+   - True 100vw x 100vh Edge-to-Edge Canvas (No outer borders or dead margin)
+   - Left Panel (58%): Deep Navy Constellation Hub with Dotted World Map
+   - Right Panel (42%): Pure Modern White Full-Height Auth Panel
+   - Mathematically Symmetrical Connector Lines to all 6 Feature Nodes
    ========================================================================== */
 
-/* Full Viewport Canvas */
+/* Fullscreen Split Canvas */
 .split-page-wrapper {
-  min-height: 100vh;
   width: 100vw;
-  background: #08101e;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
-  box-sizing: border-box;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  overflow-x: hidden;
-  position: relative;
-}
-
-/* Subtle background ambient glow for the page */
-.page-ambient-glow {
-  position: absolute;
-  width: 600px;
-  height: 600px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(0, 229, 255, 0.08) 0%, rgba(2, 132, 199, 0.04) 50%, transparent 70%);
-  filter: blur(80px);
-  pointer-events: none;
-  z-index: 1;
-}
-
-/* Main Split Card Container */
-.split-auth-card {
-  width: 100%;
-  max-width: 1140px;
-  min-height: 640px;
-  background: #ffffff;
-  border-radius: 28px;
-  overflow: hidden;
-  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.65), 0 0 35px rgba(0, 229, 255, 0.08);
-  border: 1px solid rgba(56, 189, 248, 0.22);
+  height: 100vh;
+  max-height: 100vh;
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: row;
-  position: relative;
-  z-index: 2;
+  background: #061224;
+  overflow: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  box-sizing: border-box;
 }
 
 /* ==========================================================================
-   LEFT PANEL (54%): Exact Constellation & Dotted Map Graphic
+   LEFT PANEL (58%): Full-Height Deep Navy Architecture Hub
    ========================================================================== */
 .split-left-panel {
-  flex: 0 0 54%;
-  width: 54%;
+  flex: 0 0 58%;
+  width: 58%;
+  height: 100vh;
   background: #061224;
-  padding: 2.5rem 2.75rem 2rem 2.75rem;
+  padding: 2.5rem 3.5rem 2rem 4rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   position: relative;
   overflow: hidden;
   color: #ffffff;
-  border-right: 1px solid rgba(30, 41, 59, 0.8);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
   box-sizing: border-box;
 }
 
-/* Dotted World Map Grid Pattern */
+/* Dotted World Map Grid */
 .map-pattern {
   position: absolute;
   inset: 0;
@@ -79,7 +53,22 @@
   z-index: 1;
 }
 
-/* Brand Logo (Top Left) */
+/* Ambient Radial Glow Behind Center Hub */
+.left-ambient-glow {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 229, 255, 0.12) 0%, rgba(2, 132, 199, 0.05) 50%, transparent 70%);
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Top Brand Logo */
 .split-logo-block {
   position: relative;
   z-index: 10;
@@ -87,11 +76,12 @@
   flex-direction: column;
   align-items: flex-start;
   user-select: none;
+  cursor: pointer;
 }
 
 .split-logo-title {
   margin: 0;
-  font-size: 1.55rem;
+  font-size: 1.65rem;
   font-weight: 800;
   color: #ffffff;
   letter-spacing: -0.02em;
@@ -99,15 +89,15 @@
 }
 
 .split-logo-swoosh {
-  width: 145px;
+  width: 155px;
   margin-top: 0.2rem;
   margin-bottom: 0.25rem;
 }
 
 .split-logo-tracker {
   display: flex;
-  gap: 0.45rem;
-  font-size: 0.58rem;
+  gap: 0.5rem;
+  font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.4em;
   color: #94a3b8;
@@ -115,18 +105,18 @@
   padding-left: 2px;
 }
 
-/* Main Proposition Headline & Subtitle */
+/* Hero Value Proposition */
 .split-hero-block {
   position: relative;
   z-index: 10;
-  margin-top: 1.25rem;
-  margin-bottom: 0.75rem;
-  max-width: 500px;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  max-width: 540px;
 }
 
 .split-hero-title {
   margin: 0 0 0.65rem 0;
-  font-size: clamp(1.75rem, 2.5vw, 2.25rem);
+  font-size: clamp(1.85rem, 2.5vw, 2.45rem);
   font-weight: 800;
   color: #ffffff;
   line-height: 1.18;
@@ -139,49 +129,50 @@
 
 .split-hero-desc {
   margin: 0;
-  font-size: 0.86rem;
+  font-size: 0.92rem;
   color: #94a3b8;
   line-height: 1.5;
-  max-width: 440px;
+  max-width: 480px;
 }
 
 /* ==========================================================================
-   CONSTELLATION HUB GRAPHIC (Matching the Zoomed Reference Image)
+   CONSTELLATION ARCHITECTURE STAGE (Exact 540x320 Canvas with Perfect Symmetrical Alignment)
    ========================================================================== */
-.constellation-wrapper {
+.constellation-stage {
   position: relative;
   z-index: 10;
-  width: 100%;
-  height: 300px;
-  margin-top: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 540px;
+  height: 320px;
+  margin: auto auto 0.5rem auto;
+  flex-shrink: 0;
 }
 
-/* Ambient Radial Glow Behind Center Hub */
+/* Ambient Radial Glow */
 .hub-ambient {
   position: absolute;
-  width: 250px;
-  height: 250px;
+  width: 220px;
+  height: 220px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(0, 229, 255, 0.24) 0%, rgba(2, 132, 199, 0.12) 40%, transparent 70%);
-  filter: blur(40px);
+  background: radial-gradient(circle, rgba(0, 229, 255, 0.28) 0%, rgba(2, 132, 199, 0.15) 45%, transparent 70%);
+  filter: blur(35px);
   pointer-events: none;
+  top: 50px;
+  left: 160px;
   z-index: 2;
 }
 
-/* The SVG Canvas overlay */
+/* SVG Overlay */
 .constellation-svg {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  top: 0;
+  left: 0;
+  width: 540px;
+  height: 320px;
   pointer-events: none;
   z-index: 5;
 }
 
-/* Continuous Flowing Energy Lines */
+/* Energy Pulse Animations */
 .flow-line {
   stroke-dasharray: 4 6;
   animation: energyFlow 1.4s linear infinite;
@@ -202,15 +193,15 @@
   100% { stroke-dashoffset: 20; }
 }
 
-/* Rotating Orbit Rings */
+/* Orbit Rotations */
 .orbit-cw {
   animation: rotateRing 22s linear infinite;
-  transform-origin: 260px 150px;
+  transform-origin: 270px 160px;
 }
 
 .orbit-ccw {
   animation: rotateRingRev 26s linear infinite;
-  transform-origin: 260px 150px;
+  transform-origin: 270px 160px;
 }
 
 @keyframes rotateRing {
@@ -223,18 +214,18 @@
   100% { transform: rotate(0deg); }
 }
 
-/* Center Hub Node (CargoWise style) */
+/* Center Circular Hub with Space in "Smart Expense" */
 .hub-center-container {
-  position: relative;
+  position: absolute;
+  left: 270px;
+  top: 160px;
+  transform: translate(-50%, -50%);
   z-index: 20;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .hub-center-circle {
-  width: 90px;
-  height: 90px;
+  width: 96px;
+  height: 96px;
   border-radius: 50%;
   background: #030914;
   border: 2px solid #00e5ff;
@@ -256,15 +247,16 @@
 }
 
 .hub-center-title {
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 800;
   color: #ffffff;
-  letter-spacing: -0.02em;
-  line-height: 1;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  white-space: nowrap;
 }
 
 .hub-center-subtitle {
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 700;
   color: #00e5ff;
   margin-top: 3px;
@@ -272,8 +264,8 @@
   text-transform: uppercase;
 }
 
-/* Feature Pills Positions & Styling */
-.constellation-pill {
+/* 6 Connected Feature Pills */
+.stage-pill {
   position: absolute;
   z-index: 15;
 }
@@ -284,8 +276,8 @@
   gap: 0.5rem;
   padding: 0.48rem 0.85rem;
   border-radius: 14px;
-  background: rgba(10, 25, 47, 0.92);
-  border: 1px solid rgba(0, 229, 255, 0.35);
+  background: rgba(10, 25, 47, 0.94);
+  border: 1px solid rgba(0, 229, 255, 0.38);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -301,43 +293,19 @@
 }
 
 .pill-text {
-  font-size: 0.76rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: #f1f5f9;
-  letter-spacing: 0.01em;
   white-space: nowrap;
 }
 
-/* Pill Exact Coordinates matching reference */
-.pill-top-left {
-  top: 18px;
-  left: 12px;
-}
-
-.pill-top-right {
-  top: 18px;
-  right: 12px;
-}
-
-.pill-mid-right {
-  top: 130px;
-  right: 4px;
-}
-
-.pill-bot-right {
-  bottom: 18px;
-  right: 12px;
-}
-
-.pill-bot-left {
-  bottom: 18px;
-  left: 12px;
-}
-
-.pill-mid-left {
-  top: 130px;
-  left: 4px;
-}
+/* Exact Coordinates on 540x320 Canvas */
+.pill-pos-1 { top: 24px; left: 40px; }      /* Bank Sync */
+.pill-pos-2 { top: 24px; right: 40px; }     /* Reconciliation */
+.pill-pos-3 { top: 142px; right: 10px; }    /* UPI Payments */
+.pill-pos-4 { bottom: 24px; right: 40px; }  /* Cash Wallet */
+.pill-pos-5 { bottom: 24px; left: 40px; }   /* Budget Goals */
+.pill-pos-6 { top: 142px; left: 10px; }     /* Spend Insights */
 
 /* Floating Bob Animations */
 .bob-1 { animation: floatBob 5.0s ease-in-out infinite 0.1s; }
@@ -352,39 +320,53 @@
   50% { transform: translateY(-4px); }
 }
 
+/* Left Footer */
+.split-left-footer {
+  position: relative;
+  z-index: 10;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
 /* ==========================================================================
-   RIGHT PANEL (46%): Pure White Authentication Form
+   RIGHT PANEL (42%): Pure White Full-Height Authentication Form
    ========================================================================== */
 .split-right-panel {
-  flex: 0 0 46%;
-  width: 46%;
+  flex: 0 0 42%;
+  width: 42%;
+  height: 100vh;
   background: #ffffff;
-  padding: 3rem 3.5rem;
+  padding: 3rem 4rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   position: relative;
-  z-index: 10;
   box-sizing: border-box;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.split-right-panel::-webkit-scrollbar {
+  display: none;
 }
 
 .split-form-inner {
   width: 100%;
-  max-width: 360px;
+  max-width: 380px;
   display: flex;
   flex-direction: column;
 }
 
 /* Header */
 .auth-header-block {
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.85rem;
   text-align: left;
 }
 
 .auth-header-title {
   margin: 0;
-  font-size: 1.85rem;
+  font-size: 2rem;
   font-weight: 800;
   color: #0f172a;
   letter-spacing: -0.03em;
@@ -392,8 +374,8 @@
 }
 
 .auth-header-subtitle {
-  margin: 0.35rem 0 0 0;
-  font-size: 0.86rem;
+  margin: 0.4rem 0 0 0;
+  font-size: 0.88rem;
   color: #64748b;
   font-weight: 400;
 }
@@ -424,7 +406,7 @@
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: 1.15rem;
   width: 100%;
 }
 
@@ -436,7 +418,7 @@
 }
 
 .auth-field-label {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: #334155;
   letter-spacing: 0.01em;
@@ -451,7 +433,7 @@
 
 .auth-input-icon {
   position: absolute;
-  left: 0.9rem;
+  left: 0.95rem;
   color: #94a3b8;
   pointer-events: none;
   display: flex;
@@ -461,11 +443,11 @@
 
 .auth-input {
   width: 100%;
-  padding: 0.78rem 0.95rem;
+  padding: 0.82rem 1rem;
   background: #f0f4f9;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 500;
   color: #0f172a;
   outline: none;
@@ -475,11 +457,11 @@
 }
 
 .auth-input.has-left-icon {
-  padding-left: 2.6rem;
+  padding-left: 2.65rem;
 }
 
 .auth-input.has-right-icon {
-  padding-right: 2.6rem;
+  padding-right: 2.65rem;
 }
 
 .auth-input:focus {
@@ -490,7 +472,7 @@
 
 .auth-eye-btn {
   position: absolute;
-  right: 0.85rem;
+  right: 0.9rem;
   background: none;
   border: none;
   color: #94a3b8;
@@ -511,7 +493,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   margin-top: -0.1rem;
 }
 
@@ -538,7 +520,7 @@
   border: none;
   color: #0284c7;
   font-weight: 600;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   cursor: pointer;
   padding: 0;
   transition: color 0.2s ease;
@@ -552,10 +534,10 @@
 /* Gradient Pill Submit Button */
 .auth-submit-btn {
   width: 100%;
-  padding: 0.85rem 1.25rem;
+  padding: 0.9rem 1.25rem;
   background: linear-gradient(90deg, #00c4cc 0%, #0284c7 50%, #2563eb 100%);
   color: #ffffff;
-  font-size: 0.92rem;
+  font-size: 0.94rem;
   font-weight: 700;
   border: none;
   border-radius: 12px;
@@ -584,10 +566,10 @@
 /* Footer / Switch Mode Section */
 .auth-footer {
   text-align: center;
-  margin-top: 1.75rem;
-  padding-top: 1.25rem;
+  margin-top: 1.85rem;
+  padding-top: 1.35rem;
   border-top: 1px solid #f1f5f9;
-  font-size: 0.82rem;
+  font-size: 0.84rem;
   color: #64748b;
 }
 
@@ -596,7 +578,7 @@
   border: none;
   color: #0284c7;
   font-weight: 700;
-  font-size: 0.82rem;
+  font-size: 0.84rem;
   cursor: pointer;
   padding: 0;
   margin-left: 0.35rem;
@@ -610,9 +592,9 @@
 
 .auth-copyright {
   text-align: center;
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   color: #94a3b8;
-  margin-top: 0.75rem;
+  margin-top: 0.85rem;
 }
 
 /* ==========================================================================
@@ -620,61 +602,52 @@
    ========================================================================== */
 @media (max-width: 1024px) {
   .split-page-wrapper {
-    padding: 1rem;
+    flex-direction: column;
     height: auto;
     min-height: 100vh;
     overflow-y: auto;
   }
 
-  .split-auth-card {
-    flex-direction: column;
-    min-height: auto;
-    max-width: 580px;
-  }
-
   .split-left-panel {
     flex: 1 1 auto;
     width: 100%;
+    height: auto;
+    min-height: 480px;
     border-right: none;
-    border-bottom: 1px solid rgba(30, 41, 59, 0.8);
-    padding: 2rem 1.75rem 1.5rem 1.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 2.5rem 2rem 2rem 2rem;
   }
 
-  .constellation-wrapper {
-    height: 260px;
-    margin-top: 1.5rem;
+  .constellation-stage {
+    transform: scale(0.88);
+    transform-origin: center center;
+    margin: 1rem auto;
   }
 
   .split-right-panel {
     flex: 1 1 auto;
     width: 100%;
-    padding: 2.25rem 2rem;
+    height: auto;
+    padding: 3rem 2rem;
   }
 }
 
 @media (max-width: 640px) {
-  .split-page-wrapper {
-    padding: 0.5rem;
-  }
-
-  .split-auth-card {
-    border-radius: 20px;
-  }
-
   .split-left-panel {
-    padding: 1.75rem 1.25rem 1.25rem 1.25rem;
+    padding: 2rem 1.25rem 1.5rem 1.25rem;
   }
 
   .split-hero-title {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
   }
 
-  .constellation-wrapper {
-    height: 240px;
-    transform: scale(0.85);
+  .constellation-stage {
+    transform: scale(0.72);
+    transform-origin: center center;
+    margin: 0.5rem auto;
   }
 
   .split-right-panel {
-    padding: 1.75rem 1.25rem;
+    padding: 2rem 1.25rem;
   }
 }
