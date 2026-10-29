@@ -261,7 +261,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
             {/* 1. Top Left: Bank Sync */}
             <div className="stage-pill pill-pos-1 bob-1">
               <div className="pill-content">
-                <Zap size={16} color="#00e5ff" strokeWidth={2.4} />
+                <Zap size={14} color="#00e5ff" strokeWidth={2.4} />
                 <span className="pill-text">Bank Sync</span>
               </div>
             </div>
@@ -269,7 +269,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
             {/* 2. Top Right: Reconciliation */}
             <div className="stage-pill pill-pos-2 bob-2">
               <div className="pill-content">
-                <BarChart2 size={16} color="#00e5ff" strokeWidth={2.4} />
+                <BarChart2 size={14} color="#00e5ff" strokeWidth={2.4} />
                 <span className="pill-text">Reconciliation</span>
               </div>
             </div>
@@ -277,7 +277,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
             {/* 3. Middle Right: UPI Payments */}
             <div className="stage-pill pill-pos-3 bob-3">
               <div className="pill-content">
-                <Smartphone size={16} color="#00e5ff" strokeWidth={2.4} />
+                <Smartphone size={14} color="#00e5ff" strokeWidth={2.4} />
                 <span className="pill-text">UPI Payments</span>
               </div>
             </div>
@@ -285,7 +285,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
             {/* 4. Bottom Right: Cash Wallet */}
             <div className="stage-pill pill-pos-4 bob-4">
               <div className="pill-content">
-                <Coins size={16} color="#00e5ff" strokeWidth={2.4} />
+                <Coins size={14} color="#00e5ff" strokeWidth={2.4} />
                 <span className="pill-text">Cash Wallet</span>
               </div>
             </div>
@@ -293,7 +293,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
             {/* 5. Bottom Left: Budget Goals */}
             <div className="stage-pill pill-pos-5 bob-5">
               <div className="pill-content">
-                <Target size={16} color="#00e5ff" strokeWidth={2.4} />
+                <Target size={14} color="#00e5ff" strokeWidth={2.4} />
                 <span className="pill-text">Budget Goals</span>
               </div>
             </div>
@@ -301,7 +301,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
             {/* 6. Middle Left: Spend Insights */}
             <div className="stage-pill pill-pos-6 bob-6">
               <div className="pill-content">
-                <PieChart size={16} color="#00e5ff" strokeWidth={2.4} />
+                <PieChart size={14} color="#00e5ff" strokeWidth={2.4} />
                 <span className="pill-text">Spend Insights</span>
               </div>
             </div>
@@ -362,7 +362,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
                 <label className="auth-field-label">Email or mobile number</label>
                 <div className="auth-input-container">
                   <span className="auth-input-icon">
-                    <Mail size={17} />
+                    <Mail size={20} />
                   </span>
                   <input
                     type="email"
@@ -381,7 +381,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
                 <label className="auth-field-label">Password</label>
                 <div className="auth-input-container">
                   <span className="auth-input-icon">
-                    <KeyRound size={17} />
+                    <KeyRound size={20} />
                   </span>
                   <input
                     type={showPassword ? "text" : "password"}
@@ -399,7 +399,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
                       className="auth-eye-btn"
                       aria-label="Toggle password visibility"
                     >
-                      {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
                   )}
                 </div>
@@ -439,7 +439,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
                 disabled={loading}
               >
                 <span>{loading ? 'Signing in...' : 'Sign in'}</span>
-                <ArrowRight size={16} strokeWidth={2.5} />
+                <ArrowRight size={19} strokeWidth={2.5} />
               </button>
 
             </form>
@@ -456,7 +456,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
                     <label className="auth-field-label">Registered Email</label>
                     <div className="auth-input-container">
                       <span className="auth-input-icon">
-                        <Mail size={17} />
+                        <Mail size={20} />
                       </span>
                       <input
                         type="email"
@@ -486,7 +486,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
 
                   <button type="submit" className="auth-submit-btn" disabled={loading}>
                     <span>{loading ? 'Sending Code...' : 'Send Recovery Code'}</span>
-                    <ArrowRight size={16} strokeWidth={2.5} />
+                    <ArrowRight size={19} strokeWidth={2.5} />
                   </button>
 
                   <div style={{ textAlign: 'center', marginTop: '0.4rem' }}>
@@ -503,7 +503,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
 
               {step === 2 && (
                 <>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem', color: '#64748b' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.95rem', color: '#64748b' }}>
                     <span>Sending code to: <strong>{formData.email}</strong></span>
                     <button 
                       type="button" 
@@ -524,7 +524,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
                       maxLength={6}
                       value={formData.otp}
                       onChange={handleChange}
-                      style={{ letterSpacing: '0.3em', textAlign: 'center', fontSize: '1.2rem', fontWeight: 'bold' }}
+                      style={{ letterSpacing: '0.3em', textAlign: 'center', fontSize: '1.35rem', fontWeight: 'bold' }}
                       required
                     />
                   </div>
@@ -558,7 +558,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
 
                   <button type="submit" className="auth-submit-btn" disabled={loading}>
                     <span>{loading ? 'Updating...' : 'Reset Password'}</span>
-                    <ArrowRight size={16} strokeWidth={2.5} />
+                    <ArrowRight size={19} strokeWidth={2.5} />
                   </button>
 
                   <div style={{ textAlign: 'center', marginTop: '0.4rem' }}>
@@ -587,7 +587,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
                     <label className="auth-field-label">Your Name</label>
                     <div className="auth-input-container">
                       <span className="auth-input-icon">
-                        <User size={17} />
+                        <User size={20} />
                       </span>
                       <input
                         type="text"
@@ -605,7 +605,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
                     <label className="auth-field-label">Email Address</label>
                     <div className="auth-input-container">
                       <span className="auth-input-icon">
-                        <Mail size={17} />
+                        <Mail size={20} />
                       </span>
                       <input
                         type="email"
@@ -621,14 +621,14 @@ const AuthScreen = ({ onAuthSuccess }) => {
 
                   <button type="submit" className="auth-submit-btn" disabled={loading}>
                     <span>{loading ? 'Sending Code...' : 'Continue'}</span>
-                    <ArrowRight size={16} strokeWidth={2.5} />
+                    <ArrowRight size={19} strokeWidth={2.5} />
                   </button>
                 </>
               )}
 
               {step === 2 && (
                 <>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem', color: '#64748b' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.95rem', color: '#64748b' }}>
                     <span>Code sent to: <strong>{formData.email}</strong></span>
                     <button 
                       type="button" 
@@ -649,7 +649,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
                       maxLength={6}
                       value={formData.otp}
                       onChange={handleChange}
-                      style={{ letterSpacing: '0.3em', textAlign: 'center', fontSize: '1.2rem', fontWeight: 'bold' }}
+                      style={{ letterSpacing: '0.3em', textAlign: 'center', fontSize: '1.35rem', fontWeight: 'bold' }}
                       required
                     />
                   </div>
@@ -658,7 +658,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
                     <label className="auth-field-label">Create a Strong Password</label>
                     <div className="auth-input-container">
                       <span className="auth-input-icon">
-                        <KeyRound size={17} />
+                        <KeyRound size={20} />
                       </span>
                       <input
                         type={showPassword ? "text" : "password"}
@@ -677,7 +677,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
                           className="auth-eye-btn"
                           aria-label="Toggle password visibility"
                         >
-                          {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                          {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                         </button>
                       )}
                     </div>
@@ -685,7 +685,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
 
                   <button type="submit" className="auth-submit-btn" disabled={loading}>
                     <span>{loading ? 'Creating...' : 'Create Account'}</span>
-                    <ArrowRight size={16} strokeWidth={2.5} />
+                    <ArrowRight size={19} strokeWidth={2.5} />
                   </button>
                 </>
               )}
