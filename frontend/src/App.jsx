@@ -19,6 +19,13 @@ import './App.css';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
   const [currentUser, setCurrentUser] = useState(() => JSON.parse(localStorage.getItem('user') || '{}'));
+  const [hasSessionSplashShown, setHasSessionSplashShown] = useState(() => {
+    try {
+      return sessionStorage.getItem('skip_splash') === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [showProfileTooltip, setShowProfileTooltip] = useState(false);
   const [balances, setBalances] = useState({ cash: 0, upi: 0, total: 0 });
   const [transactions, setTransactions] = useState([]);
@@ -147,6 +154,12 @@ function App() {
       localStorage.removeItem('bank_overview_cache');
       localStorage.removeItem('tmb_wizard_step');
       sessionStorage.clear();
+      try {
+        sessionStorage.setItem('skip_splash', 'true');
+      } catch (e) {
+        console.warn(e);
+      }
+      setHasSessionSplashShown(true);
       setIsAuthenticated(false);
       setCurrentUser({});
       setBalances({ cash: 0, upi: 0, total: 0 });
@@ -173,6 +186,12 @@ function App() {
     localStorage.removeItem('bank_overview_cache');
     localStorage.removeItem('tmb_wizard_step');
     sessionStorage.clear();
+    try {
+      sessionStorage.setItem('skip_splash', 'true');
+    } catch (e) {
+      console.warn(e);
+    }
+    setHasSessionSplashShown(true);
     setIsAuthenticated(false);
     setCurrentUser({});
     setBalances({ cash: 0, upi: 0, total: 0 });
@@ -207,7 +226,10 @@ function App() {
     return (
       <>
         <SystemStatusOverlay />
-        <AuthScreen onAuthSuccess={handleAuthSuccess} />
+        <AuthScreen 
+          onAuthSuccess={handleAuthSuccess} 
+          initialSkipSplash={hasSessionSplashShown}
+        />
       </>
     );
   }

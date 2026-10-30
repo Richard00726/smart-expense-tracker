@@ -7,8 +7,15 @@ import {
 import IntroSplash from './IntroSplash';
 import './AuthScreen.css';
 
-const AuthScreen = ({ onAuthSuccess }) => {
-  const [showSplash, setShowSplash] = useState(true);
+const AuthScreen = ({ onAuthSuccess, initialSkipSplash = false }) => {
+  const [showSplash, setShowSplash] = useState(() => {
+    if (initialSkipSplash) return false;
+    try {
+      return sessionStorage.getItem('skip_splash') !== 'true';
+    } catch {
+      return true;
+    }
+  });
   const [isLogin, setIsLogin] = useState(true);
   const [step, setStep] = useState(1); // 1: Form details, 2: OTP / Password
   
@@ -156,9 +163,18 @@ const AuthScreen = ({ onAuthSuccess }) => {
     setConfirmPassword('');
   };
 
-  // Show animated splash first (1s intro)
+  const handleSplashFinish = () => {
+    try {
+      sessionStorage.setItem('skip_splash', 'true');
+    } catch (e) {
+      console.warn(e);
+    }
+    setShowSplash(false);
+  };
+
+  // Show animated splash first (1s intro) only on initial URL load
   if (showSplash) {
-    return <IntroSplash onFinish={() => setShowSplash(false)} />;
+    return <IntroSplash onFinish={handleSplashFinish} />;
   }
 
   return (
