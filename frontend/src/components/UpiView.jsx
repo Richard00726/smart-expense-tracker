@@ -788,12 +788,32 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
     }
   };
 
-  const autoTransactions = transactions.filter(
-    tx => tx.wallet === 'UPI' && tx.entryMode === 'auto'
-  );
+  const autoTransactions = useMemo(() => {
+    return transactions
+      .filter(tx => tx.wallet === 'UPI' && tx.entryMode === 'auto')
+      .slice()
+      .sort((a, b) => {
+        const timeA = new Date(a.date || a.txnDate).getTime();
+        const timeB = new Date(b.date || b.txnDate).getTime();
+        if (timeB !== timeA) return timeB - timeA;
+        const createdA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const createdB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return createdB - createdA;
+      });
+  }, [transactions]);
 
   const upiTransactions = useMemo(() => {
-    return transactions.filter(tx => tx.wallet === 'UPI');
+    return transactions
+      .filter(tx => tx.wallet === 'UPI')
+      .slice()
+      .sort((a, b) => {
+        const timeA = new Date(a.date || a.txnDate).getTime();
+        const timeB = new Date(b.date || b.txnDate).getTime();
+        if (timeB !== timeA) return timeB - timeA;
+        const createdA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const createdB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return createdB - createdA;
+      });
   }, [transactions]);
 
   // Local time helpers to ensure dates match the user's browser timezone (IST) and avoid UTC midnight day-shifts

@@ -91,7 +91,10 @@ router.get("/transactions", protect, async (req, res) => {
 
     const transactions = await prisma.transaction.findMany({
       where: filter,
-      orderBy: { date: 'desc' }
+      orderBy: [
+        { date: 'desc' },
+        { createdAt: 'desc' }
+      ]
     });
 
     // Map id to _id for frontend compatibility

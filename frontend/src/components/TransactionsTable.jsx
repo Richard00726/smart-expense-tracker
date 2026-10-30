@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { ListFilter, Trash2, FileX, Edit2 } from 'lucide-react';
 import TransactionForm from './TransactionForm';
@@ -88,9 +88,21 @@ const TransactionsTable = ({
 
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
-  const hasAnyRef = transactions.some(tx => Boolean(getRefNo(tx)));
+  const sortedTransactions = useMemo(() => {
+    if (!Array.isArray(transactions)) return [];
+    return [...transactions].sort((a, b) => {
+      const timeA = new Date(a.date || a.txnDate).getTime();
+      const timeB = new Date(b.date || b.txnDate).getTime();
+      if (timeB !== timeA) return timeB - timeA;
+      const createdA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const createdB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return createdB - createdA;
+    });
+  }, [transactions]);
+
+  const hasAnyRef = sortedTransactions.some(tx => Boolean(getRefNo(tx)));
   const shouldHideRef = hideRef || !hasAnyRef;
-  const isSingleWallet = transactions.length > 0 && transactions.every(tx => tx.wallet === transactions[0]?.wallet);
+  const isSingleWallet = sortedTransactions.length > 0 && sortedTransactions.every(tx => tx.wallet === sortedTransactions[0]?.wallet);
   const shouldHideWallet = hideWallet || (isSingleWallet && (title.includes('Cash') || title.includes('UPI')));
   const shouldHideCategory = hideCategory;
 
@@ -158,7 +170,7 @@ const TransactionsTable = ({
               </tr>
             </thead>
             <tbody>
-              {transactions.map((tx) => (
+              {sortedTransactions.map((tx) => (
                 <tr key={tx._id || tx.id} className="animate-fade-in">
                   <td style={{ whiteSpace: 'nowrap', fontWeight: '500' }}>
                     {new Date(tx.date || tx.txnDate).toLocaleDateString([], { 
@@ -283,7 +295,7 @@ const TransactionsTable = ({
               </tr>
             </thead>
             <tbody>
-              {transactions.map((tx) => {
+              {sortedTransactions.map((tx) => {
                 const payee = getCleanPayee(tx);
                 const ref = getRefNo(tx);
                 const isBankTx = isBankSyncTable || tx.entryMode === 'bank_sync' || Boolean(tx.bank);
