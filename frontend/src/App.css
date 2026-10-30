@@ -410,8 +410,6 @@ tr:hover td {
   white-space: nowrap !important;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
-  display: inline-block;
-  min-width: 100%;
 }
 
 .amount-pos {
