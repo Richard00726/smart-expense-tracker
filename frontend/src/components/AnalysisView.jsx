@@ -5,19 +5,37 @@ import { PieChart as PieChartIcon, BarChart2, TrendingUp, Activity, ArrowDownLef
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899'];
 
+// Module-level persistent cache across tab switches
+const globalSummaryCache = new Map();
+
+const getInitialSummary = (key) => {
+  if (globalSummaryCache.has(key)) {
+    const val = globalSummaryCache.get(key);
+    if (val && typeof val.then !== 'function') return val;
+  }
+  try {
+    const saved = sessionStorage.getItem(`summary_${key}`);
+    if (saved) return JSON.parse(saved);
+  } catch (e) {}
+  return null;
+};
+
 const AnalysisView = ({ refreshTrigger }) => {
-  const [spendingSummary, setSpendingSummary] = useState(null);
-  const [incomeSummary, setIncomeSummary] = useState(null);
-  const [flowSummary, setFlowSummary] = useState(null);
-
-  const [spendingLoading, setSpendingLoading] = useState(true);
-  const [incomeLoading, setIncomeLoading] = useState(true);
-  const [flowLoading, setFlowLoading] = useState(true);
-
   const today = new Date();
   const todayString = today.toISOString().split('T')[0];
   const currentMonthString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
   const currentYearString = today.getFullYear().toString();
+
+  const defaultKey = `month_${currentMonthString}`;
+  const initialData = getInitialSummary(defaultKey);
+
+  const [spendingSummary, setSpendingSummary] = useState(() => initialData);
+  const [incomeSummary, setIncomeSummary] = useState(() => initialData);
+  const [flowSummary, setFlowSummary] = useState(() => initialData);
+
+  const [spendingLoading, setSpendingLoading] = useState(!initialData);
+  const [incomeLoading, setIncomeLoading] = useState(!initialData);
+  const [flowLoading, setFlowLoading] = useState(!initialData);
 
   const [spendingFilterType, setSpendingFilterType] = useState('month');
   const [spendingFilterValue, setSpendingFilterValue] = useState(currentMonthString);
@@ -71,50 +89,72 @@ const AnalysisView = ({ refreshTrigger }) => {
     return filters;
   };
 
-  // In-flight request deduplication and local cache to make tab switching instantaneous
-  const cacheRef = useRef(new Map());
-
   useEffect(() => {
-    cacheRef.current.clear();
+    globalSummaryCache.clear();
   }, [refreshTrigger]);
 
-  const fetchSummaryCached = (type, value) => {
+  const fetchSummaryCached = (type, value, force = false) => {
     const key = `${type}_${value}`;
-    if (cacheRef.current.has(key)) {
-      return cacheRef.current.get(key);
+    if (!force && globalSummaryCache.has(key)) {
+      const existing = globalSummaryCache.get(key);
+      if (existing && typeof existing.then === 'function') {
+        return existing; // Share in-flight network request
+      }
+      return Promise.resolve(existing);
     }
+
     const promise = getSummary(getFilterObj(type, value))
-      .then(res => res.data)
+      .then(res => {
+        globalSummaryCache.set(key, res.data);
+        try {
+          sessionStorage.setItem(`summary_${key}`, JSON.stringify(res.data));
+        } catch (e) {}
+        return res.data;
+      })
       .catch(err => {
-        cacheRef.current.delete(key);
+        globalSummaryCache.delete(key);
         throw err;
       });
-    cacheRef.current.set(key, promise);
+
+    globalSummaryCache.set(key, promise);
     return promise;
   };
 
   const loadSpending = async () => {
     try {
-      setSpendingLoading(true);
+      // Only show spinner if no data is currently cached/visible
+      if (!spendingSummary) setSpendingLoading(true);
       const data = await fetchSummaryCached(spendingFilterType, spendingFilterValue);
       setSpendingSummary(data);
-    } catch (e) { console.error(e); } finally { setSpendingLoading(false); }
+    } catch (e) { 
+      console.error(e); 
+    } finally { 
+      setSpendingLoading(false); 
+    }
   };
 
   const loadIncome = async () => {
     try {
-      setIncomeLoading(true);
+      if (!incomeSummary) setIncomeLoading(true);
       const data = await fetchSummaryCached(incomeFilterType, incomeFilterValue);
       setIncomeSummary(data);
-    } catch (e) { console.error(e); } finally { setIncomeLoading(false); }
+    } catch (e) { 
+      console.error(e); 
+    } finally { 
+      setIncomeLoading(false); 
+    }
   };
 
   const loadFlow = async () => {
     try {
-      setFlowLoading(true);
+      if (!flowSummary) setFlowLoading(true);
       const data = await fetchSummaryCached(flowFilterType, flowFilterValue);
       setFlowSummary(data);
-    } catch (e) { console.error(e); } finally { setFlowLoading(false); }
+    } catch (e) { 
+      console.error(e); 
+    } finally { 
+      setFlowLoading(false); 
+    }
   };
 
   useEffect(() => { loadSpending(); }, [spendingFilterType, spendingFilterValue, refreshTrigger]);

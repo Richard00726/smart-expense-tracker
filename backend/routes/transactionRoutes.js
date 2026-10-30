@@ -3,6 +3,22 @@ const router = express.Router();
 const prisma = require("../prismaClient");
 const { protect } = require("../middleware/authMiddleware");
 
+// Fast in-memory summary cache with 2-minute TTL and immediate mutation invalidation
+const summaryCache = new Map();
+
+const getSummaryCacheKey = (userId, startDate, endDate, wallet) => {
+  return `${userId}:${startDate || 'all'}:${endDate || 'all'}:${wallet || 'all'}`;
+};
+
+const invalidateSummaryCache = (userId) => {
+  if (!userId) return;
+  for (const key of summaryCache.keys()) {
+    if (key.startsWith(`${userId}:`)) {
+      summaryCache.delete(key);
+    }
+  }
+};
+
 // POST /api/transaction
 router.post("/transaction", protect, async (req, res) => {
   const { wallet, type, amount, category, note, date } = req.body;
@@ -60,6 +76,9 @@ router.post("/transaction", protect, async (req, res) => {
       }
     });
 
+    // Invalidate cached summaries so analysis updates instantly
+    invalidateSummaryCache(req.user.id);
+
     // Add _id for backwards compatibility
     transaction._id = transaction.id;
 
@@ -110,6 +129,12 @@ router.get("/transactions", protect, async (req, res) => {
 router.get("/summary", protect, async (req, res) => {
   try {
     const { startDate, endDate, wallet } = req.query;
+    const cacheKey = getSummaryCacheKey(req.user.id, startDate, endDate, wallet);
+    const cached = summaryCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp < 120000)) {
+      return res.json(cached.data);
+    }
+
     const filter = { userId: req.user.id };
     
     if (startDate || endDate) {
@@ -122,8 +147,45 @@ router.get("/summary", protect, async (req, res) => {
       filter.wallet = wallet;
     }
 
-    // Single fast query for all filtered transactions in the requested range
-    const allFilteredTransactions = await prisma.transaction.findMany({ where: filter });
+    const start = startDate ? new Date(startDate) : new Date('1970-01-01');
+
+    // Concurrently fetch allFilteredTransactions, prior UPI balance, prior Cash sums, and UPI wallet in ONE roundtrip
+    const [allFilteredTransactions, lastUpiBefore, cashPriorCredits, cashPriorDebits, upiWallet] = await Promise.all([
+      prisma.transaction.findMany({
+        where: filter,
+        select: {
+          id: true,
+          wallet: true,
+          type: true,
+          amount: true,
+          category: true,
+          date: true,
+          createdAt: true,
+          balance: true
+        }
+      }),
+      startDate ? prisma.transaction.findFirst({
+        where: {
+          userId: req.user.id,
+          wallet: 'UPI',
+          date: { lt: start }
+        },
+        orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
+        select: { balance: true }
+      }) : Promise.resolve(null),
+      startDate ? prisma.transaction.aggregate({
+        where: { userId: req.user.id, wallet: 'Cash', type: 'credit', date: { lt: start } },
+        _sum: { amount: true }
+      }) : Promise.resolve({ _sum: { amount: 0 } }),
+      startDate ? prisma.transaction.aggregate({
+        where: { userId: req.user.id, wallet: 'Cash', type: 'debit', date: { lt: start } },
+        _sum: { amount: true }
+      }) : Promise.resolve({ _sum: { amount: 0 } }),
+      prisma.wallet.findUnique({
+        where: { userId_type: { userId: req.user.id, type: 'UPI' } },
+        select: { balance: true }
+      })
+    ]);
 
     const walletSpendMap = {};
     const walletIncomeMap = {};
@@ -131,11 +193,25 @@ router.get("/summary", protect, async (req, res) => {
     const dailyMap = {};
     const monthlyMap = {};
 
+    let upiPeriodIn = 0;
+    let upiPeriodOut = 0;
+    let cashPeriodIn = 0;
+    let cashPeriodOut = 0;
+
     allFilteredTransactions.forEach(t => {
       // Format using Asia/Kolkata timezone so dates match Indian banking and user local time on UTC cloud hosts
       const istDateStr = new Date(t.date).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
       const dayKey = istDateStr;
       const monthKey = istDateStr.slice(0, 7);
+
+      const isCredit = t.type === 'credit';
+      if (t.wallet === 'UPI') {
+        if (isCredit) upiPeriodIn += t.amount;
+        else upiPeriodOut += t.amount;
+      } else if (t.wallet === 'Cash') {
+        if (isCredit) cashPeriodIn += t.amount;
+        else cashPeriodOut += t.amount;
+      }
 
       if (t.type === 'debit') {
         walletSpendMap[t.wallet] = (walletSpendMap[t.wallet] || 0) + t.amount;
@@ -143,7 +219,7 @@ router.get("/summary", protect, async (req, res) => {
           categorySpendMap[t.category] = (categorySpendMap[t.category] || 0) + t.amount;
         }
         dailyMap[dayKey] = (dailyMap[dayKey] || 0) + t.amount;
-      } else if (t.type === 'credit') {
+      } else if (isCredit) {
         walletIncomeMap[t.wallet] = (walletIncomeMap[t.wallet] || 0) + t.amount;
       }
 
@@ -157,7 +233,7 @@ router.get("/summary", protect, async (req, res) => {
           upiSpend: 0
         };
       }
-      if (t.type === 'credit') {
+      if (isCredit) {
         monthlyMap[monthKey].income += t.amount;
         if (t.wallet === 'Cash') monthlyMap[monthKey].cashIncome += t.amount;
         else if (t.wallet === 'UPI') monthlyMap[monthKey].upiIncome += t.amount;
@@ -185,42 +261,17 @@ router.get("/summary", protect, async (req, res) => {
       upiSpend: monthlyMap[key].upiSpend || 0
     }));
 
-    // 5. Compute dynamic ledger balances concurrently
-    const start = startDate ? new Date(startDate) : new Date('1970-01-01');
-    const end = endDate ? new Date(endDate) : new Date('2099-12-31');
-
-    const [lastUpiBefore, cashPriorCredits, cashPriorDebits] = await Promise.all([
-      prisma.transaction.findFirst({
-        where: {
-          userId: req.user.id,
-          wallet: 'UPI',
-          date: { lt: start }
-        },
-        orderBy: [{ date: 'desc' }, { createdAt: 'desc' }]
-      }),
-      prisma.transaction.aggregate({
-        where: { userId: req.user.id, wallet: 'Cash', type: 'credit', date: { lt: start } },
-        _sum: { amount: true }
-      }),
-      prisma.transaction.aggregate({
-        where: { userId: req.user.id, wallet: 'Cash', type: 'debit', date: { lt: start } },
-        _sum: { amount: true }
-      })
-    ]);
-
+    // Dynamic ledger opening balance
     let upiOpening = 0;
     if (lastUpiBefore && lastUpiBefore.balance !== null) {
       upiOpening = Number(lastUpiBefore.balance);
     } else {
-      const firstUpiInPeriod = await prisma.transaction.findFirst({
-        where: {
-          userId: req.user.id,
-          wallet: 'UPI',
-          date: { gte: start, lte: end }
-        },
-        orderBy: [{ date: 'asc' }, { createdAt: 'asc' }]
-      });
+      // Find first UPI transaction in period directly from in-memory array (0 extra DB queries!)
+      const upiInPeriod = allFilteredTransactions
+        .filter(t => t.wallet === 'UPI')
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime() || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
+      const firstUpiInPeriod = upiInPeriod[0];
       if (firstUpiInPeriod && firstUpiInPeriod.balance !== null) {
         if (firstUpiInPeriod.type === 'credit') {
           upiOpening = Number(firstUpiInPeriod.balance) - Number(firstUpiInPeriod.amount);
@@ -228,32 +279,11 @@ router.get("/summary", protect, async (req, res) => {
           upiOpening = Number(firstUpiInPeriod.balance) + Number(firstUpiInPeriod.amount);
         }
       } else {
-        const w = await prisma.wallet.findUnique({
-          where: { userId_type: { userId: req.user.id, type: 'UPI' } }
-        });
-        upiOpening = w ? Number(w.balance) : 0;
+        upiOpening = upiWallet ? Number(upiWallet.balance) : 0;
       }
     }
 
-    const cashOpening = Number((cashPriorCredits._sum.amount || 0) - (cashPriorDebits._sum.amount || 0));
-
-    // Calculate period in/out sums from allFilteredTransactions
-    let upiPeriodIn = 0;
-    let upiPeriodOut = 0;
-    let cashPeriodIn = 0;
-    let cashPeriodOut = 0;
-
-    allFilteredTransactions.forEach(t => {
-      const isCredit = t.type === 'credit';
-      if (t.wallet === 'UPI') {
-        if (isCredit) upiPeriodIn += t.amount;
-        else upiPeriodOut += t.amount;
-      } else if (t.wallet === 'Cash') {
-        if (isCredit) cashPeriodIn += t.amount;
-        else cashPeriodOut += t.amount;
-      }
-    });
-
+    const cashOpening = Number((cashPriorCredits._sum?.amount || 0) - (cashPriorDebits._sum?.amount || 0));
     const upiClosing = upiOpening + upiPeriodIn - upiPeriodOut;
     const cashClosing = cashOpening + cashPeriodIn - cashPeriodOut;
 
@@ -278,14 +308,18 @@ router.get("/summary", protect, async (req, res) => {
       }
     };
 
-    res.json({
+    const responseData = {
       walletSpending: formattedWalletSpending,
       walletIncome: formattedWalletIncome,
       categorySpending: formattedCategorySpending,
       dailySpending: formattedDailySpending,
       monthlyFlow: formattedMonthlyFlow,
       flowLedger
-    });
+    };
+
+    summaryCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
+
+    res.json(responseData);
 
   } catch (error) {
     console.error("Error fetching summary:", error);
@@ -315,6 +349,8 @@ router.delete("/transaction/:id", protect, async (req, res) => {
     }
 
     await prisma.transaction.delete({ where: { id: req.params.id } });
+
+    invalidateSummaryCache(req.user.id);
 
     res.json({ message: "Transaction deleted successfully" });
   } catch (error) {
@@ -404,6 +440,8 @@ router.put("/transaction/:id", protect, async (req, res) => {
 
     updatedTransaction._id = updatedTransaction.id;
 
+    invalidateSummaryCache(req.user.id);
+
     res.json({
       message: "Transaction updated successfully",
       transaction: updatedTransaction,
@@ -486,6 +524,8 @@ router.post("/transaction/auto", protect, async (req, res) => {
 
     transaction._id = transaction.id;
 
+    invalidateSummaryCache(req.user.id);
+
     // Update last bank sync timestamp
     await prisma.user.update({
       where: { id: req.user.id },
@@ -504,3 +544,4 @@ router.post("/transaction/auto", protect, async (req, res) => {
 });
 
 module.exports = router;
+module.exports.invalidateSummaryCache = invalidateSummaryCache;

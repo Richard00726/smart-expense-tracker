@@ -230,6 +230,26 @@ function App() {
     if (isAuthenticated) loadTransactions();
   }, [txFilterType, txFilterValue, txWalletFilter, isAuthenticated, currentUser?.email, currentUser?._id, currentUser?.id]);
 
+  // Quiet background prefetch of current month analysis summary so Analysis tab opens in 0ms
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const timer = setTimeout(() => {
+      const now = new Date();
+      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const [y, m] = currentMonth.split('-');
+      const start = new Date(y, m - 1, 1).toISOString();
+      const end = new Date(y, m, 0, 23, 59, 59, 999).toISOString();
+      getSummary({ startDate: start, endDate: end })
+        .then(res => {
+          try {
+            sessionStorage.setItem(`summary_month_${currentMonth}`, JSON.stringify(res.data));
+          } catch (e) {}
+        })
+        .catch(() => {});
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, transactions.length]);
+
   if (!isAuthenticated) {
     return (
       <>
