@@ -339,43 +339,39 @@ function App() {
               {activeTab === 'account' && 'My Account'}
             </span>
           </div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div className="header-actions">
             <button 
               onClick={toggleTheme}
-              className="action-btn"
-              style={{ background: 'var(--card-bg)', padding: '0.6rem', borderRadius: '50%', color: 'var(--text-primary)' }}
+              className="icon-btn"
               title="Toggle Theme"
             >
-              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
 
             <div 
-              style={{ position: 'relative', display: 'flex', alignItems: 'center', margin: '0 0.25rem' }}
+              style={{ position: 'relative', display: 'flex', alignItems: 'center' }}
               onMouseEnter={() => setShowProfileTooltip(true)}
               onMouseLeave={() => setShowProfileTooltip(false)}
             >
               <div 
-                style={{ 
-                  width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', 
-                  border: '2px solid var(--card-border)', background: 'var(--empty-state-bg)', 
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-                  boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
-                }}
+                className="profile-avatar"
+                onClick={() => setActiveTab('account')}
+                title={currentUser.username || currentUser.name || 'User Profile'}
               >
                 {currentUser.profileImage ? (
                   <img src={currentUser.profileImage} alt="User" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
-                  <User size={20} color="var(--text-secondary)" />
+                  (currentUser.username || currentUser.name || currentUser.email || 'L').charAt(0).toUpperCase()
                 )}
               </div>
               {showProfileTooltip && (
                 <div className="glass animate-fade-in" style={{
                   position: 'absolute', top: '120%', right: '50%', transform: 'translateX(50%)',
                   padding: '0.75rem 1rem', borderRadius: '8px', zIndex: 1000,
-                  whiteSpace: 'nowrap', textAlign: 'center', border: '1px solid var(--card-border)',
-                  boxShadow: '0 10px 25px rgba(0,0,0,0.5)'
+                  whiteSpace: 'nowrap', textAlign: 'center', border: '1px solid var(--border)',
+                  boxShadow: 'var(--card-shadow)', background: 'var(--bg-card)'
                 }}>
-                  <p style={{ margin: '0 0 0.25rem 0', fontWeight: '600', color: 'var(--text-primary)' }}>{currentUser.username}</p>
+                  <p style={{ margin: '0 0 0.25rem 0', fontWeight: '600', color: 'var(--text-primary)' }}>{currentUser.username || currentUser.name || 'User'}</p>
                   <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{currentUser.email}</p>
                 </div>
               )}
@@ -383,11 +379,10 @@ function App() {
 
             <button 
               onClick={handleLogout}
-              className="action-btn"
-              style={{ background: 'var(--danger)', padding: '0.6rem', borderRadius: '50%', color: '#fff' }}
+              className="logout-btn"
               title="Log out"
             >
-              <LogOut size={20} />
+              <LogOut size={18} />
             </button>
           </div>
         </header>
@@ -400,13 +395,15 @@ function App() {
               <div className="main-content" style={{ marginTop: '2rem' }}>
                 <div className="action-cards" style={{ gridColumn: '1 / -1' }}>
                   <TransactionsTable
-                    title={getDashboardFeedTitle()}
+                    title={txFilterType === 'all' ? 'Recent Transactions' : getDashboardFeedTitle()}
+                    badge="Showing 5 latest"
                     transactions={transactions.slice(0, 5)}
                     loading={txLoading}
                     onDelete={handleDeleteTransaction}
                     onEditComplete={refreshAllData}
                     hideCategory={false}
                     hideActions={true}
+                    hideWallet={true}
                   />
                 </div>
               </div>

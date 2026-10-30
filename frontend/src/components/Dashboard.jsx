@@ -24,66 +24,78 @@ const Dashboard = ({ balances, onOpenSetupGuide }) => {
   }, []);
 
   return (
-    <div className="dashboard-grid animate-fade-in">
-      <div className="balance-card glass">
-        <div className="card-title">
-          <Landmark size={20} className="text-accent-primary" />
-          Total Balance
+    <div className="balance-grid animate-fade-in">
+      <div className="card balance-card">
+        <div className="card-top">
+          <span className="card-title">
+            <Landmark size={18} strokeWidth={2} />
+            Total Balance
+          </span>
         </div>
-        <div className="card-amount">{getCurrency()}{Number(balances.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-        <div className="upi-card-footer">
-          <span className="footer-tag">Combined Cash & Bank Balance</span>
+        <div className="card-amount">
+          {getCurrency()}{Number(balances.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </div>
-      </div>
-      
-      <div className="balance-card cash glass">
-        <div className="card-title">
-          <Coins size={20} className="text-success" />
-          Cash Balance
-        </div>
-        <div className="card-amount">{getCurrency()}{Number(balances.cash || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-        <div className="upi-card-footer">
-          <span className="footer-tag">Manual entry wallet</span>
+        <div className="card-footer">
+          <span>Combined Cash & Bank Balance</span>
         </div>
       </div>
       
-      <div className="balance-card upi glass">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div className="card-title" style={{ margin: 0 }}>
-            <Wallet size={20} className="text-accent-secondary" />
+      <div className="card balance-card">
+        <div className="card-top">
+          <span className="card-title">
+            <Coins size={18} strokeWidth={2} />
+            Cash Balance
+          </span>
+        </div>
+        <div className="card-amount">
+          {getCurrency()}{Number(balances.cash || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </div>
+        <div className="card-footer">
+          <span>Manual entry wallet</span>
+        </div>
+      </div>
+      
+      <div className="card balance-card">
+        <div className="card-top">
+          <span className="card-title">
+            <Wallet size={18} strokeWidth={2} />
             UPI Balance
-          </div>
+          </span>
           {syncStatus.isConnected ? (
             <div 
-              className="upi-live-pill" 
+              className="live-sync-pill" 
               onClick={onOpenSetupGuide}
               title="TMB Bank Auto-Sync Connected & Active. Click to open Bank Sync Hub."
+              style={{ cursor: 'pointer' }}
             >
-              <span className="pulse-dot-green"></span>
+              <span className="pulse-dot"></span>
               <span>Live Auto-Sync</span>
             </div>
           ) : (
             <div 
-              className="upi-inactive-pill" 
+              className="live-sync-pill" 
               onClick={onOpenSetupGuide}
               title="Bank sync is not configured yet. Click to setup."
+              style={{ cursor: 'pointer', background: 'var(--bg-card-subtle)', color: 'var(--text-muted)', borderColor: 'var(--border)' }}
             >
-              <span className="dot-inactive"></span>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--text-muted)' }}></span>
               <span>Sync Inactive</span>
             </div>
           )}
         </div>
-        <div className="card-amount">{getCurrency()}{Number(balances.upi || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-        <div className="upi-card-footer">
+        <div className="card-amount">
+          {getCurrency()}{Number(balances.upi || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </div>
+        <div className="card-footer" style={syncStatus.isConnected ? { color: 'var(--success)', fontWeight: 600 } : {}}>
           {syncStatus.isConnected ? (
-            <span className="footer-tag" style={{ color: '#10b981', fontWeight: 500 }}>
-              <Zap size={12} color="#10b981" /> TMB Bank Auto-Sync Active
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+              <Zap size={13} strokeWidth={2.5} />
+              TMB Bank Auto-Sync Active
             </span>
           ) : (
             <span 
-              className="footer-tag" 
               onClick={onOpenSetupGuide}
-              style={{ color: 'var(--text-secondary)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+              style={{ color: 'var(--text-muted)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
             >
               Setup Bank Auto-Sync <ArrowRight size={11} />
             </span>

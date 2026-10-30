@@ -1,59 +1,108 @@
-:root {
-  --bg-color: #0f172a;
-  --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  --card-bg: rgba(30, 41, 59, 0.7);
-  --card-border: rgba(255, 255, 255, 0.1);
+:root, [data-theme='dark'] {
+  --bg-app: #080d16;
+  --bg-color: #080d16;
+  --bg-gradient: #080d16;
+  --bg-sidebar: #0b1322;
+  --sidebar-bg: #0b1322;
+  --bg-card: #0f192c;
+  --card-bg: #0f192c;
+  --bg-card-subtle: rgba(15, 25, 44, 0.7);
+  --bg-hover: rgba(255, 255, 255, 0.04);
+  --hover-bg: rgba(255, 255, 255, 0.04);
+  --border: rgba(255, 255, 255, 0.08);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --border-accent: rgba(56, 189, 248, 0.25);
   
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
+  --text-muted: #64748b;
   
-  --accent-primary: #3b82f6;
-  --accent-secondary: #8b5cf6;
-  --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  --accent-cyan: #38bdf8;
+  --accent-blue: #0284c7;
+  --accent-primary: #38bdf8;
+  --accent-secondary: #0284c7;
+  --accent-gradient: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
   
   --success: #10b981;
+  --success-bg: rgba(16, 185, 129, 0.12);
+  --success-border: rgba(16, 185, 129, 0.25);
+  
   --danger: #ef4444;
+  --danger-bg: rgba(239, 68, 68, 0.12);
+  --danger-border: rgba(239, 68, 68, 0.25);
+  
   --warning: #f59e0b;
+  --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+  --table-header: rgba(15, 25, 44, 0.95);
   
-  --sidebar-bg: rgba(15, 23, 42, 0.85);
-  --input-bg: rgba(15, 23, 42, 0.5);
-  --table-row-bg: rgba(15, 23, 42, 0.4);
-  --empty-state-bg: rgba(15, 23, 42, 0.2);
-  --modal-overlay: rgba(15, 23, 42, 0.7);
-  --hover-bg: rgba(255, 255, 255, 0.05);
+  --badge-bg: rgba(56, 189, 248, 0.1);
+  --badge-text: #38bdf8;
+  --badge-border: rgba(56, 189, 248, 0.2);
   
-  --font-main: 'Inter', system-ui, -apple-system, sans-serif;
+  --input-bg: rgba(15, 25, 44, 0.8);
+  --table-row-bg: transparent;
+  --empty-state-bg: rgba(15, 25, 44, 0.4);
+  --modal-overlay: rgba(8, 13, 22, 0.85);
+  
+  --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 [data-theme='light'] {
+  --bg-app: #f8fafc;
   --bg-color: #f8fafc;
-  --bg-gradient: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-  --card-bg: rgba(255, 255, 255, 0.7);
-  --card-border: rgba(0, 0, 0, 0.1);
+  --bg-gradient: #f8fafc;
+  --bg-sidebar: #ffffff;
+  --sidebar-bg: #ffffff;
+  --bg-card: #ffffff;
+  --card-bg: #ffffff;
+  --bg-card-subtle: #f8fafc;
+  --bg-hover: #f1f5f9;
+  --hover-bg: #f1f5f9;
+  --border: #e2e8f0;
+  --card-border: #e2e8f0;
+  --border-accent: #bae6fd;
   
   --text-primary: #0f172a;
   --text-secondary: #475569;
+  --text-muted: #94a3b8;
   
-  --accent-primary: #2563eb;
-  --accent-secondary: #7c3aed;
-  --accent-gradient: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  --accent-cyan: #0284c7;
+  --accent-blue: #2563eb;
+  --accent-primary: #0284c7;
+  --accent-secondary: #2563eb;
+  --accent-gradient: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
   
   --success: #059669;
+  --success-bg: #ecfdf5;
+  --success-border: #a7f3d0;
+  
   --danger: #dc2626;
+  --danger-bg: #fef2f2;
+  --danger-border: #fecaca;
+  
   --warning: #d97706;
-
-  --sidebar-bg: rgba(255, 255, 255, 0.85);
-  --input-bg: rgba(255, 255, 255, 0.6);
-  --table-row-bg: rgba(255, 255, 255, 0.5);
-  --empty-state-bg: rgba(255, 255, 255, 0.5);
-  --modal-overlay: rgba(255, 255, 255, 0.7);
-  --hover-bg: rgba(0, 0, 0, 0.05);
+  --card-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.05);
+  --table-header: #f8fafc;
+  
+  --badge-bg: #e0f2fe;
+  --badge-text: #0284c7;
+  --badge-border: #bae6fd;
+  
+  --input-bg: #ffffff;
+  --table-row-bg: transparent;
+  --empty-state-bg: #f1f5f9;
+  --modal-overlay: rgba(15, 23, 42, 0.5);
+  
+  --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 /* Disable browser default reveal button so only one styled custom icon is used */
@@ -64,8 +113,7 @@ input::-ms-clear {
 
 body {
   font-family: var(--font-main);
-  background: var(--bg-gradient);
-  background-attachment: fixed;
+  background: var(--bg-app);
   color: var(--text-primary);
   min-height: 100vh;
   line-height: 1.5;
