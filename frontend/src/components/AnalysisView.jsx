@@ -346,6 +346,9 @@ const AnalysisView = ({ refreshTrigger }) => {
   const upiSpend = walletSpendingData.find(item => item.name === 'UPI')?.value || 0;
   const totalSpend = cashSpend + upiSpend;
   const totalCategorySpend = categoryData.reduce((acc, curr) => acc + (Number(curr.value) || 0), 0);
+  const totalSpendNum = Number(totalSpend) || 0;
+  const cashPct = totalSpendNum > 0 ? ((cashSpend / totalSpendNum) * 100).toFixed(1) : '0.0';
+  const upiPct = totalSpendNum > 0 ? ((upiSpend / totalSpendNum) * 100).toFixed(1) : '0.0';
 
   const cashIncome = walletIncomeData.find(item => item.name === 'Cash')?.value || 0;
   const upiIncome = walletIncomeData.find(item => item.name === 'UPI')?.value || 0;
@@ -454,33 +457,253 @@ const AnalysisView = ({ refreshTrigger }) => {
             <p style={{ color: 'var(--text-secondary)' }}>No spending recorded for this period.</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            {/* 1. SPEND BY CATEGORY - PROFESSIONAL FINTECH CARD */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '0.5rem' }}>
+            {/* 1. CASH VS UPI SPENDING - FIRST */}
             <div
               style={{
-                background: 'var(--card-bg)',
+                background: 'var(--empty-state-bg)',
                 border: '1px solid var(--card-border)',
                 borderRadius: '16px',
-                padding: '1.5rem',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.04)'
+                padding: '1.25rem 1.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem'
               }}
             >
-              {/* Card Header */}
+              {/* Header */}
               <div
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  marginBottom: '1.25rem',
-                  paddingBottom: '0.85rem',
+                  paddingBottom: '0.75rem',
                   borderBottom: '1px solid var(--card-border)',
                   flexWrap: 'wrap',
-                  gap: '0.75rem'
+                  gap: '0.5rem'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                  <PieChartIcon size={20} className="text-danger" />
-                  <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: 700 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <BarChart2 size={18} className="text-danger" />
+                  <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1rem', fontWeight: 700 }}>
+                    Cash vs UPI Spending
+                  </h4>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      color: '#f59e0b',
+                      fontWeight: 700,
+                      background: 'rgba(245, 158, 11, 0.1)',
+                      padding: '2px 8px',
+                      borderRadius: '6px',
+                      border: '1px solid rgba(245, 158, 11, 0.25)'
+                    }}
+                  >
+                    Cash: {getCurrency()}{formatAmt(cashSpend)}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      color: 'var(--danger)',
+                      fontWeight: 700,
+                      background: 'rgba(239, 68, 68, 0.1)',
+                      padding: '2px 8px',
+                      borderRadius: '6px',
+                      border: '1px solid rgba(239, 68, 68, 0.25)'
+                    }}
+                  >
+                    UPI: {getCurrency()}{formatAmt(upiSpend)}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      padding: '2px 8px',
+                      borderRadius: '6px',
+                      background: 'var(--card-bg)',
+                      border: '1px solid var(--card-border)',
+                      color: 'var(--text-primary)'
+                    }}
+                  >
+                    Total: {getCurrency()}{formatAmt(totalSpend)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Dual Stat Cards */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                {/* Cash Stat Card */}
+                <div
+                  style={{
+                    background: 'var(--card-bg)',
+                    border: '1px solid var(--card-border)',
+                    borderRadius: '12px',
+                    padding: '0.85rem 1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div
+                      style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '10px',
+                        background: 'rgba(245, 158, 11, 0.12)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#f59e0b'
+                      }}
+                    >
+                      <Wallet size={18} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Cash Spending</div>
+                      <div style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                        {getCurrency()}{formatAmt(cashSpend)}
+                      </div>
+                    </div>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      padding: '2px 8px',
+                      borderRadius: '6px',
+                      background: 'rgba(245, 158, 11, 0.1)',
+                      color: '#f59e0b',
+                      border: '1px solid rgba(245, 158, 11, 0.25)'
+                    }}
+                  >
+                    {cashPct}%
+                  </span>
+                </div>
+
+                {/* UPI Stat Card */}
+                <div
+                  style={{
+                    background: 'var(--card-bg)',
+                    border: '1px solid var(--card-border)',
+                    borderRadius: '12px',
+                    padding: '0.85rem 1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div
+                      style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '10px',
+                        background: 'rgba(239, 68, 68, 0.12)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'var(--danger)'
+                      }}
+                    >
+                      <Landmark size={18} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>UPI Spending</div>
+                      <div style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                        {getCurrency()}{formatAmt(upiSpend)}
+                      </div>
+                    </div>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      padding: '2px 8px',
+                      borderRadius: '6px',
+                      background: 'rgba(239, 68, 68, 0.1)',
+                      color: 'var(--danger)',
+                      border: '1px solid rgba(239, 68, 68, 0.25)'
+                    }}
+                  >
+                    {upiPct}%
+                  </span>
+                </div>
+              </div>
+
+              {/* Segmented Proportional Visual Bar */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ width: '100%', height: '8px', background: 'var(--card-border)', borderRadius: '9999px', overflow: 'hidden', display: 'flex' }}>
+                  {Number(cashPct) > 0 && (
+                    <div style={{ width: `${cashPct}%`, height: '100%', backgroundColor: '#f59e0b', transition: 'width 0.4s ease' }} title={`Cash: ${cashPct}%`} />
+                  )}
+                  {Number(upiPct) > 0 && (
+                    <div style={{ width: `${upiPct}%`, height: '100%', backgroundColor: 'var(--danger)', transition: 'width 0.4s ease' }} title={`UPI: ${upiPct}%`} />
+                  )}
+                  {totalSpendNum === 0 && (
+                    <div style={{ width: '100%', height: '100%', backgroundColor: 'var(--card-border)' }} />
+                  )}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                  <span style={{ color: '#f59e0b' }}>● Cash: {cashPct}%</span>
+                  <span style={{ color: 'var(--danger)' }}>● UPI: {upiPct}%</span>
+                </div>
+              </div>
+
+              {/* Compact Bar Chart (Height 170px with clean compact ticks) */}
+              <div style={{ height: '170px', width: '100%', marginTop: '0.25rem' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={walletSpendingData} margin={{ top: 10, right: 20, left: 15, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" vertical={false} />
+                    <XAxis dataKey="name" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: '0.82rem' }} />
+                    <YAxis
+                      stroke="var(--text-secondary)"
+                      tick={{ fill: 'var(--text-secondary)', fontSize: '0.75rem' }}
+                      tickFormatter={(val) => `₹${val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}`}
+                    />
+                    <Tooltip
+                      cursor={{ fill: 'var(--hover-bg)' }}
+                      contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', color: 'var(--text-primary)' }}
+                      formatter={(value) => [`${getCurrency()}${formatAmt(value)}`, 'Spent']}
+                    />
+                    <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={44}>
+                      {walletSpendingData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.name === 'Cash' ? '#f59e0b' : 'var(--danger)'} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* 2. SPEND BY CATEGORY - SECOND (UNDERNEATH) */}
+            <div
+              style={{
+                background: 'var(--empty-state-bg)',
+                border: '1px solid var(--card-border)',
+                borderRadius: '16px',
+                padding: '1.25rem 1.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem'
+              }}
+            >
+              {/* Header */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  paddingBottom: '0.75rem',
+                  borderBottom: '1px solid var(--card-border)',
+                  flexWrap: 'wrap',
+                  gap: '0.5rem'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <PieChartIcon size={18} className="text-danger" />
+                  <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1rem', fontWeight: 700 }}>
                     Spend by Category
                   </h4>
                 </div>
@@ -489,9 +712,9 @@ const AnalysisView = ({ refreshTrigger }) => {
                     style={{
                       fontSize: '0.75rem',
                       fontWeight: 600,
-                      padding: '3px 10px',
+                      padding: '2px 8px',
                       borderRadius: '100px',
-                      background: 'var(--empty-state-bg)',
+                      background: 'var(--card-bg)',
                       border: '1px solid var(--card-border)',
                       color: 'var(--text-secondary)'
                     }}
@@ -502,7 +725,7 @@ const AnalysisView = ({ refreshTrigger }) => {
                     style={{
                       fontSize: '0.75rem',
                       fontWeight: 700,
-                      padding: '3px 10px',
+                      padding: '2px 8px',
                       borderRadius: '100px',
                       background: 'rgba(239, 68, 68, 0.1)',
                       color: 'var(--danger)',
@@ -514,25 +737,25 @@ const AnalysisView = ({ refreshTrigger }) => {
                 </div>
               </div>
 
-              {/* Card Body: 2-Column Side-by-Side (Left Donut, Right Categories List) */}
+              {/* 2-Column Responsive Layout: Left Donut, Right Categories List */}
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-                  gap: '2rem',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                  gap: '1.5rem',
                   alignItems: 'center'
                 }}
               >
-                {/* Left: Donut Chart with Center Metric Overlay */}
-                <div style={{ position: 'relative', width: '100%', height: '270px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {/* Left: Donut Chart with Center Metric (NO '100% of Spend') */}
+                <div style={{ position: 'relative', width: '100%', height: '260px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={categoryData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={72}
-                        outerRadius={104}
+                        innerRadius={68}
+                        outerRadius={102}
                         paddingAngle={3}
                         minAngle={4}
                         dataKey="value"
@@ -542,7 +765,7 @@ const AnalysisView = ({ refreshTrigger }) => {
                             key={`cell-${index}`}
                             fill={getCategoryColor(entry.name, index)}
                             stroke="var(--card-bg)"
-                            strokeWidth={2.5}
+                            strokeWidth={2}
                           />
                         ))}
                       </Pie>
@@ -553,6 +776,7 @@ const AnalysisView = ({ refreshTrigger }) => {
                       />
                     </PieChart>
                   </ResponsiveContainer>
+                  {/* Donut Center Overlay: ONLY 'TOTAL SPENT' & formatted amount (NO '100% of Spend') */}
                   <div
                     style={{
                       position: 'absolute',
@@ -565,17 +789,14 @@ const AnalysisView = ({ refreshTrigger }) => {
                       flexDirection: 'column',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      width: '130px'
+                      width: '120px'
                     }}
                   >
                     <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                       TOTAL SPENT
                     </span>
-                    <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: '3px 0', lineHeight: 1.2 }}>
+                    <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: '2px 0', lineHeight: 1.2 }}>
                       {getCurrency()}{formatAmt(totalCategorySpend)}
-                    </span>
-                    <span style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 700 }}>
-                      100% of Spend
                     </span>
                   </div>
                 </div>
@@ -586,8 +807,8 @@ const AnalysisView = ({ refreshTrigger }) => {
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '0.6rem',
-                    maxHeight: '310px',
+                    gap: '0.5rem',
+                    maxHeight: '280px',
                     overflowY: 'auto',
                     paddingRight: '6px'
                   }}
@@ -599,22 +820,22 @@ const AnalysisView = ({ refreshTrigger }) => {
                       <div
                         key={cat.name || idx}
                         style={{
-                          background: 'var(--empty-state-bg)',
+                          background: 'var(--card-bg)',
                           border: '1px solid var(--card-border)',
-                          borderRadius: '12px',
-                          padding: '0.7rem 0.85rem',
+                          borderRadius: '10px',
+                          padding: '0.6rem 0.8rem',
                           display: 'flex',
                           flexDirection: 'column',
                           gap: '6px',
-                          transition: 'transform 0.15s ease, border-color 0.15s ease'
+                          transition: 'all 0.15s ease'
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', minWidth: 0 }}>
                             <span
                               style={{
-                                width: '12px',
-                                height: '12px',
+                                width: '10px',
+                                height: '10px',
                                 borderRadius: '50%',
                                 backgroundColor: catColor,
                                 boxShadow: `0 0 0 2px var(--card-bg), 0 0 6px ${catColor}55`,
@@ -624,7 +845,7 @@ const AnalysisView = ({ refreshTrigger }) => {
                             <span
                               style={{
                                 fontWeight: 600,
-                                fontSize: '0.88rem',
+                                fontSize: '0.86rem',
                                 color: 'var(--text-primary)',
                                 whiteSpace: 'nowrap',
                                 overflow: 'hidden',
@@ -639,9 +860,9 @@ const AnalysisView = ({ refreshTrigger }) => {
                               style={{
                                 fontSize: '0.72rem',
                                 fontWeight: 700,
-                                padding: '2px 7px',
-                                borderRadius: '6px',
-                                background: 'var(--card-bg)',
+                                padding: '2px 6px',
+                                borderRadius: '5px',
+                                background: 'var(--empty-state-bg)',
                                 border: '1px solid var(--card-border)',
                                 color: 'var(--text-secondary)'
                               }}
@@ -651,7 +872,7 @@ const AnalysisView = ({ refreshTrigger }) => {
                             <span
                               style={{
                                 fontWeight: 700,
-                                fontSize: '0.88rem',
+                                fontSize: '0.86rem',
                                 color: 'var(--text-primary)',
                                 whiteSpace: 'nowrap'
                               }}
@@ -661,13 +882,14 @@ const AnalysisView = ({ refreshTrigger }) => {
                           </div>
                         </div>
                         {/* Micro Progress Bar with Min Width so Small Spends Stay Fully Visible */}
-                        <div style={{ width: '100%', height: '4px', background: 'rgba(148, 163, 184, 0.18)', borderRadius: '9999px', overflow: 'hidden' }}>
+                        <div style={{ width: '100%', height: '4px', background: 'rgba(148, 163, 184, 0.15)', borderRadius: '9999px', overflow: 'hidden' }}>
                           <div
                             style={{
                               width: `${Math.max(3.5, Math.min(100, Number(pct)))}%`,
                               height: '100%',
                               backgroundColor: catColor,
-                              borderRadius: '9999px'
+                              borderRadius: '9999px',
+                              transition: 'width 0.4s ease'
                             }}
                           />
                         </div>
@@ -675,108 +897,6 @@ const AnalysisView = ({ refreshTrigger }) => {
                     );
                   })}
                 </div>
-              </div>
-            </div>
-
-            {/* 2. CASH VS UPI SPENDING - DEDICATED SEPARATE CARD */}
-            <div
-              style={{
-                background: 'var(--card-bg)',
-                border: '1px solid var(--card-border)',
-                borderRadius: '16px',
-                padding: '1.5rem',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.04)'
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '1.25rem',
-                  paddingBottom: '0.85rem',
-                  borderBottom: '1px solid var(--card-border)',
-                  flexWrap: 'wrap',
-                  gap: '0.75rem'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                  <BarChart2 size={20} className="text-danger" />
-                  <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: 700 }}>
-                    Cash vs UPI Spending
-                  </h4>
-                </div>
-                <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
-                  <span
-                    style={{
-                      fontSize: '0.8rem',
-                      color: '#f59e0b',
-                      fontWeight: 600,
-                      background: 'rgba(245, 158, 11, 0.1)',
-                      padding: '3px 10px',
-                      borderRadius: '8px',
-                      border: '1px solid rgba(245, 158, 11, 0.25)'
-                    }}
-                  >
-                    Cash: {getCurrency()}{formatAmt(cashSpend)}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: '0.8rem',
-                      color: 'var(--danger)',
-                      fontWeight: 600,
-                      background: 'rgba(239, 68, 68, 0.1)',
-                      padding: '3px 10px',
-                      borderRadius: '8px',
-                      border: '1px solid rgba(239, 68, 68, 0.25)'
-                    }}
-                  >
-                    UPI: {getCurrency()}{formatAmt(upiSpend)}
-                  </span>
-                </div>
-              </div>
-
-              <div style={{ height: '240px', width: '100%' }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={walletSpendingData} margin={{ top: 15, right: 25, left: 25, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
-                    <XAxis dataKey="name" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)' }} />
-                    <YAxis stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)' }} />
-                    <Tooltip
-                      cursor={{ fill: 'var(--hover-bg)' }}
-                      contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', color: 'var(--text-primary)' }}
-                      formatter={(value) => [`${getCurrency()}${formatAmt(value)}`, 'Spent']}
-                    />
-                    <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={60}>
-                      {walletSpendingData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.name === 'Cash' ? '#f59e0b' : 'var(--danger)'} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div
-                style={{
-                  marginTop: '1rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '1rem',
-                  fontSize: '0.88rem',
-                  color: 'var(--text-secondary)',
-                  background: 'var(--empty-state-bg)',
-                  padding: '0.65rem 1rem',
-                  borderRadius: '10px',
-                  border: '1px solid var(--card-border)',
-                  flexWrap: 'wrap'
-                }}
-              >
-                <span>Total: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{formatAmt(totalSpend)}</strong></span>
-                <span style={{ opacity: 0.4 }}>•</span>
-                <span style={{ color: '#f59e0b', fontWeight: 600 }}>Cash: {getCurrency()}{formatAmt(cashSpend)}</span>
-                <span style={{ opacity: 0.4 }}>•</span>
-                <span style={{ color: 'var(--danger)', fontWeight: 600 }}>UPI: {getCurrency()}{formatAmt(upiSpend)}</span>
               </div>
             </div>
           </div>

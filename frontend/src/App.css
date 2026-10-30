@@ -305,6 +305,14 @@
   background: var(--text-secondary);
 }
 
+.transaction-table-container::-webkit-scrollbar-button,
+.table-container::-webkit-scrollbar-button,
+.custom-scrollbar::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
