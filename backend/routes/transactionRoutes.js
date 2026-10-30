@@ -23,71 +23,81 @@ const invalidateSummaryCache = (userId) => {
 router.post("/transaction", protect, async (req, res) => {
   const { wallet, type, amount, category, note, date } = req.body;
 
-  if (!wallet || !type || !amount) {
+  if (!wallet || !type || amount === undefined || amount === null) {
     return res.status(400).json({ error: "Wallet, type, and amount are required" });
+  }
+  const numAmount = Number(amount);
+  if (isNaN(numAmount) || numAmount <= 0) {
+    return res.status(400).json({ error: "Amount must be greater than zero" });
   }
   if (type === "debit" && !category) {
     return res.status(400).json({ error: "Category is required for debit transactions" });
   }
-  if (amount <= 0) {
-    return res.status(400).json({ error: "Amount must be greater than zero" });
+  if (type !== "credit" && type !== "debit") {
+    return res.status(400).json({ error: "Invalid transaction type" });
   }
 
   try {
-    let updatedWallet;
-    
-    // We do this inside a Prisma transaction if possible, or sequentially since there are checks.
-    // Sequentially is fine since we do one user at a time.
-    if (type === "credit") {
-      updatedWallet = await prisma.wallet.update({
-        where: { userId_type: { userId: req.user.id, type: wallet } },
-        data: { balance: { increment: amount } }
-      });
-    } else if (type === "debit") {
-      const currentWallet = await prisma.wallet.findUnique({
+    const result = await prisma.$transaction(async (tx) => {
+      // Find or create wallet
+      let currentWallet = await tx.wallet.findUnique({
         where: { userId_type: { userId: req.user.id, type: wallet } }
       });
 
-      if (!currentWallet || currentWallet.balance < amount) {
-        return res.status(400).json({ error: "Insufficient balance for this transaction" });
+      if (!currentWallet) {
+        currentWallet = await tx.wallet.create({
+          data: { userId: req.user.id, type: wallet, balance: 0 }
+        });
       }
 
-      updatedWallet = await prisma.wallet.update({
+      if (type === "debit") {
+        if (currentWallet.balance < numAmount) {
+          const err = new Error("Insufficient balance for this transaction");
+          err.statusCode = 400;
+          throw err;
+        }
+      }
+
+      const updatedWallet = await tx.wallet.update({
         where: { userId_type: { userId: req.user.id, type: wallet } },
-        data: { balance: { decrement: amount } }
+        data: {
+          balance: type === "credit"
+            ? { increment: numAmount }
+            : { decrement: numAmount }
+        }
       });
-    } else {
-      return res.status(400).json({ error: "Invalid transaction type" });
-    }
 
-    if (!updatedWallet) {
-      return res.status(404).json({ error: "Wallet not found" });
-    }
+      const transaction = await tx.transaction.create({
+        data: {
+          userId: req.user.id,
+          wallet,
+          type,
+          amount: numAmount,
+          category: type === "debit" ? category : null,
+          note,
+          date: date ? new Date(date) : new Date(),
+          entryMode: 'manual'
+        }
+      });
 
-    const transaction = await prisma.transaction.create({
-      data: {
-        userId: req.user.id,
-        wallet,
-        type,
-        amount,
-        category: type === "debit" ? category : null,
-        note,
-        date: date ? new Date(date) : new Date(),
-      }
+      return { transaction, updatedBalance: updatedWallet.balance };
     });
 
     // Invalidate cached summaries so analysis updates instantly
     invalidateSummaryCache(req.user.id);
 
     // Add _id for backwards compatibility
-    transaction._id = transaction.id;
+    result.transaction._id = result.transaction.id;
 
     res.status(201).json({
       message: "Transaction successful",
-      transaction,
-      updatedBalance: updatedWallet.balance,
+      transaction: result.transaction,
+      updatedBalance: result.updatedBalance,
     });
   } catch (error) {
+    if (error.statusCode === 400) {
+      return res.status(400).json({ error: error.message });
+    }
     console.error("Error processing transaction:", error);
     res.status(500).json({ error: "Server error processing transaction" });
   }
@@ -330,30 +340,45 @@ router.get("/summary", protect, async (req, res) => {
 // DELETE /api/transaction/:id
 router.delete("/transaction/:id", protect, async (req, res) => {
   try {
-    const transaction = await prisma.transaction.findFirst({ where: { id: req.params.id, userId: req.user.id } });
-    if (!transaction) {
-      return res.status(404).json({ error: "Transaction not found" });
-    }
-
-    // Rollback the wallet balance
-    if (transaction.type === "credit") {
-      await prisma.wallet.update({
-        where: { userId_type: { userId: req.user.id, type: transaction.wallet } },
-        data: { balance: { decrement: transaction.amount } }
+    await prisma.$transaction(async (tx) => {
+      const transaction = await tx.transaction.findFirst({
+        where: { id: req.params.id, userId: req.user.id }
       });
-    } else if (transaction.type === "debit") {
-      await prisma.wallet.update({
-        where: { userId_type: { userId: req.user.id, type: transaction.wallet } },
-        data: { balance: { increment: transaction.amount } }
-      });
-    }
+      if (!transaction) {
+        const err = new Error("Transaction not found");
+        err.statusCode = 404;
+        throw err;
+      }
 
-    await prisma.transaction.delete({ where: { id: req.params.id } });
+      // Delete the transaction first within this atomic block
+      await tx.transaction.delete({
+        where: { id: transaction.id }
+      });
+
+      // Rollback the wallet balance
+      if (transaction.type === "credit") {
+        await tx.wallet.update({
+          where: { userId_type: { userId: req.user.id, type: transaction.wallet } },
+          data: { balance: { decrement: transaction.amount } }
+        });
+      } else if (transaction.type === "debit") {
+        await tx.wallet.update({
+          where: { userId_type: { userId: req.user.id, type: transaction.wallet } },
+          data: { balance: { increment: transaction.amount } }
+        });
+      }
+    });
 
     invalidateSummaryCache(req.user.id);
 
     res.json({ message: "Transaction deleted successfully" });
   } catch (error) {
+    if (error.statusCode === 404) {
+      return res.status(404).json({ error: error.message });
+    }
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: "Transaction already deleted" });
+    }
     console.error("Error deleting transaction:", error);
     res.status(500).json({ error: "Server error deleting transaction" });
   }
@@ -363,79 +388,82 @@ router.delete("/transaction/:id", protect, async (req, res) => {
 router.put("/transaction/:id", protect, async (req, res) => {
   const { wallet, type, amount, category, note, date } = req.body;
 
-  if (!wallet || !type || !amount) {
+  if (!wallet || !type || amount === undefined || amount === null) {
     return res.status(400).json({ error: "Wallet, type, and amount are required" });
+  }
+  const numAmount = Number(amount);
+  if (isNaN(numAmount) || numAmount <= 0) {
+    return res.status(400).json({ error: "Amount must be greater than zero" });
   }
   if (type === "debit" && !category) {
     return res.status(400).json({ error: "Category is required for debit transactions" });
   }
-  if (amount <= 0) {
-    return res.status(400).json({ error: "Amount must be greater than zero" });
+  if (type !== "credit" && type !== "debit") {
+    return res.status(400).json({ error: "Invalid transaction type" });
   }
 
   try {
-    const oldTransaction = await prisma.transaction.findFirst({ where: { id: req.params.id, userId: req.user.id } });
-    if (!oldTransaction) {
-      return res.status(404).json({ error: "Transaction not found" });
-    }
+    const updatedTransaction = await prisma.$transaction(async (tx) => {
+      const oldTransaction = await tx.transaction.findFirst({
+        where: { id: req.params.id, userId: req.user.id }
+      });
+      if (!oldTransaction) {
+        const err = new Error("Transaction not found");
+        err.statusCode = 404;
+        throw err;
+      }
 
-    // In a real production app we would use a Prisma $transaction block here.
-    // Rollback old transaction
-    if (oldTransaction.type === "credit") {
-      await prisma.wallet.update({
-        where: { userId_type: { userId: req.user.id, type: oldTransaction.wallet } },
-        data: { balance: { decrement: oldTransaction.amount } }
-      });
-    } else if (oldTransaction.type === "debit") {
-      await prisma.wallet.update({
-        where: { userId_type: { userId: req.user.id, type: oldTransaction.wallet } },
-        data: { balance: { increment: oldTransaction.amount } }
-      });
-    }
+      // Rollback old transaction on old wallet
+      if (oldTransaction.type === "credit") {
+        await tx.wallet.update({
+          where: { userId_type: { userId: req.user.id, type: oldTransaction.wallet } },
+          data: { balance: { decrement: oldTransaction.amount } }
+        });
+      } else if (oldTransaction.type === "debit") {
+        await tx.wallet.update({
+          where: { userId_type: { userId: req.user.id, type: oldTransaction.wallet } },
+          data: { balance: { increment: oldTransaction.amount } }
+        });
+      }
 
-    // Apply new transaction
-    let updatedWallet;
-    if (type === "credit") {
-      updatedWallet = await prisma.wallet.update({
-        where: { userId_type: { userId: req.user.id, type: wallet } },
-        data: { balance: { increment: amount } }
-      });
-    } else if (type === "debit") {
-      const checkWallet = await prisma.wallet.findUnique({
+      // Apply new transaction on target wallet
+      let targetWallet = await tx.wallet.findUnique({
         where: { userId_type: { userId: req.user.id, type: wallet } }
       });
-      if (!checkWallet || checkWallet.balance < amount) {
-        // Rollback the rollback to keep consistent state if this fails
-        if (oldTransaction.type === "credit") {
-          await prisma.wallet.update({
-            where: { userId_type: { userId: req.user.id, type: oldTransaction.wallet } },
-            data: { balance: { increment: oldTransaction.amount } }
-          });
-        } else if (oldTransaction.type === "debit") {
-          await prisma.wallet.update({
-            where: { userId_type: { userId: req.user.id, type: oldTransaction.wallet } },
-            data: { balance: { decrement: oldTransaction.amount } }
-          });
-        }
-        return res.status(400).json({ error: "Insufficient balance for this update" });
+      if (!targetWallet) {
+        targetWallet = await tx.wallet.create({
+          data: { userId: req.user.id, type: wallet, balance: 0 }
+        });
       }
 
-      updatedWallet = await prisma.wallet.update({
+      if (type === "debit" && targetWallet.balance < numAmount) {
+        const err = new Error("Insufficient balance for this update");
+        err.statusCode = 400;
+        throw err;
+      }
+
+      await tx.wallet.update({
         where: { userId_type: { userId: req.user.id, type: wallet } },
-        data: { balance: { decrement: amount } }
+        data: {
+          balance: type === "credit"
+            ? { increment: numAmount }
+            : { decrement: numAmount }
+        }
       });
-    }
 
-    const updatedTransaction = await prisma.transaction.update({
-      where: { id: req.params.id },
-      data: {
-        wallet,
-        type,
-        amount,
-        category: type === "debit" ? category : null,
-        note,
-        date: date ? new Date(date) : oldTransaction.date,
-      }
+      const updated = await tx.transaction.update({
+        where: { id: req.params.id },
+        data: {
+          wallet,
+          type,
+          amount: numAmount,
+          category: type === "debit" ? category : null,
+          note,
+          date: date ? new Date(date) : oldTransaction.date,
+        }
+      });
+
+      return updated;
     });
 
     updatedTransaction._id = updatedTransaction.id;
@@ -447,6 +475,12 @@ router.put("/transaction/:id", protect, async (req, res) => {
       transaction: updatedTransaction,
     });
   } catch (error) {
+    if (error.statusCode === 400) {
+      return res.status(400).json({ error: error.message });
+    }
+    if (error.statusCode === 404) {
+      return res.status(404).json({ error: error.message });
+    }
     console.error("Error updating transaction:", error);
     res.status(500).json({ error: "Server error updating transaction" });
   }
@@ -456,86 +490,91 @@ router.put("/transaction/:id", protect, async (req, res) => {
 router.post("/transaction/auto", protect, async (req, res) => {
   const { type, amount, bank, counterparty, counterpartyType, refNo, accountNo, balance, date, txnDate } = req.body;
 
-  if (!type || !amount || !bank) {
+  if (!type || amount === undefined || amount === null || !bank) {
     return res.status(400).json({ error: "Type, amount, and bank are required" });
+  }
+  const numAmount = Number(amount);
+  if (isNaN(numAmount) || numAmount <= 0) {
+    return res.status(400).json({ error: "Amount must be greater than zero" });
   }
 
   try {
-    // 1. Prevent duplicate transactions if refNo exists
-    if (refNo) {
-      const existingTxn = await prisma.transaction.findFirst({
-        where: { userId: req.user.id, refNo }
-      });
-      if (existingTxn) {
-        return res.status(200).json({ message: "Transaction already recorded", transaction: existingTxn });
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Prevent duplicate transactions if refNo exists
+      if (refNo) {
+        const existingTxn = await tx.transaction.findFirst({
+          where: { userId: req.user.id, refNo }
+        });
+        if (existingTxn) {
+          existingTxn._id = existingTxn.id;
+          return { alreadyExists: true, transaction: existingTxn };
+        }
       }
-    }
 
-    // 2. Default wallet for auto-captured is UPI
-    const wallet = "UPI";
+      // 2. Default wallet for auto-captured is UPI
+      const wallet = "UPI";
 
-    // 3. Update the Wallet balance
-    let updatedWallet;
-    if (type === "credit") {
-      updatedWallet = await prisma.wallet.update({
-        where: { userId_type: { userId: req.user.id, type: wallet } },
-        data: { balance: { increment: amount } }
-      });
-    } else if (type === "debit") {
-      const currentWallet = await prisma.wallet.findUnique({
+      // 3. Ensure wallet exists
+      let currentWallet = await tx.wallet.findUnique({
         where: { userId_type: { userId: req.user.id, type: wallet } }
       });
-
       if (!currentWallet) {
-        return res.status(404).json({ error: "UPI Wallet not found" });
+        currentWallet = await tx.wallet.create({
+          data: { userId: req.user.id, type: wallet, balance: 0 }
+        });
       }
 
-      // We allow negative balances for auto-captured transactions because
-      // the bank has already allowed the transaction, and the user's logged balance
-      // might just be out of sync.
-      updatedWallet = await prisma.wallet.update({
+      // 4. Update the Wallet balance
+      const updatedWallet = await tx.wallet.update({
         where: { userId_type: { userId: req.user.id, type: wallet } },
-        data: { balance: { decrement: amount } }
+        data: {
+          balance: type === "credit"
+            ? { increment: numAmount }
+            : { decrement: numAmount }
+        }
       });
-    } else {
-      return res.status(400).json({ error: "Invalid transaction type" });
-    }
 
-    // 4. Save the auto-captured transaction
-    const transaction = await prisma.transaction.create({
-      data: {
-        userId: req.user.id,
-        wallet,
-        type,
-        amount,
-        category: type === "debit" ? "Uncategorized" : null,
-        note: `Auto-captured from ${bank}`,
-        bank,
-        counterparty,
-        counterpartyType,
-        refNo,
-        accountNo,
-        balance,
-        entryMode: "auto",
-        txnDate: txnDate ? new Date(txnDate) : null,
-        date: date ? new Date(date) : new Date(),
-      }
+      // 5. Save the auto-captured transaction
+      const transaction = await tx.transaction.create({
+        data: {
+          userId: req.user.id,
+          wallet,
+          type,
+          amount: numAmount,
+          category: type === "debit" ? "Uncategorized" : null,
+          note: `Auto-captured from ${bank}`,
+          bank,
+          counterparty,
+          counterpartyType,
+          refNo,
+          accountNo,
+          balance,
+          entryMode: "auto",
+          txnDate: txnDate ? new Date(txnDate) : null,
+          date: date ? new Date(date) : new Date(),
+        }
+      });
+
+      transaction._id = transaction.id;
+
+      await tx.user.update({
+        where: { id: req.user.id },
+        data: { lastBankSyncAt: new Date() }
+      });
+
+      return { transaction, updatedBalance: updatedWallet.balance };
     });
-
-    transaction._id = transaction.id;
 
     invalidateSummaryCache(req.user.id);
 
-    // Update last bank sync timestamp
-    await prisma.user.update({
-      where: { id: req.user.id },
-      data: { lastBankSyncAt: new Date() }
-    });
+    if (result.alreadyExists) {
+      return res.status(200).json({ message: "Transaction already recorded", transaction: result.transaction });
+    }
 
     res.status(201).json({
       message: "Auto-captured transaction recorded",
-      transaction,
-      updatedBalance: updatedWallet.balance,
+      transaction: result.transaction,
+      updatedBalance: result.updatedBalance,
     });
   } catch (error) {
     console.error("Error processing auto-transaction:", error);

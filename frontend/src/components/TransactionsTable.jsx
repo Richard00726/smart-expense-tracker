@@ -111,11 +111,15 @@ const TransactionsTable = ({
   };
 
   const confirmDelete = async () => {
-    if (confirmDeleteId) {
-      setDeletingId(confirmDeleteId);
-      await onDelete(confirmDeleteId);
-      setDeletingId(null);
-      setConfirmDeleteId(null);
+    if (confirmDeleteId && !deletingId) {
+      const idToDelete = confirmDeleteId;
+      setDeletingId(idToDelete);
+      try {
+        await onDelete(idToDelete);
+      } finally {
+        setDeletingId(null);
+        setConfirmDeleteId(null);
+      }
     }
   };
 
@@ -354,14 +358,16 @@ const TransactionsTable = ({
                 className="btn" 
                 style={{ background: 'var(--empty-state-bg)', color: 'var(--text-primary)' }} 
                 onClick={cancelDelete}
+                disabled={Boolean(deletingId)}
               >
                 Keep it
               </button>
               <button 
                 className="btn btn-danger" 
                 onClick={confirmDelete}
+                disabled={Boolean(deletingId)}
               >
-                Yes, Undo it
+                {deletingId ? 'Undoing...' : 'Yes, Undo it'}
               </button>
             </div>
           </div>

@@ -13,6 +13,7 @@ const TransactionForm = ({ onTransactionComplete, type, onTypeChange, hideToggle
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [toast, setToast] = useState(null);
+  const isSubmittingRef = React.useRef(false);
 
   const categories = [
     'Salary',
@@ -62,6 +63,8 @@ const TransactionForm = ({ onTransactionComplete, type, onTypeChange, hideToggle
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading || isSubmittingRef.current) return;
+
     if (!amount || amount <= 0) {
       setError('Please enter a valid amount');
       return;
@@ -82,6 +85,7 @@ const TransactionForm = ({ onTransactionComplete, type, onTypeChange, hideToggle
       }
     }
 
+    isSubmittingRef.current = true;
     setLoading(true);
     setError('');
 
@@ -127,6 +131,7 @@ const TransactionForm = ({ onTransactionComplete, type, onTypeChange, hideToggle
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to process transaction');
     } finally {
+      isSubmittingRef.current = false;
       setLoading(false);
     }
   };
