@@ -137,7 +137,17 @@ const AnalysisView = ({ refreshTrigger }) => {
     value: item.total
   })) : [];
 
-  const monthlyFlowData = flowSummary?.monthlyFlow ? flowSummary.monthlyFlow.map(item => {
+  const filteredMonthlyFlow = (flowSummary?.monthlyFlow || []).filter(item => {
+    if (flowFilterType === 'month' && flowFilterValue) {
+      return item._id === flowFilterValue;
+    }
+    if (flowFilterType === 'year' && flowFilterValue) {
+      return item._id.startsWith(flowFilterValue);
+    }
+    return true;
+  });
+
+  const monthlyFlowData = filteredMonthlyFlow.map(item => {
     const cashIn = item.cashIncome ?? 0;
     const cashOut = item.cashSpend ?? 0;
     const upiIn = item.upiIncome ?? 0;
@@ -166,7 +176,7 @@ const AnalysisView = ({ refreshTrigger }) => {
       upiIncome: upiIn,
       upiSpend: upiOut
     };
-  }) : [];
+  });
 
   let inTotal = 0;
   let outTotal = 0;
@@ -175,7 +185,7 @@ const AnalysisView = ({ refreshTrigger }) => {
   let upiInTotal = 0;
   let upiOutTotal = 0;
 
-  (flowSummary?.monthlyFlow || []).forEach(item => {
+  filteredMonthlyFlow.forEach(item => {
     inTotal += item.income || 0;
     outTotal += item.spend || 0;
     cashInTotal += item.cashIncome || 0;

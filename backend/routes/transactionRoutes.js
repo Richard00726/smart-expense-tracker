@@ -132,9 +132,10 @@ router.get("/summary", protect, async (req, res) => {
     const monthlyMap = {};
 
     allFilteredTransactions.forEach(t => {
-      const d = t.date;
-      const dayKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-      const monthKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      // Format using Asia/Kolkata timezone so dates match Indian banking and user local time on UTC cloud hosts
+      const istDateStr = new Date(t.date).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+      const dayKey = istDateStr;
+      const monthKey = istDateStr.slice(0, 7);
 
       if (t.type === 'debit') {
         walletSpendMap[t.wallet] = (walletSpendMap[t.wallet] || 0) + t.amount;
