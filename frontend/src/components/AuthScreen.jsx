@@ -339,6 +339,12 @@ const AuthScreen = ({ onAuthSuccess }) => {
       <div className="split-right-panel">
         
         <div className="split-form-inner">
+
+          {/* Mobile Only Brand Header */}
+          <div className="auth-mobile-brand">
+            <span className="auth-mobile-brand-title">Smart Expense</span>
+            <span className="auth-mobile-brand-badge">TRACKER</span>
+          </div>
           
           {/* Header */}
           <div className="auth-header-block">

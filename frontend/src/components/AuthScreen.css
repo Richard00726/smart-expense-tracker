@@ -688,6 +688,10 @@
   text-decoration: underline;
 }
 
+.auth-mobile-brand {
+  display: none;
+}
+
 .auth-copyright {
   text-align: center;
   font-size: 0.85rem;
@@ -696,79 +700,121 @@
 }
 
 /* ==========================================================================
-   RESPONSIVE DESIGN (Tablets & Mobile)
+   RESPONSIVE DESIGN (Mobile & Tablet)
+   - On screens <= 960px, hide the left side completely as requested.
+   - The right side auth form expands to a clean, full-width responsive view.
    ========================================================================== */
-@media (max-width: 1024px) {
+@media (max-width: 960px) {
   .split-page-wrapper {
     flex-direction: column;
     height: auto;
     min-height: 100vh;
+    min-height: 100dvh;
+    background: #ffffff;
+    overflow-x: hidden;
     overflow-y: auto;
   }
 
+  /* Completely hide left panel on mobile / tablet */
   .split-left-panel {
-    flex: 1 1 auto;
-    width: 100%;
-    height: auto;
-    min-height: 540px;
-    border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 6rem 2rem 3rem 2rem;
+    display: none !important;
   }
 
-  .split-logo-block {
-    top: 1.5rem;
-    left: 2rem;
+  /* Mobile Brand Logo Header inside the form */
+  .auth-mobile-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-bottom: 1.5rem;
   }
 
-  .split-left-footer {
-    position: relative;
-    bottom: auto;
-    left: auto;
-    margin-top: 2rem;
-    text-align: center;
+  .auth-mobile-brand-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.02em;
   }
 
-  .constellation-stage {
-    transform: scale(0.88);
-    transform-origin: center center;
-    margin: 1rem auto;
+  .auth-mobile-brand-badge {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    color: #0284c7;
+    background: #e0f2fe;
+    padding: 0.22rem 0.55rem;
+    border-radius: 6px;
+    text-transform: uppercase;
   }
 
+  /* Right panel becomes full viewport width clean mobile layout */
   .split-right-panel {
-    flex: 1 1 auto;
+    flex: 1 1 100%;
     width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
     height: auto;
     padding: 3rem 2rem;
-  }
-}
-
-@media (max-width: 640px) {
-  .split-left-panel {
-    padding: 5.5rem 1.25rem 2rem 1.25rem;
-  }
-
-  .split-logo-block {
-    top: 1.25rem;
-    left: 1.25rem;
-  }
-
-  .split-hero-title {
-    font-size: 1.6rem;
-  }
-
-  .constellation-stage {
-    transform: scale(0.68);
-    transform-origin: center center;
-    margin: 0 auto;
-  }
-
-  .split-right-panel {
-    padding: 2.5rem 1.25rem;
+    border-left: none;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
   }
 
   .split-form-inner {
     width: 100%;
-    max-width: 100%;
+    max-width: 440px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .split-right-panel {
+    padding: 2.25rem 1.25rem 2rem 1.25rem;
+    justify-content: flex-start;
+  }
+
+  .auth-header-block {
+    margin-bottom: 1.65rem;
+  }
+
+  .auth-header-title {
+    font-size: 1.95rem;
+  }
+
+  .auth-header-subtitle {
+    font-size: 0.95rem;
+  }
+
+  .auth-input {
+    font-size: 1rem;
+    padding: 0.88rem 1rem;
+  }
+
+  .auth-input.has-left-icon {
+    padding-left: 2.75rem;
+  }
+
+  .auth-input.has-right-icon {
+    padding-right: 2.75rem;
+  }
+
+  .auth-submit-btn {
+    padding: 0.95rem 1.25rem;
+    font-size: 1.02rem;
+  }
+
+  .auth-options-row {
+    font-size: 0.88rem;
+  }
+
+  .auth-checkbox-label {
+    font-size: 0.88rem;
+  }
+
+  .auth-link-btn {
+    font-size: 0.88rem;
   }
 }
