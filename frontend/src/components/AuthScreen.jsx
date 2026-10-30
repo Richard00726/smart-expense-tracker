@@ -225,14 +225,17 @@ const AuthScreen = ({ onAuthSuccess }) => {
                 </filter>
               </defs>
 
-              {/* 1. Large Outer Faint Ellipse (Spanning 580px wide) */}
+              {/* 1. Large Outer Ellipse: Base track + Rotating flowing dashes */}
               <ellipse cx="340" cy="180" rx="290" ry="135" stroke="rgba(56, 189, 248, 0.22)" strokeWidth="1.2" fill="none" />
+              <ellipse cx="340" cy="180" rx="290" ry="135" stroke="#00e5ff" strokeWidth="1.6" strokeDasharray="10 16" className="outer-ellipse-flow" />
 
-              {/* 2. Mid Dashed Cyan Orbit Ring */}
-              <circle cx="340" cy="180" r="76" stroke="#00e5ff" strokeWidth="1.4" strokeDasharray="5 7" className="orbit-cw" />
+              {/* 2. Mid Dashed Cyan Orbit Ring (SVG with center transform-box) */}
+              <g className="svg-orbit-cw">
+                <circle cx="340" cy="180" r="76" stroke="#00e5ff" strokeWidth="1.5" strokeDasharray="6 8" />
+              </g>
 
               {/* 3. Inner Solid Cyan Ring */}
-              <circle cx="340" cy="180" r="64" stroke="#00e5ff" strokeWidth="1.6" filter="url(#glowCyan)" />
+              <circle cx="340" cy="180" r="62" stroke="#00e5ff" strokeWidth="1.5" filter="url(#glowCyan)" opacity="0.75" />
 
               {/* 4. Symmetrical Radiating Connecting Lines to the 6 Pills */}
               {/* Top Left -> Bank Sync */}
@@ -251,9 +254,11 @@ const AuthScreen = ({ onAuthSuccess }) => {
 
             {/* Central Circular Hub with Spinning Outer Rings & Static Content (Prominent 110px Diameter) */}
             <div className="hub-center-container">
-              {/* Spinning Outer Orbit Ring */}
+              {/* Prominent Spinning Outer Orbit Circle (162px Diameter) */}
               <div className="hub-spin-ring-outer" />
-              {/* Spinning Cyan Dashed Border */}
+              {/* Spinning Mid Orbit Ring (136px Diameter) */}
+              <div className="hub-spin-ring-mid" />
+              {/* Spinning Cyan Dashed Border (116px Diameter) */}
               <div className="hub-spin-border" />
               {/* Static Center Core (Text stays completely upright and fixed) */}
               <div className="hub-center-circle">
