@@ -346,9 +346,7 @@ const TransactionsTable = ({
                               borderRadius: '6px',
                               fontSize: '11.5px',
                               fontWeight: '600',
-                              background: 'rgba(99, 102, 241, 0.1)',
-                              color: 'var(--accent-secondary, #6366f1)',
-                              border: '1px solid rgba(99, 102, 241, 0.25)'
+                              ...getCategoryStyle(tx.category)
                             }}
                           >
                             {tx.category}

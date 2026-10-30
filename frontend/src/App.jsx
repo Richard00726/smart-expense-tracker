@@ -250,9 +250,21 @@ function App() {
       <SystemStatusOverlay />
       {/* Sidebar (Desktop) */}
       <aside className="sidebar">
-        <div className="sidebar-logo">
-          <WalletIcon size={28} />
-          Smart Expense Tracker
+        <div 
+          className="sidebar-brand-block" 
+          onClick={() => setActiveTab('home')} 
+          title="Smart Expense Tracker"
+        >
+          <span className="sidebar-brand-title">Smart Expense</span>
+          <div className="sidebar-brand-swoosh">
+            <svg viewBox="0 0 460 48" fill="none" style={{ width: '100%', height: 'auto', overflow: 'visible' }}>
+              <path d="M 12 22 C 145 42, 315 42, 438 12" stroke="#00d084" strokeWidth="6.5" strokeLinecap="round" />
+              <circle cx="441" cy="11" r="7.5" fill="#00d084" />
+            </svg>
+          </div>
+          <div className="sidebar-brand-tracker">
+            <span>T</span><span>R</span><span>A</span><span>C</span><span>K</span><span>E</span><span>R</span>
+          </div>
         </div>
         <div 
           className={`nav-item ${activeTab === 'home' ? 'active' : ''}`}
@@ -302,6 +314,22 @@ function App() {
       <div className="app-container">
         <header className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div className="header-title" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <div 
+              className="header-mobile-brand" 
+              onClick={() => setActiveTab('home')} 
+              title="Smart Expense Tracker"
+            >
+              <span className="header-mobile-brand-title">Smart Expense</span>
+              <div className="header-mobile-brand-swoosh">
+                <svg viewBox="0 0 460 48" fill="none" style={{ width: '100%', height: 'auto', overflow: 'visible' }}>
+                  <path d="M 12 22 C 145 42, 315 42, 438 12" stroke="#00d084" strokeWidth="6" strokeLinecap="round" />
+                  <circle cx="441" cy="11" r="7.5" fill="#00d084" />
+                </svg>
+              </div>
+              <div className="header-mobile-brand-tracker">
+                <span>T</span><span>R</span><span>A</span><span>C</span><span>K</span><span>E</span><span>R</span>
+              </div>
+            </div>
             <span>
               {activeTab === 'home' && 'Dashboard'}
               {activeTab === 'cash' && 'Cash Management'}
