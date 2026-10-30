@@ -208,41 +208,6 @@
   100% { stroke-dashoffset: 20; }
 }
 
-/* Outer Ellipse Rotating Flow */
-.outer-ellipse-flow {
-  animation: ellipseFlow 22s linear infinite;
-  opacity: 0.75;
-}
-
-@keyframes ellipseFlow {
-  0% { stroke-dashoffset: 0; }
-  100% { stroke-dashoffset: -520; }
-}
-
-/* SVG Orbit Rotations */
-.svg-orbit-cw,
-.orbit-cw {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: rotateRing 20s linear infinite;
-}
-
-.orbit-ccw {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: rotateRingRev 24s linear infinite;
-}
-
-@keyframes rotateRing {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-@keyframes rotateRingRev {
-  0% { transform: rotate(360deg); }
-  100% { transform: rotate(0deg); }
-}
-
 /* Center Circular Hub with Space in "Smart Expense" (Prominent 110px Diameter) */
 .hub-center-container {
   position: absolute;
@@ -257,65 +222,27 @@
   z-index: 20;
 }
 
-/* 1. Prominent Spinning Outer Orbit Circle (162px Diameter, Clockwise) */
-.hub-spin-ring-outer {
+/* The ONLY Spinning Circle Line (Clean, high-tech, rotating dashed cyan) */
+.hub-single-spin-ring {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 162px;
-  height: 162px;
+  width: 126px;
+  height: 126px;
   border-radius: 50%;
-  border: 1.8px dashed #00e5ff;
-  box-shadow: 0 0 26px rgba(0, 229, 255, 0.45);
-  animation: hubSpinCW 18s linear infinite;
-  pointer-events: none;
-  z-index: 17;
-}
-
-/* 2. Spinning Mid Orbit Ring (136px Diameter, Counter-Clockwise) */
-.hub-spin-ring-mid {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 136px;
-  height: 136px;
-  border-radius: 50%;
-  border: 1.5px dotted rgba(56, 189, 248, 0.75);
-  animation: hubSpinCCW 15s linear infinite;
+  border: 2px dashed #00e5ff;
+  box-shadow: 0 0 28px rgba(0, 229, 255, 0.55);
+  animation: hubSingleSpin 14s linear infinite;
   pointer-events: none;
   z-index: 18;
 }
 
-/* 3. Spinning Inner Cyan Dashed Border Ring (116px Diameter, Clockwise) */
-.hub-spin-border {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 116px;
-  height: 116px;
-  border-radius: 50%;
-  border: 2.5px dashed #00e5ff;
-  box-shadow: 0 0 35px rgba(0, 229, 255, 0.6);
-  animation: hubSpinCW 12s linear infinite;
-  pointer-events: none;
-  z-index: 19;
-}
-
-@keyframes hubSpinCW {
+@keyframes hubSingleSpin {
   0% {
     transform: translate(-50%, -50%) rotate(0deg);
   }
   100% {
     transform: translate(-50%, -50%) rotate(360deg);
-  }
-}
-
-@keyframes hubSpinCCW {
-  0% {
-    transform: translate(-50%, -50%) rotate(360deg);
-  }
-  100% {
-    transform: translate(-50%, -50%) rotate(0deg);
   }
 }
 
@@ -324,8 +251,8 @@
   height: 110px;
   border-radius: 50%;
   background: #030914;
-  border: 1.5px solid rgba(0, 229, 255, 0.6);
-  box-shadow: 0 0 25px rgba(0, 229, 255, 0.45);
+  border: 1.5px solid rgba(0, 229, 255, 0.5);
+  box-shadow: 0 0 25px rgba(0, 229, 255, 0.4);
   display: flex;
   flex-direction: column;
   align-items: center;

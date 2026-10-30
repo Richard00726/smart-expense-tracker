@@ -225,19 +225,10 @@ const AuthScreen = ({ onAuthSuccess }) => {
                 </filter>
               </defs>
 
-              {/* 1. Large Outer Ellipse: Base track + Rotating flowing dashes */}
+              {/* 1. Large Outer Faint Ellipse (Spanning 580px wide) */}
               <ellipse cx="340" cy="180" rx="290" ry="135" stroke="rgba(56, 189, 248, 0.22)" strokeWidth="1.2" fill="none" />
-              <ellipse cx="340" cy="180" rx="290" ry="135" stroke="#00e5ff" strokeWidth="1.6" strokeDasharray="10 16" className="outer-ellipse-flow" />
 
-              {/* 2. Mid Dashed Cyan Orbit Ring (SVG with center transform-box) */}
-              <g className="svg-orbit-cw">
-                <circle cx="340" cy="180" r="76" stroke="#00e5ff" strokeWidth="1.5" strokeDasharray="6 8" />
-              </g>
-
-              {/* 3. Inner Solid Cyan Ring */}
-              <circle cx="340" cy="180" r="62" stroke="#00e5ff" strokeWidth="1.5" filter="url(#glowCyan)" opacity="0.75" />
-
-              {/* 4. Symmetrical Radiating Connecting Lines to the 6 Pills */}
+              {/* 2. Symmetrical Radiating Connecting Lines to the 6 Pills */}
               {/* Top Left -> Bank Sync */}
               <line x1="340" y1="180" x2="160" y2="63" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line-rev" />
               {/* Top Right -> Reconciliation */}
@@ -252,14 +243,10 @@ const AuthScreen = ({ onAuthSuccess }) => {
               <line x1="340" y1="180" x2="145" y2="180" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line-rev" />
             </svg>
 
-            {/* Central Circular Hub with Spinning Outer Rings & Static Content (Prominent 110px Diameter) */}
+            {/* Central Circular Hub: Exactly ONE Single Spinning Circle Line + Static Content */}
             <div className="hub-center-container">
-              {/* Prominent Spinning Outer Orbit Circle (162px Diameter) */}
-              <div className="hub-spin-ring-outer" />
-              {/* Spinning Mid Orbit Ring (136px Diameter) */}
-              <div className="hub-spin-ring-mid" />
-              {/* Spinning Cyan Dashed Border (116px Diameter) */}
-              <div className="hub-spin-border" />
+              {/* The ONLY Spinning Circle Line */}
+              <div className="hub-single-spin-ring" />
               {/* Static Center Core (Text stays completely upright and fixed) */}
               <div className="hub-center-circle">
                 <span className="hub-center-title">Smart Expense</span>
