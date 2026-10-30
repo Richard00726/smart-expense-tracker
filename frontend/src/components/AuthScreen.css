@@ -392,7 +392,7 @@
 /* Exact Coordinates on 680x360 Canvas */
 .pill-pos-1 { top: 25px; left: 45px; }       /* Bank Sync */
 .pill-pos-2 { top: 25px; right: 45px; }      /* Reconciliation */
-.pill-pos-3 { top: 161px; right: 8px; }      /* UPI Payments */
+.pill-pos-3 { top: 161px; right: 8px; }      /* UPI Transactions */
 .pill-pos-4 { bottom: 25px; right: 45px; }   /* Cash Wallet */
 .pill-pos-5 { bottom: 25px; left: 45px; }    /* Budget Goals */
 .pill-pos-6 { top: 161px; left: 8px; }       /* Spend Insights */

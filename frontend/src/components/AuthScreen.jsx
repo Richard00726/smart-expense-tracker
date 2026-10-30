@@ -278,11 +278,11 @@ const AuthScreen = ({ onAuthSuccess }) => {
               </div>
             </div>
 
-            {/* 3. Middle Right: UPI Payments */}
+            {/* 3. Middle Right: UPI Transactions */}
             <div className="stage-pill pill-pos-3 bob-3">
               <div className="pill-content">
                 <Smartphone size={14} color="#00e5ff" strokeWidth={2.4} />
-                <span className="pill-text">UPI Payments</span>
+                <span className="pill-text">UPI Transactions</span>
               </div>
               <div className="pill-tooltip tooltip-top tooltip-right">
                 Live UPI tracking with instant merchant categorization.
