@@ -221,52 +221,97 @@ function categorizeTransaction(narration, type, counterparty) {
     return 'ATM';
   }
 
-  // 3. Jewelry / Gold / Silver
+  // 3. Credit Card Bill Payment
+  if (text.includes('cr crd bill') || text.includes('credit card') || text.includes('cc bill') || text.includes('sbi card') || text.includes('hdfc card') || text.includes('icici card') || text.includes('onecard') || text.includes('billpay') || text.includes('cred ') || text.includes(' cred')) {
+    return 'Credit Card Bill';
+  }
+
+  // 4. Rent & Housing
+  if (text.includes('/rent') || text.includes(' rent') || text.includes('house rent') || text.includes('maintenance') || text.includes('society') || text.includes('pg fee') || text.includes('landlord')) {
+    return 'Rent & Housing';
+  }
+
+  // 5. Investments & SIP
+  if (text.includes('zerodha') || text.includes('groww') || text.includes('upstox') || text.includes('mutual fund') || text.includes('sip') || text.includes('nippon') || text.includes('uti mf') || text.includes('ppf') || text.includes('lic') || text.includes('investment') || text.includes('demat')) {
+    return 'Investments & SIP';
+  }
+
+  // 6. Subscriptions & OTT
+  if (text.includes('netflix') || text.includes('prime') || text.includes('spotify') || text.includes('hotstar') || text.includes('youtube') || text.includes('apple.com/bill') || text.includes('subscription')) {
+    return 'Subscriptions & OTT';
+  }
+
+  // 7. Fuel & Vehicle
+  if (text.includes('petrol') || text.includes('fuel') || text.includes('hpcl') || text.includes('bpcl') || text.includes('iocl') || text.includes('shell') || text.includes('fastag') || text.includes('toll') || text.includes('diesel')) {
+    return 'Fuel & Vehicle';
+  }
+
+  // 8. Jewelry / Gold / Silver
   if (text.includes('jewel') || text.includes('grt') || text.includes('tanishq') || text.includes('malabar') || text.includes('kalyan') || text.includes('lalitha') || text.includes('gold') || text.includes('silver')) {
     return 'Jewellery';
   }
 
-  // 4. Bank Reimbursement
+  // 9. Education & Learning
+  if (text.includes('school') || text.includes('college') || text.includes('tuition') || text.includes('fees') || text.includes('course') || text.includes('udemy') || text.includes('coursera') || text.includes('academy')) {
+    return 'Education & Learning';
+  }
+
+  // 10. Personal Care & Fitness
+  if (text.includes('salon') || text.includes('spa') || text.includes('parlour') || text.includes('gym') || text.includes('fitness') || text.includes('cult') || text.includes('barber')) {
+    return 'Personal Care & Fitness';
+  }
+
+  // 11. Gifts & Donations
+  if (text.includes('gift') || text.includes('charity') || text.includes('donation') || text.includes('temple') || text.includes('church') || text.includes('trust')) {
+    return 'Gifts & Donations';
+  }
+
+  // 12. Bank Reimbursement
   if (text.includes('reim') || text.includes('reimbursement')) {
     return 'Reimbursement';
   }
 
-  // 4. Bank Transfer
-  if (text.includes('mbank') || text.includes('self/by') || text.includes('self transfer') || text.includes('bank transfer') || (type === 'credit' && text.includes('self'))) {
-    return 'Bank Transfer';
-  }
-
-  // 3. Travel & Transportation
-  if (text.includes('railway') || text.includes('irctc') || text.includes('uber') || text.includes('ola') || text.includes('rapido') || text.includes('metro') || text.includes('petrol') || text.includes('fuel')) {
-    return 'Travel';
-  }
-
-  // 4. Healthcare & Medical
-  if (text.includes('hospital') || text.includes('medical') || text.includes('clinic') || text.includes('pharmacy') || text.includes('doctor') || text.includes('health') || text.includes('lab')) {
+  // 13. Healthcare & Medical
+  if (text.includes('hospital') || text.includes('medical') || text.includes('clinic') || text.includes('pharmacy') || text.includes('doctor') || text.includes('health') || text.includes('lab') || text.includes('apollo') || text.includes('1mg')) {
     return 'Healthcare';
   }
 
-  // 5. Food & Groceries
+  // 14. Food & Groceries
   if (text.includes('swiggy') || text.includes('zomato') || text.includes('fish') || text.includes('meat') || text.includes('bakery') || text.includes('restaurant') || text.includes('cafe') || text.includes('hotel') || text.includes('grocery') || text.includes('food') || text.includes('dairy') || text.includes('supermarket')) {
     return 'Food & Groceries';
   }
 
-  // 6. Shopping and orders
+  // 15. Shopping and orders
   if (text.includes('amazon') || text.includes('flipkart') || text.includes('myntra') || text.includes('blinkit') || text.includes('zepto') || text.includes('instamart') || text.includes('store') || text.includes('mart') || text.includes('shop') || text.includes('retail') || text.includes('clothing')) {
     return 'Shopping and orders';
   }
 
-  // 7. Bills & Recharge
+  // 16. Entertainment
+  if (text.includes('cinema') || text.includes('movie') || text.includes('pvr') || text.includes('inox') || text.includes('bookmyshow') || text.includes('theatre') || text.includes('game') || text.includes('gaming')) {
+    return 'Entertainment';
+  }
+
+  // 17. Bills & Recharge
   if (text.includes('recharge') || text.includes('jio') || text.includes('airtel') || text.includes('vi ') || text.includes('vodafone') || text.includes('electricity') || text.includes('bescom') || text.includes('tneb') || text.includes('bill') || text.includes('broadband') || text.includes('dth') || text.includes('gas') || text.includes('water')) {
     return 'Bills & Recharge';
   }
 
-  // 8. UPI Transfer (P2P payments to individuals)
+  // 18. Bank Transfer
+  if (text.includes('mbank') || text.includes('self/by') || text.includes('self transfer') || text.includes('bank transfer') || (type === 'credit' && text.includes('self'))) {
+    return 'Bank Transfer';
+  }
+
+  // 19. Travel & Transportation
+  if (text.includes('railway') || text.includes('irctc') || text.includes('uber') || text.includes('ola') || text.includes('rapido') || text.includes('metro') || text.includes('flight') || text.includes('bus') || text.includes('redbus')) {
+    return 'Travel';
+  }
+
+  // 20. UPI Transfer (P2P payments to individuals)
   if (text.includes('sending money') || text.includes('/pay') || text.includes('upi/0') || text.includes('transfer')) {
     return 'UPI Transfer';
   }
 
-  // 9. Daily Expense (default for small local QR merchants/spends)
+  // 21. Daily Expense (default for small local QR merchants/spends)
   return 'Daily Expense';
 }
 

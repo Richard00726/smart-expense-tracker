@@ -51,51 +51,114 @@ const getCategoryStyle = (category) => {
   }
   if (cat.includes('jewel') || cat.includes('gold')) {
     return {
-      background: 'rgba(234, 179, 8, 0.12)',
-      color: '#eab308',
-      border: '1px solid rgba(234, 179, 8, 0.25)'
+      background: 'rgba(202, 138, 4, 0.12)',
+      color: '#ca8a04',
+      border: '1px solid rgba(202, 138, 4, 0.25)'
     };
   }
-  if (cat === 'travel' || cat.includes('rail')) {
+  if (cat.includes('credit card') || cat.includes('crd bill') || cat.includes('cc bill')) {
     return {
-      background: 'rgba(168, 85, 247, 0.12)',
-      color: '#a855f7',
-      border: '1px solid rgba(168, 85, 247, 0.25)'
+      background: 'rgba(13, 148, 136, 0.12)',
+      color: '#0d9488',
+      border: '1px solid rgba(13, 148, 136, 0.25)'
     };
   }
-  if (cat.includes('bill') || cat.includes('recharge')) {
+  if (cat.includes('rent') || cat.includes('housing') || cat.includes('society')) {
     return {
-      background: 'rgba(14, 165, 233, 0.12)',
-      color: '#0284c7',
-      border: '1px solid rgba(14, 165, 233, 0.25)'
+      background: 'rgba(99, 102, 241, 0.12)',
+      color: '#6366f1',
+      border: '1px solid rgba(99, 102, 241, 0.25)'
     };
   }
-  if (cat.includes('food') || cat.includes('grocer')) {
+  if (cat.includes('invest') || cat.includes('sip') || cat.includes('mutual fund')) {
     return {
-      background: 'rgba(249, 115, 22, 0.12)',
-      color: '#f97316',
-      border: '1px solid rgba(249, 115, 22, 0.25)'
+      background: 'rgba(5, 150, 105, 0.12)',
+      color: '#059669',
+      border: '1px solid rgba(5, 150, 105, 0.25)'
     };
   }
-  if (cat.includes('shop') || cat.includes('order')) {
-    return {
-      background: 'rgba(236, 72, 153, 0.12)',
-      color: '#ec4899',
-      border: '1px solid rgba(236, 72, 153, 0.25)'
-    };
-  }
-  if (cat.includes('entertain')) {
+  if (cat.includes('subscri') || cat.includes('ott') || cat.includes('netflix') || cat.includes('prime')) {
     return {
       background: 'rgba(139, 92, 246, 0.12)',
       color: '#8b5cf6',
       border: '1px solid rgba(139, 92, 246, 0.25)'
     };
   }
+  if (cat.includes('fuel') || cat.includes('petrol') || cat.includes('vehicle') || cat.includes('diesel')) {
+    return {
+      background: 'rgba(37, 99, 235, 0.12)',
+      color: '#2563eb',
+      border: '1px solid rgba(37, 99, 235, 0.25)'
+    };
+  }
+  if (cat.includes('educat') || cat.includes('learn') || cat.includes('course') || cat.includes('fee')) {
+    return {
+      background: 'rgba(2, 132, 199, 0.12)',
+      color: '#0284c7',
+      border: '1px solid rgba(2, 132, 199, 0.25)'
+    };
+  }
+  if (cat.includes('personal') || cat.includes('care') || cat.includes('fitness') || cat.includes('gym') || cat.includes('salon')) {
+    return {
+      background: 'rgba(249, 115, 22, 0.12)',
+      color: '#f97316',
+      border: '1px solid rgba(249, 115, 22, 0.25)'
+    };
+  }
+  if (cat.includes('gift') || cat.includes('donat') || cat.includes('charity')) {
+    return {
+      background: 'rgba(244, 63, 94, 0.12)',
+      color: '#f43f5e',
+      border: '1px solid rgba(244, 63, 94, 0.25)'
+    };
+  }
+  if (cat === 'travel' || cat.includes('rail') || cat.includes('flight') || cat.includes('irctc')) {
+    return {
+      background: 'rgba(124, 58, 237, 0.12)',
+      color: '#7c3aed',
+      border: '1px solid rgba(124, 58, 237, 0.25)'
+    };
+  }
+  if (cat.includes('bill') || cat.includes('recharge')) {
+    return {
+      background: 'rgba(8, 145, 178, 0.12)',
+      color: '#0891b2',
+      border: '1px solid rgba(8, 145, 178, 0.25)'
+    };
+  }
+  if (cat.includes('food') || cat.includes('grocer')) {
+    return {
+      background: 'rgba(234, 88, 12, 0.12)',
+      color: '#ea580c',
+      border: '1px solid rgba(234, 88, 12, 0.25)'
+    };
+  }
+  if (cat.includes('shop') || cat.includes('order')) {
+    return {
+      background: 'rgba(219, 39, 119, 0.12)',
+      color: '#db2777',
+      border: '1px solid rgba(219, 39, 119, 0.25)'
+    };
+  }
+  if (cat.includes('entertain')) {
+    return {
+      background: 'rgba(162, 28, 175, 0.12)',
+      color: '#a21caf',
+      border: '1px solid rgba(162, 28, 175, 0.25)'
+    };
+  }
   if (cat.includes('health') || cat.includes('medic')) {
     return {
-      background: 'rgba(239, 68, 68, 0.12)',
-      color: '#ef4444',
-      border: '1px solid rgba(239, 68, 68, 0.25)'
+      background: 'rgba(220, 38, 38, 0.12)',
+      color: '#dc2626',
+      border: '1px solid rgba(220, 38, 38, 0.25)'
+    };
+  }
+  if (cat.includes('reim')) {
+    return {
+      background: 'rgba(14, 116, 144, 0.12)',
+      color: '#0e7490',
+      border: '1px solid rgba(14, 116, 144, 0.25)'
     };
   }
   if (cat === 'bank transfer' || cat.includes('upi')) {

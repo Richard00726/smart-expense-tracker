@@ -5,6 +5,60 @@ import { PieChart as PieChartIcon, BarChart2, TrendingUp, Activity, ArrowDownLef
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899'];
 
+const CATEGORY_COLORS = {
+  // Living & Essentials
+  'Food & Groceries': '#ea580c',
+  'Rent & Housing': '#6366f1',
+  'Bills & Recharge': '#0891b2',
+  'Shopping and orders': '#db2777',
+  'Shopping & Orders': '#db2777',
+  'Fuel & Vehicle': '#2563eb',
+  'Credit Card Bill': '#0d9488',
+  
+  // Wealth & Subscriptions
+  'Investments & SIP': '#059669',
+  'Subscriptions & OTT': '#8b5cf6',
+  'Education & Learning': '#0284c7',
+  'Personal Care & Fitness': '#f97316',
+  'Gifts & Donations': '#f43f5e',
+  
+  // High-Value & Leisure
+  'Jewellery': '#ca8a04',
+  'Travel': '#7c3aed',
+  'Healthcare': '#dc2626',
+  'Entertainment': '#a21caf',
+  'ATM': '#d97706',
+  
+  // Transfers & General
+  'Daily Expense': '#4b5563',
+  'Bank Transfer': '#334155',
+  'UPI Transfer': '#06b6d4',
+  'Salary': '#10b981',
+  'Reimbursement': '#0e7490',
+  'Self Transfer': '#64748b',
+  'Other': '#64748b'
+};
+
+const FALLBACK_PALETTE = [
+  '#6366f1', '#ea580c', '#0891b2', '#db2777', '#2563eb',
+  '#0d9488', '#059669', '#8b5cf6', '#0284c7', '#f97316',
+  '#f43f5e', '#ca8a04', '#7c3aed', '#dc2626', '#a21caf',
+  '#d97706', '#4b5563', '#06b6d4', '#10b981', '#0e7490'
+];
+
+const getCategoryColor = (name, index = 0) => {
+  if (!name) return FALLBACK_PALETTE[index % FALLBACK_PALETTE.length];
+  if (CATEGORY_COLORS[name]) return CATEGORY_COLORS[name];
+  
+  const lower = name.toLowerCase();
+  for (const [key, color] of Object.entries(CATEGORY_COLORS)) {
+    if (lower === key.toLowerCase() || lower.includes(key.toLowerCase()) || key.toLowerCase().includes(lower)) {
+      return color;
+    }
+  }
+  return FALLBACK_PALETTE[index % FALLBACK_PALETTE.length];
+};
+
 // Module-level persistent cache across tab switches
 const globalSummaryCache = new Map();
 
@@ -291,6 +345,7 @@ const AnalysisView = ({ refreshTrigger }) => {
   const cashSpend = walletSpendingData.find(item => item.name === 'Cash')?.value || 0;
   const upiSpend = walletSpendingData.find(item => item.name === 'UPI')?.value || 0;
   const totalSpend = cashSpend + upiSpend;
+  const totalCategorySpend = categoryData.reduce((acc, curr) => acc + (Number(curr.value) || 0), 0);
 
   const cashIncome = walletIncomeData.find(item => item.name === 'Cash')?.value || 0;
   const upiIncome = walletIncomeData.find(item => item.name === 'UPI')?.value || 0;
@@ -400,34 +455,142 @@ const AnalysisView = ({ refreshTrigger }) => {
           </div>
         ) : (
           <div className="charts-grid">
-            <div className="chart-wrapper">
-              <h4 style={{ textAlign: 'center', marginBottom: '1rem', color: 'var(--text-secondary)' }}>
-                Spend by Category
-              </h4>
-              <div className="chart-container">
+            <div className="chart-wrapper" style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1rem', fontWeight: 600 }}>
+                  Spend by Category
+                </h4>
+                <span style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  background: 'var(--empty-state-bg)',
+                  border: '1px solid var(--card-border)',
+                  color: 'var(--text-muted)'
+                }}>
+                  {categoryData.length} {categoryData.length === 1 ? 'category' : 'categories'}
+                </span>
+              </div>
+
+              {/* Donut Chart with Centered Total Spent Metric */}
+              <div style={{ position: 'relative', width: '100%', height: '240px' }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={categoryData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={60}
-                      outerRadius={90}
-                      paddingAngle={5}
+                      innerRadius={65}
+                      outerRadius={95}
+                      paddingAngle={3}
                       dataKey="value"
                     >
                       {categoryData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        <Cell key={`cell-${index}`} fill={getCategoryColor(entry.name, index)} stroke="var(--card-bg)" strokeWidth={2} />
                       ))}
                     </Pie>
                     <Tooltip 
                       contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', color: 'var(--text-primary)' }}
                       itemStyle={{ color: 'var(--text-primary)' }}
-                      formatter={(value) => `${getCurrency()}${value}`}
+                      formatter={(value) => [`${getCurrency()}${formatAmt(value)}`, 'Spent']}
                     />
-                    <Legend />
                   </PieChart>
                 </ResponsiveContainer>
+                <div style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  textAlign: 'center',
+                  pointerEvents: 'none',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '120px'
+                }}>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Total Spent
+                  </span>
+                  <span style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', margin: '2px 0', lineHeight: 1.2 }}>
+                    {getCurrency()}{formatAmt(totalCategorySpend)}
+                  </span>
+                  <span style={{ fontSize: '0.68rem', color: '#10b981', fontWeight: 600 }}>
+                    100% of Spend
+                  </span>
+                </div>
+              </div>
+
+              {/* High-Contrast Category Breakdown Ranking List */}
+              <div style={{
+                marginTop: '1rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.55rem',
+                maxHeight: '260px',
+                overflowY: 'auto',
+                paddingRight: '4px'
+              }}>
+                {categoryData.map((cat, idx) => {
+                  const pct = totalCategorySpend > 0 ? ((cat.value / totalCategorySpend) * 100).toFixed(1) : '0.0';
+                  const catColor = getCategoryColor(cat.name, idx);
+                  return (
+                    <div
+                      key={cat.name || idx}
+                      style={{
+                        background: 'var(--empty-state-bg)',
+                        border: '1px solid var(--card-border)',
+                        borderRadius: '10px',
+                        padding: '0.6rem 0.8rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px',
+                        transition: 'transform 0.15s ease'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', minWidth: 0 }}>
+                          <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: catColor, flexShrink: 0 }} />
+                          <span style={{
+                            fontWeight: 600,
+                            fontSize: '0.88rem',
+                            color: 'var(--text-primary)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                          }}>
+                            {cat.name}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexShrink: 0 }}>
+                          <span style={{
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            background: 'var(--card-bg)',
+                            border: '1px solid var(--card-border)',
+                            color: 'var(--text-secondary)'
+                          }}>
+                            {pct}%
+                          </span>
+                          <span style={{
+                            fontWeight: 700,
+                            fontSize: '0.88rem',
+                            color: 'var(--text-primary)',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            {getCurrency()}{formatAmt(cat.value)}
+                          </span>
+                        </div>
+                      </div>
+                      <div style={{ width: '100%', height: '4px', background: 'var(--card-border)', borderRadius: '9999px', overflow: 'hidden' }}>
+                        <div style={{ width: `${Math.min(100, Math.max(0, Number(pct)))}%`, height: '100%', backgroundColor: catColor, borderRadius: '9999px' }} />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
