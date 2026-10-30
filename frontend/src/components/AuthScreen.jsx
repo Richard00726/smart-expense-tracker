@@ -225,8 +225,9 @@ const AuthScreen = ({ onAuthSuccess }) => {
                 </filter>
               </defs>
 
-              {/* 1. Large Outer Faint Ellipse (Spanning 580px wide) */}
+              {/* 1. Large Outer Ellipse: Base track + Rotating flowing dashes */}
               <ellipse cx="340" cy="180" rx="290" ry="135" stroke="rgba(56, 189, 248, 0.22)" strokeWidth="1.2" fill="none" />
+              <ellipse cx="340" cy="180" rx="290" ry="135" stroke="#00e5ff" strokeWidth="1.6" strokeDasharray="10 16" className="outer-ellipse-flow" />
 
               {/* 2. Symmetrical Radiating Connecting Lines to the 6 Pills */}
               {/* Top Left -> Bank Sync */}

@@ -208,6 +208,17 @@
   100% { stroke-dashoffset: 20; }
 }
 
+/* Outer Ellipse Rotating Flow */
+.outer-ellipse-flow {
+  animation: ellipseFlow 22s linear infinite;
+  opacity: 0.75;
+}
+
+@keyframes ellipseFlow {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -520; }
+}
+
 /* Center Circular Hub with Space in "Smart Expense" (Prominent 110px Diameter) */
 .hub-center-container {
   position: absolute;
