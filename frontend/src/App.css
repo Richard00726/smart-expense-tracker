@@ -352,14 +352,18 @@ tr:hover td {
 }
 
 .badge-category {
-  display: inline-block;
-  padding: 0.25rem 0.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.65rem;
   border-radius: 6px;
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   font-weight: 600;
+  white-space: nowrap !important;
   background: var(--badge-bg);
   color: var(--badge-text);
   border: 1px solid var(--badge-border);
+  line-height: 1.25;
 }
 
 .ref-code {
@@ -371,16 +375,20 @@ tr:hover td {
   border: 1px solid var(--border);
   padding: 0.2rem 0.5rem;
   border-radius: 6px;
+  white-space: nowrap !important;
+  display: inline-block;
 }
 
 .type-pill {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   padding: 0.25rem 0.65rem;
   border-radius: 6px;
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.04em;
+  white-space: nowrap !important;
 }
 
 .type-deposit {

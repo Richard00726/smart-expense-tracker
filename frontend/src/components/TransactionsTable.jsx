@@ -11,6 +11,21 @@ const getCleanPayee = (tx) => {
   // Format: UPI/000000652067/Indian Railways/SBIN/Pay
   const upiMatch = tx.note.match(/UPI\/\d+\/([^/]+)/i);
   if (upiMatch && upiMatch[1]) return upiMatch[1].trim();
+
+  // Format: MBank/627806381285/Tr To SELVI T/Rent or MBank/629812953800/Self/by LOURDURAJ M
+  const mbankMatch = tx.note.match(/MBank\/\d+\/(?:Tr To\s+|To\s+|Self\/by\s+|by\s+)?([^/]+)/i);
+  if (mbankMatch && mbankMatch[1]) {
+    const rawTarget = mbankMatch[1].trim();
+    if (rawTarget.toLowerCase().startsWith('self')) return 'Self Transfer';
+    if (rawTarget.length > 2) return `Transfer to ${rawTarget}`;
+    return 'Bank Transfer';
+  }
+
+  // Format: ATM/CASH/571563/629813571563
+  if (/^ATM\/CASH/i.test(tx.note)) return 'ATM Cash Withdrawal';
+
+  // Format: Cr Crd bill SEP2026...
+  if (/^Cr\s*Crd\s*bill/i.test(tx.note)) return 'Credit Card Bill Payment';
   
   // Format: REIM FOR THE DATE...
   if (/^REIM\s+FOR/i.test(tx.note)) return 'Bank Reimbursement';
@@ -46,6 +61,41 @@ const getCategoryStyle = (category) => {
       background: 'rgba(168, 85, 247, 0.12)',
       color: '#a855f7',
       border: '1px solid rgba(168, 85, 247, 0.25)'
+    };
+  }
+  if (cat.includes('bill') || cat.includes('recharge')) {
+    return {
+      background: 'rgba(14, 165, 233, 0.12)',
+      color: '#0284c7',
+      border: '1px solid rgba(14, 165, 233, 0.25)'
+    };
+  }
+  if (cat.includes('food') || cat.includes('grocer')) {
+    return {
+      background: 'rgba(249, 115, 22, 0.12)',
+      color: '#f97316',
+      border: '1px solid rgba(249, 115, 22, 0.25)'
+    };
+  }
+  if (cat.includes('shop') || cat.includes('order')) {
+    return {
+      background: 'rgba(236, 72, 153, 0.12)',
+      color: '#ec4899',
+      border: '1px solid rgba(236, 72, 153, 0.25)'
+    };
+  }
+  if (cat.includes('entertain')) {
+    return {
+      background: 'rgba(139, 92, 246, 0.12)',
+      color: '#8b5cf6',
+      border: '1px solid rgba(139, 92, 246, 0.25)'
+    };
+  }
+  if (cat.includes('health') || cat.includes('medic')) {
+    return {
+      background: 'rgba(239, 68, 68, 0.12)',
+      color: '#ef4444',
+      border: '1px solid rgba(239, 68, 68, 0.25)'
     };
   }
   if (cat === 'bank transfer' || cat.includes('upi')) {
@@ -170,11 +220,11 @@ const TransactionsTable = ({
           <table>
             <thead>
               <tr>
-                <th style={{ width: '140px' }}>Date</th>
+                <th style={{ width: '140px', minWidth: '125px', whiteSpace: 'nowrap' }}>Date</th>
                 <th>Particulars & Payee</th>
-                <th style={{ width: '150px' }}>Category</th>
-                <th style={{ width: '150px' }}>Ref / UTR</th>
-                <th style={{ width: '140px', textAlign: 'center' }}>Type</th>
+                <th style={{ width: '170px', minWidth: '155px', whiteSpace: 'nowrap' }}>Category</th>
+                <th style={{ width: '150px', minWidth: '130px', whiteSpace: 'nowrap' }}>Ref / UTR</th>
+                <th style={{ width: '130px', minWidth: '110px', textAlign: 'center', whiteSpace: 'nowrap' }}>Type</th>
                 <th style={{ width: '150px', minWidth: '130px', textAlign: 'right', whiteSpace: 'nowrap' }}>Amount</th>
               </tr>
             </thead>
@@ -198,12 +248,12 @@ const TransactionsTable = ({
                       </span>
                     )}
                   </td>
-                  <td>
+                  <td style={{ whiteSpace: 'nowrap' }}>
                     <span className="badge-category" style={getCategoryStyle(tx.category)}>
                       {tx.category || 'Daily Expense'}
                     </span>
                   </td>
-                  <td>
+                  <td style={{ whiteSpace: 'nowrap' }}>
                     {tx.refNo ? (
                       <span className="ref-code">
                         {tx.refNo}
@@ -212,7 +262,7 @@ const TransactionsTable = ({
                       <span style={{ color: 'var(--text-muted)' }}>—</span>
                     )}
                   </td>
-                  <td style={{ textAlign: 'center' }}>
+                  <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
                     {tx.type === 'credit' ? (
                       <span className="type-pill type-deposit">DEPOSIT</span>
                     ) : (
@@ -238,14 +288,14 @@ const TransactionsTable = ({
           <table>
             <thead>
               <tr>
-                <th style={{ width: '140px' }}>Date</th>
-                {!shouldHideWallet && <th style={{ width: '110px' }}>Wallet</th>}
+                <th style={{ width: '140px', minWidth: '125px', whiteSpace: 'nowrap' }}>Date</th>
+                {!shouldHideWallet && <th style={{ width: '110px', minWidth: '90px', whiteSpace: 'nowrap' }}>Wallet</th>}
                 <th>Particulars & Payee</th>
-                {!shouldHideCategory && <th style={{ width: '150px' }}>Category</th>}
-                {!shouldHideRef && <th style={{ width: '150px' }}>Ref / UTR</th>}
-                <th style={{ width: '140px', textAlign: 'center' }}>Type</th>
+                {!shouldHideCategory && <th style={{ width: '170px', minWidth: '155px', whiteSpace: 'nowrap' }}>Category</th>}
+                {!shouldHideRef && <th style={{ width: '150px', minWidth: '130px', whiteSpace: 'nowrap' }}>Ref / UTR</th>}
+                <th style={{ width: '130px', minWidth: '110px', textAlign: 'center', whiteSpace: 'nowrap' }}>Type</th>
                 <th style={{ width: '150px', minWidth: '130px', textAlign: 'right', whiteSpace: 'nowrap' }}>Amount</th>
-                {!hideActions && <th style={{ textAlign: 'center', width: '80px' }}>Action</th>}
+                {!hideActions && <th style={{ textAlign: 'center', width: '80px', minWidth: '80px', whiteSpace: 'nowrap' }}>Action</th>}
               </tr>
             </thead>
             <tbody>
@@ -272,7 +322,7 @@ const TransactionsTable = ({
                       )}
                     </td>
                     {!shouldHideWallet && (
-                      <td>
+                      <td style={{ whiteSpace: 'nowrap' }}>
                         <span className={`badge ${tx.wallet === 'Cash' ? 'badge-cash' : 'badge-upi'}`}>
                           {tx.wallet}
                         </span>
@@ -289,7 +339,7 @@ const TransactionsTable = ({
                       )}
                     </td>
                     {!shouldHideCategory && (
-                      <td>
+                      <td style={{ whiteSpace: 'nowrap' }}>
                         {tx.category ? (
                           <span className="badge-category" style={getCategoryStyle(tx.category)}>
                             {tx.category}
@@ -300,7 +350,7 @@ const TransactionsTable = ({
                       </td>
                     )}
                     {!shouldHideRef && (
-                      <td>
+                      <td style={{ whiteSpace: 'nowrap' }}>
                         {ref ? (
                           <span className="ref-code">
                             {ref}
@@ -310,7 +360,7 @@ const TransactionsTable = ({
                         )}
                       </td>
                     )}
-                    <td style={{ textAlign: 'center' }}>
+                    <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
                       {tx.type === 'credit' ? (
                         <span className="type-pill type-deposit">
                           {isBankTx ? 'DEPOSIT' : 'CREDIT'}
