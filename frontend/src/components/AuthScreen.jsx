@@ -249,20 +249,28 @@ const AuthScreen = ({ onAuthSuccess }) => {
               <line x1="340" y1="180" x2="145" y2="180" stroke="url(#cyanLineGrad)" strokeWidth="1.6" className="flow-line-rev" />
             </svg>
 
-            {/* Central Circular Hub with Space in "Smart Expense" (Prominent 110px Diameter) */}
+            {/* Central Circular Hub with Spinning Outer Rings & Static Content (Prominent 110px Diameter) */}
             <div className="hub-center-container">
+              {/* Spinning Outer Orbit Ring */}
+              <div className="hub-spin-ring-outer" />
+              {/* Spinning Cyan Dashed Border */}
+              <div className="hub-spin-border" />
+              {/* Static Center Core (Text stays completely upright and fixed) */}
               <div className="hub-center-circle">
                 <span className="hub-center-title">Smart Expense</span>
                 <span className="hub-center-subtitle">TRACKER</span>
               </div>
             </div>
 
-            {/* 6 Connected Feature Pills */}
+            {/* 6 Connected Feature Pills with Hover Tooltips */}
             {/* 1. Top Left: Bank Sync */}
             <div className="stage-pill pill-pos-1 bob-1">
               <div className="pill-content">
                 <Zap size={14} color="#00e5ff" strokeWidth={2.4} />
                 <span className="pill-text">Bank Sync</span>
+              </div>
+              <div className="pill-tooltip tooltip-bottom tooltip-left">
+                Automatic multi-bank sync &amp; real-time transaction fetching.
               </div>
             </div>
 
@@ -272,6 +280,9 @@ const AuthScreen = ({ onAuthSuccess }) => {
                 <BarChart2 size={14} color="#00e5ff" strokeWidth={2.4} />
                 <span className="pill-text">Reconciliation</span>
               </div>
+              <div className="pill-tooltip tooltip-bottom tooltip-right">
+                One-click ledger balancing between cash and bank statements.
+              </div>
             </div>
 
             {/* 3. Middle Right: UPI Payments */}
@@ -279,6 +290,9 @@ const AuthScreen = ({ onAuthSuccess }) => {
               <div className="pill-content">
                 <Smartphone size={14} color="#00e5ff" strokeWidth={2.4} />
                 <span className="pill-text">UPI Payments</span>
+              </div>
+              <div className="pill-tooltip tooltip-top tooltip-right">
+                Live UPI tracking with instant merchant categorization.
               </div>
             </div>
 
@@ -288,6 +302,9 @@ const AuthScreen = ({ onAuthSuccess }) => {
                 <Coins size={14} color="#00e5ff" strokeWidth={2.4} />
                 <span className="pill-text">Cash Wallet</span>
               </div>
+              <div className="pill-tooltip tooltip-top tooltip-right">
+                Physical cash spend tracking &amp; daily balance updates.
+              </div>
             </div>
 
             {/* 5. Bottom Left: Budget Goals */}
@@ -296,6 +313,9 @@ const AuthScreen = ({ onAuthSuccess }) => {
                 <Target size={14} color="#00e5ff" strokeWidth={2.4} />
                 <span className="pill-text">Budget Goals</span>
               </div>
+              <div className="pill-tooltip tooltip-top tooltip-left">
+                Monthly budget thresholds with predictive spend alerts.
+              </div>
             </div>
 
             {/* 6. Middle Left: Spend Insights */}
@@ -303,6 +323,9 @@ const AuthScreen = ({ onAuthSuccess }) => {
               <div className="pill-content">
                 <PieChart size={14} color="#00e5ff" strokeWidth={2.4} />
                 <span className="pill-text">Spend Insights</span>
+              </div>
+              <div className="pill-tooltip tooltip-top tooltip-left">
+                Visual trend breakdown &amp; recurring category analytics.
               </div>
             </div>
 
