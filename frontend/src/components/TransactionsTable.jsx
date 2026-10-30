@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { ListFilter, Trash2, FileX, Edit2 } from 'lucide-react';
 import TransactionForm from './TransactionForm';
@@ -85,8 +85,8 @@ const TransactionsTable = ({
 }) => {
   const [deletingId, setDeletingId] = useState(null);
   const [editingTx, setEditingTx] = useState(null);
-
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const isDeletingRef = useRef(false);
 
   const sortedTransactions = useMemo(() => {
     if (!Array.isArray(transactions)) return [];
@@ -107,16 +107,19 @@ const TransactionsTable = ({
   const shouldHideCategory = hideCategory;
 
   const requestDelete = (id) => {
+    if (isDeletingRef.current) return;
     setConfirmDeleteId(id);
   };
 
   const confirmDelete = async () => {
-    if (confirmDeleteId && !deletingId) {
+    if (confirmDeleteId && !isDeletingRef.current) {
+      isDeletingRef.current = true;
       const idToDelete = confirmDeleteId;
       setDeletingId(idToDelete);
       try {
         await onDelete(idToDelete);
       } finally {
+        isDeletingRef.current = false;
         setDeletingId(null);
         setConfirmDeleteId(null);
       }
@@ -124,6 +127,7 @@ const TransactionsTable = ({
   };
 
   const cancelDelete = () => {
+    if (isDeletingRef.current) return;
     setConfirmDeleteId(null);
   };
 
