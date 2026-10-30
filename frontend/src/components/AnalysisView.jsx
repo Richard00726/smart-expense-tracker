@@ -489,7 +489,7 @@ const AnalysisView = ({ refreshTrigger }) => {
                 </span>
               </div>
 
-              {/* Donut Chart - Normal (No Blur, High Contrast) */}
+              {/* Donut Chart - Clean Steady Center (No Floating Popup Obscuring Donut) */}
               <div style={{ position: 'relative', width: '100%', height: '260px' }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -502,51 +502,34 @@ const AnalysisView = ({ refreshTrigger }) => {
                       paddingAngle={3}
                       minAngle={4}
                       dataKey="value"
-                    >
-                      {categoryData.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={getCategoryColor(entry.name, index)}
-                          stroke="var(--card-bg)"
-                          strokeWidth={2}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          const data = payload[0];
-                          const catIndex = categoryData.findIndex(c => c.name === data.name);
-                          const color = getCategoryColor(data.name, catIndex >= 0 ? catIndex : 0);
-                          const pct = totalCategorySpend > 0 ? ((data.value / totalCategorySpend) * 100).toFixed(1) : '0.0';
-                          return (
-                            <div style={{
-                              background: 'var(--card-bg)',
-                              border: '1px solid var(--card-border)',
-                              borderRadius: '8px',
-                              padding: '8px 12px',
-                              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                              color: 'var(--text-primary)'
-                            }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, fontSize: '0.88rem' }}>
-                                <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: color }} />
-                                <span>{data.name}</span>
-                              </div>
-                              <div style={{ fontSize: '1.05rem', fontWeight: 800, marginTop: '4px', color: 'var(--text-primary)' }}>
-                                {getCurrency()}{formatAmt(data.value)}
-                              </div>
-                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '2px' }}>
-                                {pct}% of total spending
-                              </div>
-                            </div>
-                          );
+                      onMouseEnter={(_, index) => {
+                        const cat = categoryData[index];
+                        if (cat) {
+                          setHoveredCategory(cat);
+                          const el = document.getElementById(`cat-row-${index}`);
+                          if (el) {
+                            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                          }
                         }
-                        return null;
                       }}
-                    />
+                      onMouseLeave={() => setHoveredCategory(null)}
+                    >
+                      {categoryData.map((entry, index) => {
+                        const isHovered = hoveredCategory && hoveredCategory.name === entry.name;
+                        return (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={getCategoryColor(entry.name, index)}
+                            stroke="var(--card-bg)"
+                            strokeWidth={isHovered ? 3 : 2}
+                            style={{ cursor: 'pointer', transition: 'all 0.15s ease' }}
+                          />
+                        );
+                      })}
+                    </Pie>
                   </PieChart>
                 </ResponsiveContainer>
-                {/* Center Hub: Clean Steady TOTAL SPENT (NO blur, NO 100% of spend) */}
+                {/* Center Hub: Clean Steady TOTAL SPENT & Total Amount */}
                 <div
                   style={{
                     position: 'absolute',
@@ -571,7 +554,7 @@ const AnalysisView = ({ refreshTrigger }) => {
                 </div>
               </div>
 
-              {/* Category Breakdown Ranking List (Comes Down, Below the Donut) */}
+              {/* Category Breakdown Ranking List (Comes Down - Automatically Scrolls & Highlights on Hover) */}
               <div
                 className="custom-scrollbar"
                 style={{
@@ -587,17 +570,25 @@ const AnalysisView = ({ refreshTrigger }) => {
                 {categoryData.map((cat, idx) => {
                   const pct = totalCategorySpend > 0 ? ((cat.value / totalCategorySpend) * 100).toFixed(1) : '0.0';
                   const catColor = getCategoryColor(cat.name, idx);
+                  const isHovered = hoveredCategory && hoveredCategory.name === cat.name;
                   return (
                     <div
+                      id={`cat-row-${idx}`}
                       key={cat.name || idx}
+                      onMouseEnter={() => setHoveredCategory(cat)}
+                      onMouseLeave={() => setHoveredCategory(null)}
                       style={{
-                        background: 'var(--empty-state-bg)',
-                        border: '1px solid var(--card-border)',
+                        background: isHovered ? 'var(--hover-bg)' : 'var(--empty-state-bg)',
+                        border: isHovered ? `1.5px solid ${catColor}` : '1px solid var(--card-border)',
+                        boxShadow: isHovered ? `0 0 10px ${catColor}33` : 'none',
                         borderRadius: '10px',
                         padding: '0.65rem 0.85rem',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '6px'
+                        gap: '6px',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                        transform: isHovered ? 'scale(1.01)' : 'scale(1)'
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
@@ -614,9 +605,9 @@ const AnalysisView = ({ refreshTrigger }) => {
                           />
                           <span
                             style={{
-                              fontWeight: 600,
+                              fontWeight: isHovered ? 700 : 600,
                               fontSize: '0.88rem',
-                              color: 'var(--text-primary)',
+                              color: isHovered ? catColor : 'var(--text-primary)',
                               whiteSpace: 'nowrap',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis'
