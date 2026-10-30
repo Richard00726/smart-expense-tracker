@@ -436,199 +436,24 @@ const AnalysisView = ({ refreshTrigger }) => {
             <p style={{ color: 'var(--text-secondary)' }}>No spending recorded for this period.</p>
           </div>
         ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-              gap: '1.5rem',
-              alignItems: 'stretch',
-              marginTop: '0.75rem'
-            }}
-          >
-            {/* BOX 1 (LEFT, 50% BALANCED WIDTH): CASH VS UPI SPENDING */}
-            <div
-              style={{
-                background: 'var(--empty-state-bg)',
-                border: '1px solid var(--card-border)',
-                borderRadius: '16px',
-                padding: '1.25rem 1.5rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1rem',
-                height: '100%',
-                boxSizing: 'border-box'
-              }}
-            >
-              {/* Header */}
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  paddingBottom: '0.75rem',
-                  borderBottom: '1px solid var(--card-border)',
-                  flexWrap: 'wrap',
-                  gap: '0.5rem'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                  <BarChart2 size={18} className="text-danger" />
-                  <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1rem', fontWeight: 700 }}>
-                    Cash vs UPI Spending
-                  </h4>
-                </div>
-                <span
-                  style={{
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    padding: '3px 10px',
-                    borderRadius: '6px',
-                    background: 'var(--card-bg)',
-                    border: '1px solid var(--card-border)',
-                    color: 'var(--text-primary)'
-                  }}
-                >
-                  Total: {getCurrency()}{formatAmt(totalSpend)}
-                </span>
-              </div>
-
-              {/* Dual Stat Cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                {/* Cash Stat Card */}
-                <div
-                  style={{
-                    background: 'var(--card-bg)',
-                    border: '1px solid var(--card-border)',
-                    borderRadius: '12px',
-                    padding: '0.75rem 0.9rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '4px'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#f59e0b' }} />
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Cash Spend</span>
-                    </div>
-                    <span
-                      style={{
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        padding: '1px 6px',
-                        borderRadius: '4px',
-                        background: 'rgba(245, 158, 11, 0.1)',
-                        color: '#f59e0b',
-                        border: '1px solid rgba(245, 158, 11, 0.25)'
-                      }}
-                    >
-                      {cashPct}%
-                    </span>
-                  </div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)', marginTop: '2px' }}>
-                    {getCurrency()}{formatAmt(cashSpend)}
-                  </div>
-                </div>
-
-                {/* UPI Stat Card */}
-                <div
-                  style={{
-                    background: 'var(--card-bg)',
-                    border: '1px solid var(--card-border)',
-                    borderRadius: '12px',
-                    padding: '0.75rem 0.9rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '4px'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--danger)' }} />
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>UPI Spend</span>
-                    </div>
-                    <span
-                      style={{
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        padding: '1px 6px',
-                        borderRadius: '4px',
-                        background: 'rgba(239, 68, 68, 0.1)',
-                        color: 'var(--danger)',
-                        border: '1px solid rgba(239, 68, 68, 0.25)'
-                      }}
-                    >
-                      {upiPct}%
-                    </span>
-                  </div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)', marginTop: '2px' }}>
-                    {getCurrency()}{formatAmt(upiSpend)}
-                  </div>
-                </div>
-              </div>
-
-              {/* Segmented Proportional Visual Bar */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                <div style={{ width: '100%', height: '8px', background: 'var(--card-border)', borderRadius: '9999px', overflow: 'hidden', display: 'flex' }}>
-                  {Number(cashPct) > 0 && (
-                    <div style={{ width: `${cashPct}%`, height: '100%', backgroundColor: '#f59e0b', transition: 'width 0.4s ease' }} title={`Cash: ${cashPct}%`} />
-                  )}
-                  {Number(upiPct) > 0 && (
-                    <div style={{ width: `${upiPct}%`, height: '100%', backgroundColor: 'var(--danger)', transition: 'width 0.4s ease' }} title={`UPI: ${upiPct}%`} />
-                  )}
-                  {totalSpendNum === 0 && (
-                    <div style={{ width: '100%', height: '100%', backgroundColor: 'var(--card-border)' }} />
-                  )}
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                  <span style={{ color: '#f59e0b' }}>● Cash: {cashPct}%</span>
-                  <span style={{ color: 'var(--danger)' }}>● UPI: {upiPct}%</span>
-                </div>
-              </div>
-
-              {/* Bar Chart (Fitted into box height) */}
-              <div style={{ height: '210px', width: '100%', marginTop: 'auto' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem', marginTop: '1rem' }}>
+            {/* 1. CASH VS UPI SPENDING - FIRST, BIG LIKE INCOME */}
+            <div className="chart-wrapper" style={{ maxWidth: '650px', margin: '0 auto', width: '100%' }}>
+              <h4 style={{ textAlign: 'center', marginBottom: '1.25rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                Cash vs UPI Spending
+              </h4>
+              <div className="chart-container">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={walletSpendingData} margin={{ top: 15, right: 20, left: 15, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" vertical={false} />
-                    <XAxis dataKey="name" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: '0.82rem' }} />
-                    <YAxis
-                      stroke="var(--text-secondary)"
-                      tick={{ fill: 'var(--text-secondary)', fontSize: '0.75rem' }}
-                      tickFormatter={(val) => `₹${val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}`}
-                    />
-                    <Tooltip
+                  <BarChart data={walletSpendingData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
+                    <XAxis dataKey="name" stroke="var(--text-secondary)" />
+                    <YAxis stroke="var(--text-secondary)" />
+                    <Tooltip 
                       cursor={{ fill: 'var(--hover-bg)' }}
-                      content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          const data = payload[0];
-                          const isCash = data.payload.name === 'Cash';
-                          return (
-                            <div style={{
-                              background: 'var(--card-bg)',
-                              border: '1px solid var(--card-border)',
-                              borderRadius: '8px',
-                              padding: '8px 12px',
-                              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                              color: 'var(--text-primary)'
-                            }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, fontSize: '0.88rem' }}>
-                                <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: isCash ? '#f59e0b' : 'var(--danger)' }} />
-                                <span>{data.payload.name} Spending</span>
-                              </div>
-                              <div style={{ fontSize: '1rem', fontWeight: 800, marginTop: '4px' }}>
-                                {getCurrency()}{formatAmt(data.value)}
-                              </div>
-                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '2px' }}>
-                                {isCash ? cashPct : upiPct}% of total spending
-                              </div>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
+                      contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', color: 'var(--text-primary)' }}
+                      formatter={(value) => `${getCurrency()}${value}`}
                     />
-                    <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={48}>
+                    <Bar dataKey="value" fill="var(--danger)">
                       {walletSpendingData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.name === 'Cash' ? '#f59e0b' : 'var(--danger)'} />
                       ))}
@@ -636,72 +461,36 @@ const AnalysisView = ({ refreshTrigger }) => {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
+              <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.9rem', color: 'var(--text-secondary)', background: 'var(--empty-state-bg)', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--card-border)' }}>
+                <span style={{ marginRight: '0.5rem' }}>Total: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{totalSpend.toFixed(2)}</strong></span>
+                <span style={{ margin: '0 0.5rem', opacity: 0.5 }}>|</span>
+                <span style={{ color: '#f59e0b', fontWeight: '500' }}>Cash: {getCurrency()}{cashSpend.toFixed(2)}</span>
+                <span style={{ margin: '0 0.5rem', opacity: 0.5 }}>|</span>
+                <span style={{ color: 'var(--danger)', fontWeight: '500' }}>UPI: {getCurrency()}{upiSpend.toFixed(2)}</span>
+              </div>
             </div>
 
-            {/* BOX 2 (RIGHT, 50% BALANCED WIDTH): SPEND BY CATEGORY */}
-            <div
-              style={{
-                background: 'var(--empty-state-bg)',
-                border: '1px solid var(--card-border)',
-                borderRadius: '16px',
-                padding: '1.25rem 1.5rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1rem',
-                height: '100%',
-                boxSizing: 'border-box'
-              }}
-            >
-              {/* Header */}
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  paddingBottom: '0.75rem',
-                  borderBottom: '1px solid var(--card-border)',
-                  flexWrap: 'wrap',
-                  gap: '0.5rem'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                  <PieChartIcon size={18} className="text-danger" />
-                  <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1rem', fontWeight: 700 }}>
-                    Spend by Category
-                  </h4>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <span
-                    style={{
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      padding: '2px 8px',
-                      borderRadius: '100px',
-                      background: 'var(--card-bg)',
-                      border: '1px solid var(--card-border)',
-                      color: 'var(--text-secondary)'
-                    }}
-                  >
-                    {categoryData.length} {categoryData.length === 1 ? 'category' : 'categories'}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      padding: '2px 8px',
-                      borderRadius: '100px',
-                      background: 'rgba(239, 68, 68, 0.1)',
-                      color: 'var(--danger)',
-                      border: '1px solid rgba(239, 68, 68, 0.2)'
-                    }}
-                  >
-                    Total: {getCurrency()}{formatAmt(totalCategorySpend)}
-                  </span>
-                </div>
+            {/* 2. SPEND BY CATEGORY - SECOND, COMES DOWN (NOT ON RIGHT SIDE) */}
+            <div className="chart-wrapper" style={{ maxWidth: '650px', margin: '0 auto', width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.05rem', fontWeight: 600 }}>
+                  Spend by Category
+                </h4>
+                <span style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  background: 'var(--empty-state-bg)',
+                  border: '1px solid var(--card-border)',
+                  color: 'var(--text-muted)'
+                }}>
+                  {categoryData.length} {categoryData.length === 1 ? 'category' : 'categories'}
+                </span>
               </div>
 
-              {/* Donut Chart with Interactive Hover Feature */}
-              <div style={{ position: 'relative', width: '100%', height: '210px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {/* Donut Chart - Normal (No Blur, High Contrast) */}
+              <div style={{ position: 'relative', width: '100%', height: '260px' }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -709,26 +498,19 @@ const AnalysisView = ({ refreshTrigger }) => {
                       cx="50%"
                       cy="50%"
                       innerRadius={68}
-                      outerRadius={98}
+                      outerRadius={100}
                       paddingAngle={3}
                       minAngle={4}
                       dataKey="value"
-                      onMouseEnter={(_, index) => setHoveredCategory(categoryData[index])}
-                      onMouseLeave={() => setHoveredCategory(null)}
                     >
-                      {categoryData.map((entry, index) => {
-                        const isHovered = hoveredCategory && hoveredCategory.name === entry.name;
-                        return (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={getCategoryColor(entry.name, index)}
-                            stroke="var(--card-bg)"
-                            strokeWidth={isHovered ? 3 : 2}
-                            opacity={hoveredCategory ? (isHovered ? 1 : 0.4) : 1}
-                            style={{ cursor: 'pointer', transition: 'all 0.2s ease' }}
-                          />
-                        );
-                      })}
+                      {categoryData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={getCategoryColor(entry.name, index)}
+                          stroke="var(--card-bg)"
+                          strokeWidth={2}
+                        />
+                      ))}
                     </Pie>
                     <Tooltip
                       content={({ active, payload }) => {
@@ -764,8 +546,7 @@ const AnalysisView = ({ refreshTrigger }) => {
                     />
                   </PieChart>
                 </ResponsiveContainer>
-
-                {/* Donut Center Overlay: Shows Hovered Category Name & Amount on Hover; otherwise TOTAL SPENT */}
+                {/* Center Hub: Clean Steady TOTAL SPENT (NO blur, NO 100% of spend) */}
                 <div
                   style={{
                     position: 'absolute',
@@ -781,42 +562,24 @@ const AnalysisView = ({ refreshTrigger }) => {
                     width: '130px'
                   }}
                 >
-                  <span
-                    style={{
-                      fontSize: '0.68rem',
-                      fontWeight: 700,
-                      color: hoveredCategory
-                        ? getCategoryColor(hoveredCategory.name, categoryData.findIndex(c => c.name === hoveredCategory.name))
-                        : 'var(--text-muted)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.06em',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      maxWidth: '120px'
-                    }}
-                  >
-                    {hoveredCategory ? hoveredCategory.name : 'TOTAL SPENT'}
+                  <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    TOTAL SPENT
                   </span>
-                  <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)', margin: '2px 0', lineHeight: 1.2 }}>
-                    {getCurrency()}{formatAmt(hoveredCategory ? hoveredCategory.value : totalCategorySpend)}
+                  <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: '2px 0', lineHeight: 1.2 }}>
+                    {getCurrency()}{formatAmt(totalCategorySpend)}
                   </span>
-                  {hoveredCategory && totalCategorySpend > 0 && (
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                      {((hoveredCategory.value / totalCategorySpend) * 100).toFixed(1)}%
-                    </span>
-                  )}
                 </div>
               </div>
 
-              {/* Scrollable Category Breakdown Ranking List */}
+              {/* Category Breakdown Ranking List (Comes Down, Below the Donut) */}
               <div
                 className="custom-scrollbar"
                 style={{
+                  marginTop: '1.25rem',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '0.5rem',
-                  maxHeight: '190px',
+                  gap: '0.55rem',
+                  maxHeight: '260px',
                   overflowY: 'auto',
                   paddingRight: '6px'
                 }}
@@ -824,22 +587,17 @@ const AnalysisView = ({ refreshTrigger }) => {
                 {categoryData.map((cat, idx) => {
                   const pct = totalCategorySpend > 0 ? ((cat.value / totalCategorySpend) * 100).toFixed(1) : '0.0';
                   const catColor = getCategoryColor(cat.name, idx);
-                  const isHovered = hoveredCategory && hoveredCategory.name === cat.name;
                   return (
                     <div
                       key={cat.name || idx}
-                      onMouseEnter={() => setHoveredCategory(cat)}
-                      onMouseLeave={() => setHoveredCategory(null)}
                       style={{
-                        background: isHovered ? 'var(--hover-bg)' : 'var(--card-bg)',
-                        border: isHovered ? `1px solid ${catColor}` : '1px solid var(--card-border)',
+                        background: 'var(--empty-state-bg)',
+                        border: '1px solid var(--card-border)',
                         borderRadius: '10px',
-                        padding: '0.55rem 0.75rem',
+                        padding: '0.65rem 0.85rem',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '5px',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease'
+                        gap: '6px'
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
@@ -857,7 +615,7 @@ const AnalysisView = ({ refreshTrigger }) => {
                           <span
                             style={{
                               fontWeight: 600,
-                              fontSize: '0.86rem',
+                              fontSize: '0.88rem',
                               color: 'var(--text-primary)',
                               whiteSpace: 'nowrap',
                               overflow: 'hidden',
@@ -873,8 +631,8 @@ const AnalysisView = ({ refreshTrigger }) => {
                               fontSize: '0.72rem',
                               fontWeight: 700,
                               padding: '2px 6px',
-                              borderRadius: '5px',
-                              background: 'var(--empty-state-bg)',
+                              borderRadius: '4px',
+                              background: 'var(--card-bg)',
                               border: '1px solid var(--card-border)',
                               color: 'var(--text-secondary)'
                             }}
@@ -884,7 +642,7 @@ const AnalysisView = ({ refreshTrigger }) => {
                           <span
                             style={{
                               fontWeight: 700,
-                              fontSize: '0.86rem',
+                              fontSize: '0.88rem',
                               color: 'var(--text-primary)',
                               whiteSpace: 'nowrap'
                             }}
@@ -893,15 +651,13 @@ const AnalysisView = ({ refreshTrigger }) => {
                           </span>
                         </div>
                       </div>
-                      {/* Micro Progress Bar with Min Width so Small Spends Stay Fully Visible */}
-                      <div style={{ width: '100%', height: '4px', background: 'rgba(148, 163, 184, 0.15)', borderRadius: '9999px', overflow: 'hidden' }}>
+                      <div style={{ width: '100%', height: '4px', background: 'var(--card-border)', borderRadius: '9999px', overflow: 'hidden' }}>
                         <div
                           style={{
                             width: `${Math.max(3.5, Math.min(100, Number(pct)))}%`,
                             height: '100%',
                             backgroundColor: catColor,
-                            borderRadius: '9999px',
-                            transition: 'width 0.4s ease'
+                            borderRadius: '9999px'
                           }}
                         />
                       </div>
