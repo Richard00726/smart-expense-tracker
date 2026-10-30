@@ -175,7 +175,7 @@ const TransactionsTable = ({
                 <th style={{ width: '150px' }}>Category</th>
                 <th style={{ width: '150px' }}>Ref / UTR</th>
                 <th style={{ width: '140px', textAlign: 'center' }}>Type</th>
-                <th style={{ width: '140px', textAlign: 'right' }}>Amount</th>
+                <th style={{ width: '150px', minWidth: '130px', textAlign: 'right', whiteSpace: 'nowrap' }}>Amount</th>
               </tr>
             </thead>
             <tbody>
@@ -219,8 +219,13 @@ const TransactionsTable = ({
                       <span className="type-pill type-withdrawal">WITHDRAWAL</span>
                     )}
                   </td>
-                  <td className={`amount-val ${tx.type === 'credit' ? 'amount-pos' : 'amount-neg'}`}>
-                    {tx.type === 'credit' ? '+' : '-'}{getCurrency()}{Number(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <td 
+                    className={`amount-val ${tx.type === 'credit' ? 'amount-pos' : 'amount-neg'}`}
+                    style={{ whiteSpace: 'nowrap', textAlign: 'right', minWidth: '130px' }}
+                  >
+                    <span style={{ display: 'inline-block', whiteSpace: 'nowrap' }}>
+                      {tx.type === 'credit' ? '+' : '-'}{getCurrency()}{Number(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
                   </td>
                 </tr>
               ))}
@@ -239,7 +244,7 @@ const TransactionsTable = ({
                 {!shouldHideCategory && <th style={{ width: '150px' }}>Category</th>}
                 {!shouldHideRef && <th style={{ width: '150px' }}>Ref / UTR</th>}
                 <th style={{ width: '140px', textAlign: 'center' }}>Type</th>
-                <th style={{ width: '140px', textAlign: 'right' }}>Amount</th>
+                <th style={{ width: '150px', minWidth: '130px', textAlign: 'right', whiteSpace: 'nowrap' }}>Amount</th>
                 {!hideActions && <th style={{ textAlign: 'center', width: '80px' }}>Action</th>}
               </tr>
             </thead>
@@ -316,8 +321,13 @@ const TransactionsTable = ({
                         </span>
                       )}
                     </td>
-                    <td className={`amount-val ${tx.type === 'credit' ? 'amount-pos' : 'amount-neg'}`}>
-                      {tx.type === 'credit' ? '+' : '-'}{getCurrency()}{Number(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    <td 
+                      className={`amount-val ${tx.type === 'credit' ? 'amount-pos' : 'amount-neg'}`}
+                      style={{ whiteSpace: 'nowrap', textAlign: 'right', minWidth: '130px' }}
+                    >
+                      <span style={{ display: 'inline-block', whiteSpace: 'nowrap' }}>
+                        {tx.type === 'credit' ? '+' : '-'}{getCurrency()}{Number(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
                     </td>
                     {!hideActions && (
                       <td style={{ textAlign: 'center' }}>

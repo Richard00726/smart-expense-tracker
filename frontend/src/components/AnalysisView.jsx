@@ -761,7 +761,7 @@ const AnalysisView = ({ refreshTrigger }) => {
                     {flowWalletFilter === 'Cash' && 'Cash Inflow'}
                     {flowWalletFilter === 'UPI' && 'UPI Inflow'}
                   </span>
-                  <strong style={{ fontSize: '1.2rem', color: '#10b981' }}>
+                  <strong style={{ fontSize: '1.2rem', color: '#10b981', whiteSpace: 'nowrap' }}>
                     +{getCurrency()}{formatAmt(activeLedger.inflow)}
                   </strong>
                   <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
@@ -799,7 +799,7 @@ const AnalysisView = ({ refreshTrigger }) => {
                     {flowWalletFilter === 'Cash' && 'Cash Outflow'}
                     {flowWalletFilter === 'UPI' && 'UPI Outflow'}
                   </span>
-                  <strong style={{ fontSize: '1.2rem', color: '#ef4444' }}>
+                  <strong style={{ fontSize: '1.2rem', color: '#ef4444', whiteSpace: 'nowrap' }}>
                     -{getCurrency()}{formatAmt(activeLedger.outflow)}
                   </strong>
                   <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
@@ -888,7 +888,7 @@ const AnalysisView = ({ refreshTrigger }) => {
               </div>
 
               <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                Period Net Change: <strong style={{ color: (activeLedger.inflow - activeLedger.outflow) >= 0 ? '#10b981' : '#f97316' }}>
+                Period Net Change: <strong style={{ color: (activeLedger.inflow - activeLedger.outflow) >= 0 ? '#10b981' : '#f97316', whiteSpace: 'nowrap' }}>
                   {(activeLedger.inflow - activeLedger.outflow) >= 0 ? '+' : '-'}{getCurrency()}{formatAmt(Math.abs(activeLedger.inflow - activeLedger.outflow))}
                 </strong>
                 <span style={{ color: 'var(--text-muted)', marginLeft: '6px' }}>
@@ -914,11 +914,11 @@ const AnalysisView = ({ refreshTrigger }) => {
                 color: 'var(--text-secondary)'
               }}>
                 <div>
-                  💵 <strong style={{ color: 'var(--text-primary)' }}>Cash Flow:</strong> In <span style={{ color: '#10b981', fontWeight: 600 }}>+{getCurrency()}{flowTotals.cashIn.toFixed(2)}</span> | Out <span style={{ color: '#ef4444', fontWeight: 600 }}>-{getCurrency()}{flowTotals.cashOut.toFixed(2)}</span>
+                  💵 <strong style={{ color: 'var(--text-primary)' }}>Cash Flow:</strong> In <span style={{ color: '#10b981', fontWeight: 600, whiteSpace: 'nowrap' }}>+{getCurrency()}{flowTotals.cashIn.toFixed(2)}</span> | Out <span style={{ color: '#ef4444', fontWeight: 600, whiteSpace: 'nowrap' }}>-{getCurrency()}{flowTotals.cashOut.toFixed(2)}</span>
                 </div>
                 <div style={{ height: '16px', width: '1px', background: 'var(--card-border)' }} />
                 <div>
-                  💳 <strong style={{ color: 'var(--text-primary)' }}>UPI Flow:</strong> In <span style={{ color: '#10b981', fontWeight: 600 }}>+{getCurrency()}{flowTotals.upiIn.toFixed(2)}</span> | Out <span style={{ color: '#ef4444', fontWeight: 600 }}>-{getCurrency()}{flowTotals.upiOut.toFixed(2)}</span>
+                  💳 <strong style={{ color: 'var(--text-primary)' }}>UPI Flow:</strong> In <span style={{ color: '#10b981', fontWeight: 600, whiteSpace: 'nowrap' }}>+{getCurrency()}{flowTotals.upiIn.toFixed(2)}</span> | Out <span style={{ color: '#ef4444', fontWeight: 600, whiteSpace: 'nowrap' }}>-{getCurrency()}{flowTotals.upiOut.toFixed(2)}</span>
                 </div>
               </div>
             )}

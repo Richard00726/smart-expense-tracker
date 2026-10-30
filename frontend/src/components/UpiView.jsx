@@ -2427,20 +2427,20 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                             <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
                               {summary.statementDate || summary.period}
                             </td>
-                            <td style={{ textAlign: 'right', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>
+                            <td style={{ textAlign: 'right', color: 'var(--text-secondary)', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
                               ₹{Number(summary.openingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </td>
-                            <td style={{ textAlign: 'right', fontWeight: '600', color: '#10b981' }}>
+                            <td style={{ textAlign: 'right', fontWeight: '600', color: '#10b981', whiteSpace: 'nowrap' }}>
                               {summary.totalDeposits > 0 
                                 ? `+₹${Number(summary.totalDeposits).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
                                 : '—'}
                             </td>
-                            <td style={{ textAlign: 'right', fontWeight: '600', color: summary.totalWithdrawals > 0 ? '#ef4444' : 'var(--text-secondary)' }}>
+                            <td style={{ textAlign: 'right', fontWeight: '600', color: summary.totalWithdrawals > 0 ? '#ef4444' : 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                               {summary.totalWithdrawals > 0 
                                 ? `-₹${Number(summary.totalWithdrawals).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
                                 : '—'}
                             </td>
-                            <td style={{ textAlign: 'right', fontWeight: '700', color: '#38bdf8', fontSize: '13.5px' }}>
+                            <td style={{ textAlign: 'right', fontWeight: '700', color: '#38bdf8', fontSize: '13.5px', whiteSpace: 'nowrap' }}>
                               ₹{Number(summary.closingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </td>
                             <td style={{ textAlign: 'center' }}>

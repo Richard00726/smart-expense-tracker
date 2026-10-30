@@ -154,6 +154,7 @@
   letter-spacing: -0.03em;
   margin-bottom: 0.9rem;
   color: var(--text-primary);
+  white-space: nowrap;
 }
 
 .card-footer, .upi-card-footer {
@@ -398,24 +399,33 @@ tr:hover td {
   font-weight: 700;
   font-size: 0.95rem;
   text-align: right;
+  white-space: nowrap !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  display: inline-block;
+  min-width: 100%;
 }
 
 .amount-pos {
   color: var(--success);
+  white-space: nowrap !important;
 }
 
 .amount-neg {
   color: var(--danger);
+  white-space: nowrap !important;
 }
 
 .amount-credit {
   color: var(--success);
   font-weight: 600;
+  white-space: nowrap !important;
 }
 
 .amount-debit {
   color: var(--danger);
   font-weight: 600;
+  white-space: nowrap !important;
 }
 
 .action-btn {
