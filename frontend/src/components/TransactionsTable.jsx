@@ -161,11 +161,25 @@ const getCategoryStyle = (category) => {
       border: '1px solid rgba(14, 116, 144, 0.25)'
     };
   }
-  if (cat === 'bank transfer' || cat.includes('upi')) {
+  if (cat.includes('daily expense')) {
     return {
-      background: 'var(--badge-bg)',
-      color: 'var(--badge-text)',
-      border: '1px solid var(--badge-border)'
+      background: 'rgba(37, 99, 235, 0.12)',
+      color: '#2563eb',
+      border: '1px solid rgba(37, 99, 235, 0.25)'
+    };
+  }
+  if (cat === 'bank transfer') {
+    return {
+      background: 'rgba(139, 92, 246, 0.12)',
+      color: '#8b5cf6',
+      border: '1px solid rgba(139, 92, 246, 0.25)'
+    };
+  }
+  if (cat.includes('upi')) {
+    return {
+      background: 'rgba(20, 184, 166, 0.12)',
+      color: '#0d9488',
+      border: '1px solid rgba(20, 184, 166, 0.25)'
     };
   }
   return {

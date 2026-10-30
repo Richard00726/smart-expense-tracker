@@ -7,43 +7,43 @@ const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'
 
 const CATEGORY_COLORS = {
   // Living & Essentials
-  'Food & Groceries': '#ea580c',
-  'Rent & Housing': '#6366f1',
-  'Bills & Recharge': '#0891b2',
-  'Shopping and orders': '#db2777',
-  'Shopping & Orders': '#db2777',
-  'Fuel & Vehicle': '#2563eb',
-  'Credit Card Bill': '#0d9488',
+  'Daily Expense': '#2563eb',          // Electric Blue (High Visibility)
+  'ATM': '#f59e0b',                    // Amber Gold
+  'Bills & Recharge': '#06b6d4',       // Vibrant Cyan
+  'Bank Transfer': '#8b5cf6',          // Royal Purple
+  'Food & Groceries': '#ea580c',       // Flame Orange
+  'Shopping and orders': '#db2777',    // Rose Pink
+  'Shopping & Orders': '#db2777',      // Alias
+  'Credit Card Bill': '#0d9488',       // Teal
+  'Rent & Housing': '#6366f1',         // Indigo
+  'Fuel & Vehicle': '#3b82f6',         // Vivid Blue
   
   // Wealth & Subscriptions
-  'Investments & SIP': '#059669',
-  'Subscriptions & OTT': '#8b5cf6',
-  'Education & Learning': '#0284c7',
-  'Personal Care & Fitness': '#f97316',
-  'Gifts & Donations': '#f43f5e',
+  'Investments & SIP': '#10b981',      // Emerald Green
+  'Subscriptions & OTT': '#a855f7',    // Violet
+  'Education & Learning': '#0284c7',   // Sky Blue
+  'Personal Care & Fitness': '#f97316',// Tangerine
+  'Gifts & Donations': '#f43f5e',      // Rose Red
   
   // High-Value & Leisure
-  'Jewellery': '#ca8a04',
-  'Travel': '#7c3aed',
-  'Healthcare': '#dc2626',
-  'Entertainment': '#a21caf',
-  'ATM': '#d97706',
+  'Jewellery': '#eab308',              // Gold
+  'Travel': '#7c3aed',                 // Deep Purple
+  'Healthcare': '#ef4444',             // Bright Crimson
+  'Entertainment': '#d946ef',          // Fuchsia
   
   // Transfers & General
-  'Daily Expense': '#4b5563',
-  'Bank Transfer': '#334155',
-  'UPI Transfer': '#06b6d4',
-  'Salary': '#10b981',
-  'Reimbursement': '#0e7490',
-  'Self Transfer': '#64748b',
-  'Other': '#64748b'
+  'UPI Transfer': '#14b8a6',           // Bright Teal
+  'Salary': '#22c55e',                 // Fresh Green
+  'Reimbursement': '#0284c7',          // Ocean Blue
+  'Self Transfer': '#64748b',          // Steel Gray
+  'Other': '#78716c'                   // Warm Stone
 };
 
 const FALLBACK_PALETTE = [
-  '#6366f1', '#ea580c', '#0891b2', '#db2777', '#2563eb',
-  '#0d9488', '#059669', '#8b5cf6', '#0284c7', '#f97316',
-  '#f43f5e', '#ca8a04', '#7c3aed', '#dc2626', '#a21caf',
-  '#d97706', '#4b5563', '#06b6d4', '#10b981', '#0e7490'
+  '#2563eb', '#f59e0b', '#06b6d4', '#8b5cf6', '#ea580c',
+  '#db2777', '#0d9488', '#6366f1', '#10b981', '#a855f7',
+  '#0284c7', '#f97316', '#f43f5e', '#eab308', '#7c3aed',
+  '#ef4444', '#d946ef', '#14b8a6', '#22c55e', '#64748b'
 ];
 
 const getCategoryColor = (name, index = 0) => {
@@ -454,162 +454,300 @@ const AnalysisView = ({ refreshTrigger }) => {
             <p style={{ color: 'var(--text-secondary)' }}>No spending recorded for this period.</p>
           </div>
         ) : (
-          <div className="charts-grid">
-            <div className="chart-wrapper" style={{ display: 'flex', flexDirection: 'column' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1rem', fontWeight: 600 }}>
-                  Spend by Category
-                </h4>
-                <span style={{
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  padding: '2px 8px',
-                  borderRadius: '12px',
-                  background: 'var(--empty-state-bg)',
-                  border: '1px solid var(--card-border)',
-                  color: 'var(--text-muted)'
-                }}>
-                  {categoryData.length} {categoryData.length === 1 ? 'category' : 'categories'}
-                </span>
-              </div>
-
-              {/* Donut Chart with Centered Total Spent Metric */}
-              <div style={{ position: 'relative', width: '100%', height: '240px' }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={categoryData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={65}
-                      outerRadius={95}
-                      paddingAngle={3}
-                      dataKey="value"
-                    >
-                      {categoryData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={getCategoryColor(entry.name, index)} stroke="var(--card-bg)" strokeWidth={2} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', color: 'var(--text-primary)' }}
-                      itemStyle={{ color: 'var(--text-primary)' }}
-                      formatter={(value) => [`${getCurrency()}${formatAmt(value)}`, 'Spent']}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  textAlign: 'center',
-                  pointerEvents: 'none',
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {/* 1. SPEND BY CATEGORY - PROFESSIONAL FINTECH CARD */}
+            <div
+              style={{
+                background: 'var(--card-bg)',
+                border: '1px solid var(--card-border)',
+                borderRadius: '16px',
+                padding: '1.5rem',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.04)'
+              }}
+            >
+              {/* Card Header */}
+              <div
+                style={{
                   display: 'flex',
-                  flexDirection: 'column',
+                  justifyContent: 'space-between',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '120px'
-                }}>
-                  <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Total Spent
+                  marginBottom: '1.25rem',
+                  paddingBottom: '0.85rem',
+                  borderBottom: '1px solid var(--card-border)',
+                  flexWrap: 'wrap',
+                  gap: '0.75rem'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                  <PieChartIcon size={20} className="text-danger" />
+                  <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: 700 }}>
+                    Spend by Category
+                  </h4>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      padding: '3px 10px',
+                      borderRadius: '100px',
+                      background: 'var(--empty-state-bg)',
+                      border: '1px solid var(--card-border)',
+                      color: 'var(--text-secondary)'
+                    }}
+                  >
+                    {categoryData.length} {categoryData.length === 1 ? 'category' : 'categories'}
                   </span>
-                  <span style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', margin: '2px 0', lineHeight: 1.2 }}>
-                    {getCurrency()}{formatAmt(totalCategorySpend)}
-                  </span>
-                  <span style={{ fontSize: '0.68rem', color: '#10b981', fontWeight: 600 }}>
-                    100% of Spend
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      padding: '3px 10px',
+                      borderRadius: '100px',
+                      background: 'rgba(239, 68, 68, 0.1)',
+                      color: 'var(--danger)',
+                      border: '1px solid rgba(239, 68, 68, 0.2)'
+                    }}
+                  >
+                    Total: {getCurrency()}{formatAmt(totalCategorySpend)}
                   </span>
                 </div>
               </div>
 
-              {/* High-Contrast Category Breakdown Ranking List */}
-              <div style={{
-                marginTop: '1rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.55rem',
-                maxHeight: '260px',
-                overflowY: 'auto',
-                paddingRight: '4px'
-              }}>
-                {categoryData.map((cat, idx) => {
-                  const pct = totalCategorySpend > 0 ? ((cat.value / totalCategorySpend) * 100).toFixed(1) : '0.0';
-                  const catColor = getCategoryColor(cat.name, idx);
-                  return (
-                    <div
-                      key={cat.name || idx}
-                      style={{
-                        background: 'var(--empty-state-bg)',
-                        border: '1px solid var(--card-border)',
-                        borderRadius: '10px',
-                        padding: '0.6rem 0.8rem',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '6px',
-                        transition: 'transform 0.15s ease'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', minWidth: 0 }}>
-                          <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: catColor, flexShrink: 0 }} />
-                          <span style={{
-                            fontWeight: 600,
-                            fontSize: '0.88rem',
-                            color: 'var(--text-primary)',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                          }}>
-                            {cat.name}
-                          </span>
+              {/* Card Body: 2-Column Side-by-Side (Left Donut, Right Categories List) */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                  gap: '2rem',
+                  alignItems: 'center'
+                }}
+              >
+                {/* Left: Donut Chart with Center Metric Overlay */}
+                <div style={{ position: 'relative', width: '100%', height: '270px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={categoryData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={72}
+                        outerRadius={104}
+                        paddingAngle={3}
+                        minAngle={4}
+                        dataKey="value"
+                      >
+                        {categoryData.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={getCategoryColor(entry.name, index)}
+                            stroke="var(--card-bg)"
+                            strokeWidth={2.5}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', color: 'var(--text-primary)' }}
+                        itemStyle={{ color: 'var(--text-primary)' }}
+                        formatter={(value) => [`${getCurrency()}${formatAmt(value)}`, 'Spent']}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      textAlign: 'center',
+                      pointerEvents: 'none',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '130px'
+                    }}
+                  >
+                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      TOTAL SPENT
+                    </span>
+                    <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: '3px 0', lineHeight: 1.2 }}>
+                      {getCurrency()}{formatAmt(totalCategorySpend)}
+                    </span>
+                    <span style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 700 }}>
+                      100% of Spend
+                    </span>
+                  </div>
+                </div>
+
+                {/* Right: Category Breakdown Ranking List with Professional UPI-style Scroll */}
+                <div
+                  className="custom-scrollbar"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.6rem',
+                    maxHeight: '310px',
+                    overflowY: 'auto',
+                    paddingRight: '6px'
+                  }}
+                >
+                  {categoryData.map((cat, idx) => {
+                    const pct = totalCategorySpend > 0 ? ((cat.value / totalCategorySpend) * 100).toFixed(1) : '0.0';
+                    const catColor = getCategoryColor(cat.name, idx);
+                    return (
+                      <div
+                        key={cat.name || idx}
+                        style={{
+                          background: 'var(--empty-state-bg)',
+                          border: '1px solid var(--card-border)',
+                          borderRadius: '12px',
+                          padding: '0.7rem 0.85rem',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '6px',
+                          transition: 'transform 0.15s ease, border-color 0.15s ease'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', minWidth: 0 }}>
+                            <span
+                              style={{
+                                width: '12px',
+                                height: '12px',
+                                borderRadius: '50%',
+                                backgroundColor: catColor,
+                                boxShadow: `0 0 0 2px var(--card-bg), 0 0 6px ${catColor}55`,
+                                flexShrink: 0
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontWeight: 600,
+                                fontSize: '0.88rem',
+                                color: 'var(--text-primary)',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
+                              }}
+                            >
+                              {cat.name}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexShrink: 0 }}>
+                            <span
+                              style={{
+                                fontSize: '0.72rem',
+                                fontWeight: 700,
+                                padding: '2px 7px',
+                                borderRadius: '6px',
+                                background: 'var(--card-bg)',
+                                border: '1px solid var(--card-border)',
+                                color: 'var(--text-secondary)'
+                              }}
+                            >
+                              {pct}%
+                            </span>
+                            <span
+                              style={{
+                                fontWeight: 700,
+                                fontSize: '0.88rem',
+                                color: 'var(--text-primary)',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {getCurrency()}{formatAmt(cat.value)}
+                            </span>
+                          </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexShrink: 0 }}>
-                          <span style={{
-                            fontSize: '0.72rem',
-                            fontWeight: 700,
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            background: 'var(--card-bg)',
-                            border: '1px solid var(--card-border)',
-                            color: 'var(--text-secondary)'
-                          }}>
-                            {pct}%
-                          </span>
-                          <span style={{
-                            fontWeight: 700,
-                            fontSize: '0.88rem',
-                            color: 'var(--text-primary)',
-                            whiteSpace: 'nowrap'
-                          }}>
-                            {getCurrency()}{formatAmt(cat.value)}
-                          </span>
+                        {/* Micro Progress Bar with Min Width so Small Spends Stay Fully Visible */}
+                        <div style={{ width: '100%', height: '4px', background: 'rgba(148, 163, 184, 0.18)', borderRadius: '9999px', overflow: 'hidden' }}>
+                          <div
+                            style={{
+                              width: `${Math.max(3.5, Math.min(100, Number(pct)))}%`,
+                              height: '100%',
+                              backgroundColor: catColor,
+                              borderRadius: '9999px'
+                            }}
+                          />
                         </div>
                       </div>
-                      <div style={{ width: '100%', height: '4px', background: 'var(--card-border)', borderRadius: '9999px', overflow: 'hidden' }}>
-                        <div style={{ width: `${Math.min(100, Math.max(0, Number(pct)))}%`, height: '100%', backgroundColor: catColor, borderRadius: '9999px' }} />
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
-            <div className="chart-wrapper">
-              <h4 style={{ textAlign: 'center', marginBottom: '1rem', color: 'var(--text-secondary)' }}>
-                Cash vs UPI Spending
-              </h4>
-              <div className="chart-container">
+            {/* 2. CASH VS UPI SPENDING - DEDICATED SEPARATE CARD */}
+            <div
+              style={{
+                background: 'var(--card-bg)',
+                border: '1px solid var(--card-border)',
+                borderRadius: '16px',
+                padding: '1.5rem',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.04)'
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '1.25rem',
+                  paddingBottom: '0.85rem',
+                  borderBottom: '1px solid var(--card-border)',
+                  flexWrap: 'wrap',
+                  gap: '0.75rem'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                  <BarChart2 size={20} className="text-danger" />
+                  <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: 700 }}>
+                    Cash vs UPI Spending
+                  </h4>
+                </div>
+                <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+                  <span
+                    style={{
+                      fontSize: '0.8rem',
+                      color: '#f59e0b',
+                      fontWeight: 600,
+                      background: 'rgba(245, 158, 11, 0.1)',
+                      padding: '3px 10px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(245, 158, 11, 0.25)'
+                    }}
+                  >
+                    Cash: {getCurrency()}{formatAmt(cashSpend)}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: '0.8rem',
+                      color: 'var(--danger)',
+                      fontWeight: 600,
+                      background: 'rgba(239, 68, 68, 0.1)',
+                      padding: '3px 10px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(239, 68, 68, 0.25)'
+                    }}
+                  >
+                    UPI: {getCurrency()}{formatAmt(upiSpend)}
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ height: '240px', width: '100%' }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={walletSpendingData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <BarChart data={walletSpendingData} margin={{ top: 15, right: 25, left: 25, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
-                    <XAxis dataKey="name" stroke="var(--text-secondary)" />
-                    <YAxis stroke="var(--text-secondary)" />
-                    <Tooltip 
+                    <XAxis dataKey="name" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)' }} />
+                    <YAxis stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)' }} />
+                    <Tooltip
                       cursor={{ fill: 'var(--hover-bg)' }}
                       contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', color: 'var(--text-primary)' }}
-                      formatter={(value) => `${getCurrency()}${value}`}
+                      formatter={(value) => [`${getCurrency()}${formatAmt(value)}`, 'Spent']}
                     />
-                    <Bar dataKey="value" fill="var(--danger)">
+                    <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={60}>
                       {walletSpendingData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.name === 'Cash' ? '#f59e0b' : 'var(--danger)'} />
                       ))}
@@ -617,12 +755,28 @@ const AnalysisView = ({ refreshTrigger }) => {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.9rem', color: 'var(--text-secondary)', background: 'var(--empty-state-bg)', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--card-border)' }}>
-                <span style={{ marginRight: '0.5rem' }}>Total: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{totalSpend.toFixed(2)}</strong></span>
-                <span style={{ margin: '0 0.5rem', opacity: 0.5 }}>|</span>
-                <span style={{ color: '#f59e0b', fontWeight: '500' }}>Cash: {getCurrency()}{cashSpend.toFixed(2)}</span>
-                <span style={{ margin: '0 0.5rem', opacity: 0.5 }}>|</span>
-                <span style={{ color: 'var(--danger)', fontWeight: '500' }}>UPI: {getCurrency()}{upiSpend.toFixed(2)}</span>
+
+              <div
+                style={{
+                  marginTop: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '1rem',
+                  fontSize: '0.88rem',
+                  color: 'var(--text-secondary)',
+                  background: 'var(--empty-state-bg)',
+                  padding: '0.65rem 1rem',
+                  borderRadius: '10px',
+                  border: '1px solid var(--card-border)',
+                  flexWrap: 'wrap'
+                }}
+              >
+                <span>Total: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{formatAmt(totalSpend)}</strong></span>
+                <span style={{ opacity: 0.4 }}>•</span>
+                <span style={{ color: '#f59e0b', fontWeight: 600 }}>Cash: {getCurrency()}{formatAmt(cashSpend)}</span>
+                <span style={{ opacity: 0.4 }}>•</span>
+                <span style={{ color: 'var(--danger)', fontWeight: 600 }}>UPI: {getCurrency()}{formatAmt(upiSpend)}</span>
               </div>
             </div>
           </div>
