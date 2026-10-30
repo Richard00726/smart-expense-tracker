@@ -24,10 +24,22 @@ const ToggleSwitch = ({ checked, onChange }) => (
   </div>
 );
 
-const AccountView = ({ theme, toggleTheme, onLogout }) => {
+const AccountView = ({ theme, toggleTheme, onLogout, currentUser }) => {
   const [activeSetting, setActiveSetting] = useState(null);
-  const [profile, setProfile] = useState({ username: '', email: '', currency: '₹', createdAt: '', profileImage: '' });
-  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState(() => {
+    const cached = currentUser || JSON.parse(localStorage.getItem('user') || '{}');
+    return {
+      username: cached.username || '',
+      email: cached.email || '',
+      currency: cached.currency || '₹',
+      createdAt: cached.createdAt || '',
+      profileImage: cached.profileImage || ''
+    };
+  });
+  const [loading, setLoading] = useState(() => {
+    const cached = currentUser || JSON.parse(localStorage.getItem('user') || '{}');
+    return !cached.email;
+  });
   const [profileSaving, setProfileSaving] = useState(false);
   const [passwordSaving, setPasswordSaving] = useState(false);
   
@@ -53,13 +65,18 @@ const AccountView = ({ theme, toggleTheme, onLogout }) => {
   const fetchProfile = async () => {
     try {
       const res = await getUser();
-      setProfile({
+      const updated = {
         username: res.data.username,
         email: res.data.email,
         currency: res.data.currency || '₹',
         createdAt: res.data.createdAt,
         profileImage: res.data.profileImage || ''
-      });
+      };
+      setProfile(updated);
+      try {
+        const existing = JSON.parse(localStorage.getItem('user') || '{}');
+        localStorage.setItem('user', JSON.stringify({ ...existing, ...updated }));
+      } catch (e) {}
     } catch (err) {
       console.error(err);
     } finally {

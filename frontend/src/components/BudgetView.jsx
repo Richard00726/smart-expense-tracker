@@ -3,10 +3,42 @@ import { Target, TrendingUp, AlertCircle, Edit2, Check, Filter, Calendar } from 
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { getCurrency, updateProfile, getTransactions } from '../services/api';
 
+// Fast module-level memory cache for budget view
+const budgetCache = new Map();
+
+const filterTxsForTimeframe = (txList, tf) => {
+  if (!Array.isArray(txList) || txList.length === 0) return [];
+  const now = new Date();
+  return txList.filter(t => {
+    const d = new Date(t.date || t.txnDate);
+    if (isNaN(d.getTime())) return false;
+    if (tf === 'daily') {
+      return d.toDateString() === now.toDateString();
+    } else if (tf === 'weekly') {
+      const day = now.getDay();
+      const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+      const start = new Date(now.getFullYear(), now.getMonth(), diff);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      end.setHours(23, 59, 59, 999);
+      return d >= start && d <= end;
+    } else if (tf === 'monthly') {
+      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    } else if (tf === 'yearly') {
+      return d.getFullYear() === now.getFullYear();
+    }
+    return true;
+  });
+};
+
 const BudgetView = ({ transactions: initialTransactions }) => {
   const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user') || '{}'));
   const [timeframe, setTimeframe] = useState('monthly');
-  const [budgetTransactions, setBudgetTransactions] = useState([]);
+  const [budgetTransactions, setBudgetTransactions] = useState(() => {
+    if (budgetCache.has('monthly')) return budgetCache.get('monthly');
+    return filterTxsForTimeframe(initialTransactions, 'monthly');
+  });
   const [loadingTx, setLoadingTx] = useState(false);
   
   const getLimitForTimeframe = (tf, userData) => {
@@ -32,8 +64,27 @@ const BudgetView = ({ transactions: initialTransactions }) => {
     fetchTransactionsForTimeframe(timeframe);
   }, [timeframe, user]);
 
+  useEffect(() => {
+    if (Array.isArray(initialTransactions) && initialTransactions.length > 0 && budgetTransactions.length === 0) {
+      const local = filterTxsForTimeframe(initialTransactions, timeframe);
+      if (local.length > 0) {
+        setBudgetTransactions(local);
+      }
+    }
+  }, [initialTransactions, timeframe]);
+
   const fetchTransactionsForTimeframe = async (tf) => {
-    setLoadingTx(true);
+    if (budgetCache.has(tf)) {
+      setBudgetTransactions(budgetCache.get(tf));
+    } else {
+      const local = filterTxsForTimeframe(initialTransactions, tf);
+      if (local.length > 0) {
+        setBudgetTransactions(local);
+      } else if (budgetTransactions.length === 0) {
+        setLoadingTx(true);
+      }
+    }
+
     try {
       const now = new Date();
       let startDate, endDate;
@@ -59,6 +110,7 @@ const BudgetView = ({ transactions: initialTransactions }) => {
 
       const res = await getTransactions({ startDate: startDate.toISOString(), endDate: endDate.toISOString() });
       setBudgetTransactions(res.data);
+      budgetCache.set(tf, res.data);
     } catch (err) {
       console.error("Failed to fetch budget transactions:", err);
     } finally {

@@ -3,12 +3,25 @@ import { Wallet, Landmark, Coins, Zap, ArrowRight } from 'lucide-react';
 import { getCurrency, getBankSyncSettings } from '../services/api';
 
 const Dashboard = ({ balances, onOpenSetupGuide }) => {
-  const [syncStatus, setSyncStatus] = useState({ isConnected: false, loading: true });
+  const [syncStatus, setSyncStatus] = useState(() => {
+    try {
+      const cached = localStorage.getItem('bank_sync_settings_cache');
+      if (cached) {
+        const data = JSON.parse(cached);
+        const isConnected = Boolean(data.hasPassword && (data.hasGoogleAuth || data.bankSyncActive || data.lastBankSyncAt));
+        return { isConnected, loading: false, email: data.googleEmail };
+      }
+    } catch (e) {}
+    return { isConnected: false, loading: true };
+  });
 
   const checkSyncStatus = async () => {
     try {
       const res = await getBankSyncSettings();
       const data = res.data;
+      try {
+        localStorage.setItem('bank_sync_settings_cache', JSON.stringify(data));
+      } catch (e) {}
       // Only considered connected when user has saved password AND active sync / statement history
       const isConnected = Boolean(data.hasPassword && (data.hasGoogleAuth || data.bankSyncActive || data.lastBankSyncAt));
       setSyncStatus({ isConnected, loading: false, email: data.googleEmail });

@@ -3,11 +3,16 @@ const router = express.Router();
 const prisma = require("../prismaClient");
 const { protect } = require("../middleware/authMiddleware");
 
-// Fast in-memory summary cache with 2-minute TTL and immediate mutation invalidation
+// Fast in-memory summary and transactions cache with TTL and immediate mutation invalidation
 const summaryCache = new Map();
+const txCache = new Map();
 
 const getSummaryCacheKey = (userId, startDate, endDate, wallet) => {
   return `${userId}:${startDate || 'all'}:${endDate || 'all'}:${wallet || 'all'}`;
+};
+
+const getTxCacheKey = (userId, wallet, category, startDate, endDate) => {
+  return `${userId}:${wallet || 'all'}:${category || 'all'}:${startDate || 'all'}:${endDate || 'all'}`;
 };
 
 const invalidateSummaryCache = (userId) => {
@@ -15,6 +20,11 @@ const invalidateSummaryCache = (userId) => {
   for (const key of summaryCache.keys()) {
     if (key.startsWith(`${userId}:`)) {
       summaryCache.delete(key);
+    }
+  }
+  for (const key of txCache.keys()) {
+    if (key.startsWith(`${userId}:`)) {
+      txCache.delete(key);
     }
   }
 };
@@ -107,6 +117,11 @@ router.post("/transaction", protect, async (req, res) => {
 router.get("/transactions", protect, async (req, res) => {
   try {
     const { wallet, category, startDate, endDate } = req.query;
+    const cacheKey = getTxCacheKey(req.user.id, wallet, category, startDate, endDate);
+    const cached = txCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp < 45000)) {
+      return res.json(cached.data);
+    }
     
     const filter = { userId: req.user.id };
     if (wallet) filter.wallet = wallet;
@@ -128,6 +143,7 @@ router.get("/transactions", protect, async (req, res) => {
 
     // Map id to _id for frontend compatibility
     const mappedTransactions = transactions.map(t => ({ ...t, _id: t.id }));
+    txCache.set(cacheKey, { data: mappedTransactions, timestamp: Date.now() });
     res.json(mappedTransactions);
   } catch (error) {
     console.error("Error fetching transactions:", error);

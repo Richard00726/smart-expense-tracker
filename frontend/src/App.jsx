@@ -27,9 +27,30 @@ function App() {
     }
   });
   const [showProfileTooltip, setShowProfileTooltip] = useState(false);
-  const [balances, setBalances] = useState({ cash: 0, upi: 0, total: 0 });
-  const [transactions, setTransactions] = useState([]);
-  const [txLoading, setTxLoading] = useState(true);
+  const [balances, setBalances] = useState(() => {
+    try {
+      const cached = localStorage.getItem('cached_balances');
+      return cached ? JSON.parse(cached) : { cash: 0, upi: 0, total: 0 };
+    } catch {
+      return { cash: 0, upi: 0, total: 0 };
+    }
+  });
+  const [transactions, setTransactions] = useState(() => {
+    try {
+      const cached = localStorage.getItem('cached_transactions');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [txLoading, setTxLoading] = useState(() => {
+    try {
+      const cached = localStorage.getItem('cached_transactions');
+      return !cached || JSON.parse(cached).length === 0;
+    } catch {
+      return true;
+    }
+  });
   const [activeTab, setActiveTab] = useState(() => {
     if (window.location.pathname.includes('google-callback') || window.location.search.includes('code=')) {
       return 'upi';
@@ -78,16 +99,17 @@ function App() {
     try {
       const res = await getWallets();
       setBalances(res.data);
+      try {
+        localStorage.setItem('cached_balances', JSON.stringify(res.data));
+      } catch (e) {}
     } catch (error) {
       console.error("Failed to load wallets:", error);
     }
   };
 
-
-
   const loadTransactions = async () => {
     try {
-      setTxLoading(true);
+      if (transactions.length === 0) setTxLoading(true);
       let txFilters = {};
       const now = new Date();
 
@@ -132,6 +154,11 @@ function App() {
         return createdB - createdA;
       });
       setTransactions(sorted);
+      if (txFilterType === 'all' && txWalletFilter === 'all') {
+        try {
+          localStorage.setItem('cached_transactions', JSON.stringify(sorted.slice(0, 100)));
+        } catch (e) {}
+      }
     } catch (error) {
       console.error("Failed to load transactions:", error);
     } finally {
@@ -467,7 +494,7 @@ function App() {
 
           {activeTab === 'account' && (
             <div style={{ marginTop: '2rem' }}>
-              <AccountView theme={theme} toggleTheme={toggleTheme} onLogout={handleLogout} />
+              <AccountView currentUser={currentUser} theme={theme} toggleTheme={toggleTheme} onLogout={handleLogout} />
             </div>
           )}
 
