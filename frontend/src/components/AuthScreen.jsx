@@ -340,10 +340,22 @@ const AuthScreen = ({ onAuthSuccess }) => {
         
         <div className="split-form-inner">
 
-          {/* Mobile Only Brand Header */}
-          <div className="auth-mobile-brand">
-            <span className="auth-mobile-brand-title">Smart Expense</span>
-            <span className="auth-mobile-brand-badge">TRACKER</span>
+          {/* Mobile Only Brand Logo */}
+          <div 
+            className="auth-mobile-logo-block" 
+            onClick={() => setShowSplash(true)}
+            title="Click to replay intro animation"
+          >
+            <h2 className="auth-mobile-logo-title">Smart Expense</h2>
+            <div className="auth-mobile-logo-swoosh">
+              <svg viewBox="0 0 460 48" fill="none" style={{ width: '100%', height: 'auto', overflow: 'visible' }}>
+                <path d="M 12 22 C 145 42, 315 42, 438 12" stroke="#00c4cc" strokeWidth="5.5" strokeLinecap="round" />
+                <circle cx="441" cy="11" r="6.5" fill="#00c4cc" />
+              </svg>
+            </div>
+            <div className="auth-mobile-logo-tracker">
+              <span>T</span><span>R</span><span>A</span><span>C</span><span>K</span><span>E</span><span>R</span>
+            </div>
           </div>
           
           {/* Header */}
