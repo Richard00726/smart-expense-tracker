@@ -846,6 +846,45 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
   const currentLocalMonthStr = getLocalMonthKey(today);
   const currentLocalYearStr = today.getFullYear().toString();
 
+  // Compute the live true closing balance from the live wallet or the newest auto transaction
+  const effectiveLiveBalance = useMemo(() => {
+    // 1. Live wallet balance passed down from App
+    if (balances?.upi !== undefined && balances?.upi !== null && !isNaN(balances.upi) && Number(balances.upi) > 0) {
+      return Number(balances.upi);
+    }
+    // 2. Newest auto bank transaction balance
+    if (autoTransactions && autoTransactions.length > 0) {
+      const newestWithBal = autoTransactions.find(t => t.balance !== null && t.balance !== undefined && !isNaN(t.balance));
+      if (newestWithBal) {
+        return Number(newestWithBal.balance);
+      }
+    }
+    // 3. Newest daily summary in bankOverview
+    if (bankOverview?.dailySummaries && bankOverview.dailySummaries.length > 0) {
+      const topClosing = bankOverview.dailySummaries[0]?.closingBalance;
+      if (topClosing !== null && topClosing !== undefined && !isNaN(topClosing)) {
+        return Number(topClosing);
+      }
+    }
+    // 4. Fallback to latestClosingBalance or balances.upi
+    if (bankOverview?.latestClosingBalance !== null && bankOverview?.latestClosingBalance !== undefined && !isNaN(bankOverview.latestClosingBalance)) {
+      return Number(bankOverview.latestClosingBalance);
+    }
+    return Number(balances?.upi || 0);
+  }, [balances?.upi, autoTransactions, bankOverview]);
+
+  // Keep bankOverview in sync with the true live balance so cached copy is never stale
+  useEffect(() => {
+    if (effectiveLiveBalance > 0 && bankOverview && bankOverview.latestClosingBalance !== effectiveLiveBalance) {
+      const updated = { ...bankOverview, latestClosingBalance: effectiveLiveBalance };
+      setBankOverview(updated);
+      try {
+        localStorage.setItem(`bank_overview_cache_${userCacheKey}`, JSON.stringify(updated));
+        localStorage.setItem('bank_overview_cache', JSON.stringify(updated));
+      } catch {}
+    }
+  }, [effectiveLiveBalance, bankOverview, userCacheKey]);
+
   // Top Table (Daily Statement Ledger) Filter State
   const [ledgerFilterType, setLedgerFilterType] = useState('month');
   const [ledgerFilterValue, setLedgerFilterValue] = useState('');
@@ -1257,7 +1296,17 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
           <Building2 size={17} />
           Auto-Tracker-UPI (Bank Sync)
           {isConfigured && (
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981', display: 'inline-block' }} />
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: googleTokenExpired ? '#f59e0b' : '#10b981',
+                boxShadow: googleTokenExpired ? '0 0 8px #f59e0b' : '0 0 8px #10b981',
+                display: 'inline-block'
+              }}
+              title={googleTokenExpired ? 'Gmail Session Expired – Re-link Required' : 'Bank Sync Active'}
+            />
           )}
         </button>
         <button
@@ -1456,25 +1505,23 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                 )}
 
                 {/* 5. Live Statement Closing Balance */}
-                {(bankOverview?.latestClosingBalance != null || balances?.upi != null) && (
-                  <span
-                    style={{
-                      fontSize: '0.78rem',
-                      background: 'rgba(56, 189, 248, 0.12)',
-                      color: '#38bdf8',
-                      border: '1px solid rgba(56, 189, 248, 0.25)',
-                      padding: '0.2rem 0.6rem',
-                      borderRadius: '20px',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                      fontWeight: 700
-                    }}
-                    title="Official statement Closing Balance synced with wallet"
-                  >
-                    💰 Balance: ₹{Number(bankOverview?.latestClosingBalance != null ? bankOverview.latestClosingBalance : balances.upi).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                  </span>
-                )}
+                <span
+                  style={{
+                    fontSize: '0.78rem',
+                    background: 'rgba(56, 189, 248, 0.12)',
+                    color: '#38bdf8',
+                    border: '1px solid rgba(56, 189, 248, 0.25)',
+                    padding: '0.2rem 0.6rem',
+                    borderRadius: '20px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    fontWeight: 700
+                  }}
+                  title="Live statement Closing Balance synchronized with wallet"
+                >
+                  💰 Balance: ₹{effectiveLiveBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
 
                 {/* 6. Timestamp when data was actually fetched */}
                 {lastSyncTime && (
