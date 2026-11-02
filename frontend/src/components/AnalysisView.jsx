@@ -58,7 +58,113 @@ const AnalysisView = ({ refreshTrigger }) => {
   const currentMonthString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
   const currentYearString = today.getFullYear().toString();
 
-  const defaultKey = `month_${currentMonthString}`;
+  const availableMonths = React.useMemo(() => {
+    const monthsMap = new Map();
+
+    // Ensure current calendar month is always present
+    const [cy, cm] = currentMonthString.split('-');
+    const curDate = new Date(parseInt(cy, 10), parseInt(cm, 10) - 1, 1);
+    const curLabel = curDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    monthsMap.set(currentMonthString, { key: currentMonthString, label: curLabel });
+
+    const addMonthKey = (mKey) => {
+      if (mKey && !monthsMap.has(mKey)) {
+        const [y, m] = mKey.split('-');
+        const sDate = new Date(parseInt(y, 10), parseInt(m, 10) - 1, 1);
+        const label = sDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        monthsMap.set(mKey, { key: mKey, label });
+      }
+    };
+
+    const txList = Array.isArray(refreshTrigger) ? refreshTrigger : [];
+    txList.forEach(t => {
+      const d = t.date || t.txnDate;
+      if (d) addMonthKey(new Date(d).toISOString().slice(0, 7));
+    });
+
+    try {
+      const cached = localStorage.getItem('cached_transactions');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed)) {
+          parsed.forEach(t => {
+            const d = t.date || t.txnDate;
+            if (d) addMonthKey(new Date(d).toISOString().slice(0, 7));
+          });
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const bankCache = localStorage.getItem('bank_overview_cache');
+      if (bankCache) {
+        const parsed = JSON.parse(bankCache);
+        if (Array.isArray(parsed?.dailySummaries)) {
+          parsed.dailySummaries.forEach(s => {
+            const dateStr = s.statementDate || s.period || '';
+            const parts = dateStr.split('-');
+            if (parts.length >= 3) {
+              addMonthKey(`${parts[2].slice(0, 4)}-${parts[1].padStart(2, '0')}`);
+            }
+          });
+        }
+      }
+    } catch (e) {}
+
+    return Array.from(monthsMap.values()).sort((a, b) => b.key.localeCompare(a.key));
+  }, [refreshTrigger, currentMonthString]);
+
+  // Find latest month with real transactions so analysis isn't blank on 1st of month
+  const latestMonthWithData = React.useMemo(() => {
+    let allTx = Array.isArray(refreshTrigger) && refreshTrigger.length > 0 ? refreshTrigger : [];
+    if (allTx.length === 0) {
+      try {
+        const cached = localStorage.getItem('cached_transactions');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) allTx = parsed;
+        }
+      } catch (e) {}
+    }
+
+    if (allTx.length === 0) {
+      try {
+        const bankCache = localStorage.getItem('bank_overview_cache');
+        if (bankCache) {
+          const parsed = JSON.parse(bankCache);
+          if (Array.isArray(parsed?.dailySummaries) && parsed.dailySummaries.length > 0) {
+            for (const s of parsed.dailySummaries) {
+              const dateStr = s.statementDate || s.period || '';
+              const parts = dateStr.split('-');
+              if (parts.length >= 3) {
+                return `${parts[2].slice(0, 4)}-${parts[1].padStart(2, '0')}`;
+              }
+            }
+          }
+        }
+      } catch (e) {}
+      return currentMonthString;
+    }
+
+    const hasCurrent = allTx.some(t => {
+      const d = t.date || t.txnDate;
+      return d && new Date(d).toISOString().slice(0, 7) === currentMonthString;
+    });
+    if (hasCurrent) return currentMonthString;
+
+    for (const m of availableMonths) {
+      if (m.key === currentMonthString) continue;
+      const hasTx = allTx.some(t => {
+        const d = t.date || t.txnDate;
+        return d && new Date(d).toISOString().slice(0, 7) === m.key;
+      });
+      if (hasTx) return m.key;
+    }
+    return availableMonths[0]?.key || currentMonthString;
+  }, [availableMonths, currentMonthString, refreshTrigger]);
+
+  const defaultMonth = latestMonthWithData || currentMonthString;
+  const defaultKey = `month_${defaultMonth}`;
   const initialData = getInitialSummary(defaultKey);
 
   const [spendingSummary, setSpendingSummary] = useState(() => initialData);
@@ -70,20 +176,44 @@ const AnalysisView = ({ refreshTrigger }) => {
   const [flowLoading, setFlowLoading] = useState(!initialData);
 
   const [spendingFilterType, setSpendingFilterType] = useState('month');
-  const [spendingFilterValue, setSpendingFilterValue] = useState(currentMonthString);
+  const [spendingFilterValue, setSpendingFilterValue] = useState(() => defaultMonth);
 
   const [incomeFilterType, setIncomeFilterType] = useState('month');
-  const [incomeFilterValue, setIncomeFilterValue] = useState(currentMonthString);
+  const [incomeFilterValue, setIncomeFilterValue] = useState(() => defaultMonth);
 
   const [flowFilterType, setFlowFilterType] = useState('month');
-  const [flowFilterValue, setFlowFilterValue] = useState(currentMonthString);
+  const [flowFilterValue, setFlowFilterValue] = useState(() => defaultMonth);
   const [flowWalletFilter, setFlowWalletFilter] = useState('all'); // 'all' (Combined - Default), 'Cash', 'UPI'
   const [hoveredCategory, setHoveredCategory] = useState(null);
 
+  const [userChangedSpendingMonth, setUserChangedSpendingMonth] = useState(false);
+  const [userChangedIncomeMonth, setUserChangedIncomeMonth] = useState(false);
+  const [userChangedFlowMonth, setUserChangedFlowMonth] = useState(false);
+
+  // Sync to latest month with data if user hasn't explicitly selected another month
+  useEffect(() => {
+    if (latestMonthWithData && !userChangedSpendingMonth && spendingFilterType === 'month' && spendingFilterValue !== latestMonthWithData) {
+      setSpendingFilterValue(latestMonthWithData);
+    }
+  }, [latestMonthWithData, userChangedSpendingMonth, spendingFilterType]);
+
+  useEffect(() => {
+    if (latestMonthWithData && !userChangedIncomeMonth && incomeFilterType === 'month' && incomeFilterValue !== latestMonthWithData) {
+      setIncomeFilterValue(latestMonthWithData);
+    }
+  }, [latestMonthWithData, userChangedIncomeMonth, incomeFilterType]);
+
+  useEffect(() => {
+    if (latestMonthWithData && !userChangedFlowMonth && flowFilterType === 'month' && flowFilterValue !== latestMonthWithData) {
+      setFlowFilterValue(latestMonthWithData);
+    }
+  }, [latestMonthWithData, userChangedFlowMonth, flowFilterType]);
+
   const handleFilterTypeChange = (newType, setType, setValue) => {
     setType(newType);
-    if (newType === 'day') setValue(todayString);
-    else if (newType === 'month') setValue(currentMonthString);
+    if (newType === 'all') setValue('');
+    else if (newType === 'day') setValue(todayString);
+    else if (newType === 'month') setValue(latestMonthWithData || currentMonthString);
     else if (newType === 'year') setValue(currentYearString);
   };
 
@@ -95,6 +225,9 @@ const AnalysisView = ({ refreshTrigger }) => {
 
   const getFilterObj = (type, value) => {
     let filters = {};
+    if (type === 'all') {
+      return {};
+    }
     if (type === 'today') {
       const start = new Date();
       start.setHours(0, 0, 0, 0);
@@ -406,20 +539,35 @@ const AnalysisView = ({ refreshTrigger }) => {
               <input type="date" className="form-control" style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }} value={spendingFilterValue} onChange={e => setSpendingFilterValue(e.target.value)} />
             )}
             {spendingFilterType === 'month' && (
-              <input type="month" className="form-control" style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }} value={spendingFilterValue} onChange={e => setSpendingFilterValue(e.target.value)} />
+              <select
+                className="form-control"
+                style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem', fontWeight: 500 }}
+                value={spendingFilterValue || latestMonthWithData || currentMonthString}
+                onChange={e => {
+                  setUserChangedSpendingMonth(true);
+                  setSpendingFilterValue(e.target.value);
+                }}
+              >
+                {availableMonths.map(m => (
+                  <option key={`spend-month-${m.key}`} value={m.key}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
             )}
             {spendingFilterType === 'year' && (
               <input type="number" min="2000" max="2100" placeholder="YYYY" className="form-control" style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }} value={spendingFilterValue} onChange={e => setSpendingFilterValue(e.target.value)} />
             )}
             <select
               className="form-control"
-              style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
+              style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem', fontWeight: 600 }}
               value={spendingFilterType}
               onChange={(e) => handleFilterTypeChange(e.target.value, setSpendingFilterType, setSpendingFilterValue)}
             >
+              <option value="month">By Month</option>
+              <option value="all">All Time</option>
               <option value="today">Today</option>
               <option value="day">By Day</option>
-              <option value="month">By Month</option>
               <option value="year">By Year</option>
             </select>
           </div>
@@ -523,6 +671,14 @@ const AnalysisView = ({ refreshTrigger }) => {
                             stroke="var(--card-bg)"
                             strokeWidth={isHovered ? 3 : 2}
                             style={{ cursor: 'pointer', transition: 'all 0.15s ease' }}
+                            onMouseEnter={() => {
+                              setHoveredCategory(entry);
+                              const el = document.getElementById(`cat-row-${index}`);
+                              if (el) {
+                                el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                              }
+                            }}
+                            onMouseLeave={() => setHoveredCategory(null)}
                           />
                         );
                       })}
@@ -690,20 +846,35 @@ const AnalysisView = ({ refreshTrigger }) => {
               <input type="date" className="form-control" style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }} value={incomeFilterValue} onChange={e => setIncomeFilterValue(e.target.value)} />
             )}
             {incomeFilterType === 'month' && (
-              <input type="month" className="form-control" style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }} value={incomeFilterValue} onChange={e => setIncomeFilterValue(e.target.value)} />
+              <select
+                className="form-control"
+                style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem', fontWeight: 500 }}
+                value={incomeFilterValue || latestMonthWithData || currentMonthString}
+                onChange={e => {
+                  setUserChangedIncomeMonth(true);
+                  setIncomeFilterValue(e.target.value);
+                }}
+              >
+                {availableMonths.map(m => (
+                  <option key={`inc-month-${m.key}`} value={m.key}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
             )}
             {incomeFilterType === 'year' && (
               <input type="number" min="2000" max="2100" placeholder="YYYY" className="form-control" style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }} value={incomeFilterValue} onChange={e => setIncomeFilterValue(e.target.value)} />
             )}
             <select
               className="form-control"
-              style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
+              style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem', fontWeight: 600 }}
               value={incomeFilterType}
               onChange={(e) => handleFilterTypeChange(e.target.value, setIncomeFilterType, setIncomeFilterValue)}
             >
+              <option value="month">By Month</option>
+              <option value="all">All Time</option>
               <option value="today">Today</option>
               <option value="day">By Day</option>
-              <option value="month">By Month</option>
               <option value="year">By Year</option>
             </select>
           </div>
@@ -819,20 +990,35 @@ const AnalysisView = ({ refreshTrigger }) => {
               <input type="date" className="form-control" style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }} value={flowFilterValue} onChange={e => setFlowFilterValue(e.target.value)} />
             )}
             {flowFilterType === 'month' && (
-              <input type="month" className="form-control" style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }} value={flowFilterValue} onChange={e => setFlowFilterValue(e.target.value)} />
+              <select
+                className="form-control"
+                style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem', fontWeight: 500 }}
+                value={flowFilterValue || latestMonthWithData || currentMonthString}
+                onChange={e => {
+                  setUserChangedFlowMonth(true);
+                  setFlowFilterValue(e.target.value);
+                }}
+              >
+                {availableMonths.map(m => (
+                  <option key={`flow-month-${m.key}`} value={m.key}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
             )}
             {flowFilterType === 'year' && (
               <input type="number" min="2000" max="2100" placeholder="YYYY" className="form-control" style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }} value={flowFilterValue} onChange={e => setFlowFilterValue(e.target.value)} />
             )}
             <select
               className="form-control"
-              style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
+              style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem', fontWeight: 600 }}
               value={flowFilterType}
               onChange={(e) => handleFilterTypeChange(e.target.value, setFlowFilterType, setFlowFilterValue)}
             >
+              <option value="month">By Month</option>
+              <option value="all">All Time</option>
               <option value="today">Today</option>
               <option value="day">By Day</option>
-              <option value="month">By Month</option>
               <option value="year">By Year</option>
             </select>
           </div>
