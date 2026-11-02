@@ -180,7 +180,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
   // Status & action state
   const [isConfigured, setIsConfigured] = useState(() => {
     if (cachedSettings) {
-      return Boolean(cachedSettings?.hasPassword && (cachedSettings?.hasGoogleAuth || cachedSettings?.bankSyncActive));
+      return Boolean(cachedSettings?.hasPassword && (cachedSettings?.hasGoogleAuth || cachedSettings?.bankSyncActive || cachedSettings?.googleTokenExpired));
     }
     try {
       const u = (currentUser && currentUser.email) ? currentUser : JSON.parse(localStorage.getItem('user') || '{}');
@@ -420,8 +420,8 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
         setLastSyncTime(null);
       }
 
-      // Check if user is genuinely configured in DB (password saved and Google auth or active sync)
-      const userConfigured = Boolean(data.hasPassword && (data.hasGoogleAuth || data.bankSyncActive));
+      // Check if user is genuinely configured in DB (password saved and Google auth, active sync, or token expired awaiting re-auth)
+      const userConfigured = Boolean(data.hasPassword && (data.hasGoogleAuth || data.bankSyncActive || data.googleTokenExpired));
 
       if (userConfigured) {
         setIsConfigured(true);
@@ -429,9 +429,10 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
         // Fetch dynamic Customer & Branch details and Daily Statement summaries
         getBankOverview()
           .then(ovRes => {
-            if (ovRes.data) {
+            if (ovRes.data && (ovRes.data.accountNo || (Array.isArray(ovRes.data.dailySummaries) && ovRes.data.dailySummaries.length > 0))) {
               setBankOverview(ovRes.data);
               try {
+                localStorage.setItem(`bank_overview_cache_${userCacheKey}`, JSON.stringify(ovRes.data));
                 localStorage.setItem('bank_overview_cache', JSON.stringify(ovRes.data));
               } catch {}
             }
@@ -454,9 +455,10 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                 refreshAllData();
                 getBankOverview()
                   .then(ovRes => {
-                    if (ovRes.data) {
+                    if (ovRes.data && (ovRes.data.accountNo || (Array.isArray(ovRes.data.dailySummaries) && ovRes.data.dailySummaries.length > 0))) {
                       setBankOverview(ovRes.data);
                       try {
+                        localStorage.setItem(`bank_overview_cache_${userCacheKey}`, JSON.stringify(ovRes.data));
                         localStorage.setItem('bank_overview_cache', JSON.stringify(ovRes.data));
                       } catch {}
                     }
@@ -472,15 +474,18 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
             });
         }
       } else {
-        setIsConfigured(false);
-        setBankOverview(null);
-        setLastSyncTime(null);
-        setMaskedPassword('');
-        setWizardStep(1);
-        try {
-          localStorage.removeItem('bank_sync_settings_cache');
-          localStorage.removeItem('bank_overview_cache');
-        } catch {}
+        // Only clear state if user genuinely has no password, no sync, and no credentials
+        if (!data.hasPassword && !data.hasGoogleCredentials && !data.googleClientId && !data.googleTokenExpired) {
+          setIsConfigured(false);
+          setBankOverview(null);
+          setLastSyncTime(null);
+          setMaskedPassword('');
+          setWizardStep(1);
+          try {
+            localStorage.removeItem('bank_sync_settings_cache');
+            localStorage.removeItem('bank_overview_cache');
+          } catch {}
+        }
       }
     } catch (err) {
       console.error('Failed to load bank sync settings:', err);
@@ -843,11 +848,13 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
 
   // Top Table (Daily Statement Ledger) Filter State
   const [ledgerFilterType, setLedgerFilterType] = useState('month');
-  const [ledgerFilterValue, setLedgerFilterValue] = useState(currentLocalMonthStr);
+  const [ledgerFilterValue, setLedgerFilterValue] = useState('');
+  const [userChangedLedgerMonth, setUserChangedLedgerMonth] = useState(false);
 
   // Bottom Table (Auto Bank & UPI Transactions) Filter State
   const [txFilterType, setTxFilterType] = useState('month');
-  const [txFilterValue, setTxFilterValue] = useState(currentLocalMonthStr);
+  const [txFilterValue, setTxFilterValue] = useState('');
+  const [userChangedTxMonth, setUserChangedTxMonth] = useState(false);
 
   const isNoticeDismissed = useMemo(() => {
     try {
@@ -878,7 +885,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
   const handleLedgerFilterTypeChange = (newType) => {
     setLedgerFilterType(newType);
     if (newType === 'day') setLedgerFilterValue(todayLocalDateStr);
-    else if (newType === 'month') setLedgerFilterValue(currentLocalMonthStr);
+    else if (newType === 'month') setLedgerFilterValue(latestMonthWithData || currentLocalMonthStr);
     else if (newType === 'year') setLedgerFilterValue(currentLocalYearStr);
     else setLedgerFilterValue('');
   };
@@ -886,13 +893,22 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
   const handleTxFilterTypeChange = (newType) => {
     setTxFilterType(newType);
     if (newType === 'day') setTxFilterValue(todayLocalDateStr);
-    else if (newType === 'month') setTxFilterValue(currentLocalMonthStr);
+    else if (newType === 'month') setTxFilterValue(latestMonthWithData || currentLocalMonthStr);
     else if (newType === 'year') setTxFilterValue(currentLocalYearStr);
     else setTxFilterValue('');
   };
 
   const availableMonths = useMemo(() => {
     const monthsMap = new Map();
+
+    // Ensure current calendar month is always present as an available option
+    if (currentLocalMonthStr) {
+      const [y, m] = currentLocalMonthStr.split('-');
+      const sampleDate = new Date(parseInt(y, 10), parseInt(m, 10) - 1, 1);
+      const label = sampleDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      monthsMap.set(currentLocalMonthStr, { key: currentLocalMonthStr, label });
+    }
+
     (bankOverview?.dailySummaries || []).forEach(s => {
       const dateStr = s.statementDate || s.period || '';
       const parts = dateStr.split('-');
@@ -917,7 +933,54 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
       }
     });
     return Array.from(monthsMap.values()).sort((a, b) => b.key.localeCompare(a.key));
-  }, [upiTransactions, bankOverview?.dailySummaries]);
+  }, [upiTransactions, bankOverview?.dailySummaries, currentLocalMonthStr]);
+
+  // Compute the newest month that actually holds statement summaries or transactions
+  const latestMonthWithData = useMemo(() => {
+    // 1. If current calendar month has data, use it
+    const hasCurrentLedger = (bankOverview?.dailySummaries || []).some(s => {
+      const dateStr = s.statementDate || s.period || '';
+      const parts = dateStr.split('-');
+      if (parts.length >= 3) {
+        return parts[1] === currentLocalMonthStr.split('-')[1] && parts[2].startsWith(currentLocalMonthStr.split('-')[0]);
+      }
+      return false;
+    });
+    const hasCurrentTx = upiTransactions.some(tx => getLocalMonthKey(tx.date || tx.txnDate) === currentLocalMonthStr);
+    if (hasCurrentLedger || hasCurrentTx) return currentLocalMonthStr;
+
+    // 2. Otherwise find the most recent month with actual data
+    for (const m of availableMonths) {
+      if (m.key === currentLocalMonthStr) continue;
+      const hasLedger = (bankOverview?.dailySummaries || []).some(s => {
+        const dateStr = s.statementDate || s.period || '';
+        const parts = dateStr.split('-');
+        if (parts.length >= 3) {
+          return parts[1] === m.key.split('-')[1] && parts[2].startsWith(m.key.split('-')[0]);
+        }
+        return false;
+      });
+      const hasTx = upiTransactions.some(tx => getLocalMonthKey(tx.date || tx.txnDate) === m.key);
+      if (hasLedger || hasTx) return m.key;
+    }
+    return availableMonths[0]?.key || currentLocalMonthStr;
+  }, [availableMonths, currentLocalMonthStr, bankOverview?.dailySummaries, upiTransactions]);
+
+  // Sync to the latest month that has records so the view is never empty on load
+  useEffect(() => {
+    if (latestMonthWithData && !userChangedLedgerMonth) {
+      setLedgerFilterValue(latestMonthWithData);
+    }
+  }, [latestMonthWithData, userChangedLedgerMonth]);
+
+  useEffect(() => {
+    if (latestMonthWithData && !userChangedTxMonth) {
+      setTxFilterValue(latestMonthWithData);
+    }
+  }, [latestMonthWithData, userChangedTxMonth]);
+
+  const effectiveLedgerMonth = ledgerFilterValue || latestMonthWithData || currentLocalMonthStr;
+  const effectiveTxMonth = txFilterValue || latestMonthWithData || currentLocalMonthStr;
 
   const statementRangeText = useMemo(() => {
     if (!availableMonths || availableMonths.length === 0) {
@@ -948,9 +1011,8 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
     }
 
     if (txFilterType === 'month') {
-      const activeMonth = txFilterValue || (availableMonths[0]?.key || currentLocalMonthStr);
       return autoTransactions.filter(tx => {
-        return getLocalMonthKey(tx.date || tx.txnDate) === activeMonth;
+        return getLocalMonthKey(tx.date || tx.txnDate) === effectiveTxMonth;
       });
     }
 
@@ -963,7 +1025,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
     }
 
     return autoTransactions;
-  }, [autoTransactions, txFilterType, txFilterValue, todayLocalDateStr, availableMonths, currentLocalMonthStr]);
+  }, [autoTransactions, txFilterType, txFilterValue, effectiveTxMonth, todayLocalDateStr]);
 
   const displayedUpiTransactions = useMemo(() => {
     if (txFilterType === 'all') return upiTransactions;
@@ -982,9 +1044,8 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
     }
 
     if (txFilterType === 'month') {
-      const activeMonth = txFilterValue || (availableMonths[0]?.key || currentLocalMonthStr);
       return upiTransactions.filter(tx => {
-        return getLocalMonthKey(tx.date || tx.txnDate) === activeMonth;
+        return getLocalMonthKey(tx.date || tx.txnDate) === effectiveTxMonth;
       });
     }
 
@@ -997,7 +1058,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
     }
 
     return upiTransactions;
-  }, [upiTransactions, txFilterType, txFilterValue, todayLocalDateStr, availableMonths, currentLocalMonthStr]);
+  }, [upiTransactions, txFilterType, txFilterValue, effectiveTxMonth, todayLocalDateStr]);
 
   const displayedDailySummaries = useMemo(() => {
     const list = bankOverview?.dailySummaries || [];
@@ -1016,8 +1077,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
     }
 
     if (ledgerFilterType === 'month') {
-      const activeMonth = ledgerFilterValue || (availableMonths[0]?.key || currentLocalMonthStr);
-      const [y, m] = activeMonth.split('-');
+      const [y, m] = effectiveLedgerMonth.split('-');
       return list.filter(s => {
         const dateStr = s.statementDate || s.period || '';
         const parts = dateStr.split('-');
@@ -1033,7 +1093,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
     }
 
     return list;
-  }, [bankOverview?.dailySummaries, ledgerFilterType, ledgerFilterValue, todayLocalDateStr, availableMonths, currentLocalMonthStr]);
+  }, [bankOverview?.dailySummaries, ledgerFilterType, ledgerFilterValue, effectiveLedgerMonth, todayLocalDateStr]);
 
   const renderLedgerFilterControls = () => (
     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -1043,15 +1103,21 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
           className="form-control"
           style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
           value={ledgerFilterValue}
-          onChange={e => setLedgerFilterValue(e.target.value)}
+          onChange={e => {
+            setUserChangedLedgerMonth(true);
+            setLedgerFilterValue(e.target.value);
+          }}
         />
       )}
       {ledgerFilterType === 'month' && (
         <select
           className="form-control"
           style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem', fontWeight: 500 }}
-          value={ledgerFilterValue || (availableMonths[0]?.key || currentLocalMonthStr)}
-          onChange={e => setLedgerFilterValue(e.target.value)}
+          value={effectiveLedgerMonth}
+          onChange={e => {
+            setUserChangedLedgerMonth(true);
+            setLedgerFilterValue(e.target.value);
+          }}
         >
           {availableMonths.map(m => (
             <option key={`ledger-${m.key}`} value={m.key}>
@@ -1069,7 +1135,10 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
           className="form-control"
           style={{ width: '90px', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
           value={ledgerFilterValue}
-          onChange={e => setLedgerFilterValue(e.target.value)}
+          onChange={e => {
+            setUserChangedLedgerMonth(true);
+            setLedgerFilterValue(e.target.value);
+          }}
         />
       )}
       <select
@@ -1095,15 +1164,21 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
           className="form-control"
           style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
           value={txFilterValue}
-          onChange={e => setTxFilterValue(e.target.value)}
+          onChange={e => {
+            setUserChangedTxMonth(true);
+            setTxFilterValue(e.target.value);
+          }}
         />
       )}
       {txFilterType === 'month' && (
         <select
           className="form-control"
           style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem', fontWeight: 500 }}
-          value={txFilterValue || (availableMonths[0]?.key || currentLocalMonthStr)}
-          onChange={e => setTxFilterValue(e.target.value)}
+          value={effectiveTxMonth}
+          onChange={e => {
+            setUserChangedTxMonth(true);
+            setTxFilterValue(e.target.value);
+          }}
         >
           {availableMonths.map(m => (
             <option key={`tx-${m.key}`} value={m.key}>
@@ -1121,7 +1196,10 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
           className="form-control"
           style={{ width: '90px', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
           value={txFilterValue}
-          onChange={e => setTxFilterValue(e.target.value)}
+          onChange={e => {
+            setUserChangedTxMonth(true);
+            setTxFilterValue(e.target.value);
+          }}
         />
       )}
       <select

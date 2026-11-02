@@ -203,7 +203,7 @@ async function syncUserBankStatements(user, options = {}) {
 
         // Store daily statement summary and bank metadata
         if (result.metadata) {
-          updateDailySummary(user.id, result.metadata, result.transactions);
+          await updateDailySummary(user.id, result.metadata, result.transactions);
         }
 
         // Automatically sync UPI Wallet balance to statement Closing Balance
@@ -235,7 +235,7 @@ async function syncUserBankStatements(user, options = {}) {
     }
 
     // Ensure UPI Wallet balance is set to the true newest statement closing balance
-    const overview = getBankOverview(user.id);
+    const overview = await getBankOverview(user.id);
     if (overview.latestClosingBalance !== null && !isNaN(overview.latestClosingBalance)) {
       await prisma.wallet.upsert({
         where: { userId_type: { userId: user.id, type: 'UPI' } },

@@ -58,6 +58,13 @@ router.get(['/google-callback', '/google-callback-popup'], async (req, res) => {
     const protocol = req.headers['x-forwarded-proto'] || (req.get('host').includes('localhost') ? 'http' : 'https');
     const redirectUri = `${protocol}://${req.get('host')}${req.baseUrl}${req.path}`;
 
+    const clientId = user?.googleClientId || process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = user?.googleClientSecret || process.env.GOOGLE_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      return res.status(400).send('Google Client ID and Secret are not configured.');
+    }
+
     const { tokens, email } = await exchangeCodeForTokens(code, clientId, clientSecret, redirectUri);
 
     const updateData = {
@@ -142,7 +149,7 @@ router.get('/settings', async (req, res) => {
 router.get('/overview', async (req, res) => {
   try {
     const { getBankOverview } = require('../services/bankOverviewStore');
-    const overview = getBankOverview(req.user.id);
+    const overview = await getBankOverview(req.user.id);
     res.json(overview);
   } catch (err) {
     console.error('Error fetching bank overview:', err);
@@ -314,6 +321,9 @@ router.post('/google-auth-url', async (req, res) => {
     const protocol = req.headers['x-forwarded-proto'] || (req.get('host').includes('localhost') ? 'http' : 'https');
     const redirectUri = req.body.redirectUri || `${protocol}://${req.get('host')}/api/bank-sync/google-callback`;
     const loginHint = req.body.loginHint || user?.googleEmail || user?.email;
+
+    const clientId = user?.googleClientId || process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = user?.googleClientSecret || process.env.GOOGLE_CLIENT_SECRET;
 
     if (!clientId || !clientSecret) {
       return res.status(400).json({

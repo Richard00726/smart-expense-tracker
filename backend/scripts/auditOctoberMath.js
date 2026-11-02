@@ -1,6 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const { getBankOverview } = require('../services/bankOverviewStore');
+const { getBankOverviewSync } = require('../services/bankOverviewStore');
 
 async function main() {
   const user = await prisma.user.findFirst({
@@ -59,7 +59,7 @@ async function main() {
   console.log('Total October Outflow (Debits):', debitClean.toFixed(2));
   console.log('Net October Flow:', (creditClean - debitClean).toFixed(2));
 
-  const overview = getBankOverview();
+  const overview = getBankOverviewSync();
   console.log('\n--- BANK STATEMENTS OVERVIEW STORE ---');
   if (overview && overview.dailySummaries) {
     const dates = Object.keys(overview.dailySummaries).sort();
