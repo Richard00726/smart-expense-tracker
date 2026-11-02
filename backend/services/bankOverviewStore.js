@@ -128,6 +128,9 @@ async function getBankOverview(userId) {
   }
 
   if (overview && Array.isArray(overview.dailySummaries) && overview.dailySummaries.length > 0) {
+    if (overview.dailySummaries[0]?.closingBalance !== undefined && overview.dailySummaries[0]?.closingBalance !== null) {
+      overview.latestClosingBalance = overview.dailySummaries[0].closingBalance;
+    }
     return overview;
   }
 
@@ -140,6 +143,9 @@ async function getBankOverview(userId) {
     if (user?.bankOverviewData && typeof user.bankOverviewData === 'object') {
       const dbOverview = user.bankOverviewData;
       if (Array.isArray(dbOverview.dailySummaries) && dbOverview.dailySummaries.length > 0) {
+        if (dbOverview.dailySummaries[0]?.closingBalance !== undefined && dbOverview.dailySummaries[0]?.closingBalance !== null) {
+          dbOverview.latestClosingBalance = dbOverview.dailySummaries[0].closingBalance;
+        }
         saveBankOverview(userId, dbOverview, false);
         return dbOverview;
       }

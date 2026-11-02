@@ -84,7 +84,7 @@ const SUPPORTED_BANKS = [
   }
 ];
 
-const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransaction, currentUser }) => {
+const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransaction, currentUser, balances }) => {
   const [mainTab, setMainTab] = useState('auto');
   const [subTab, setSubTab] = useState('add');
 
@@ -1456,7 +1456,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                 )}
 
                 {/* 5. Live Statement Closing Balance */}
-                {bankOverview?.latestClosingBalance != null && (
+                {(bankOverview?.latestClosingBalance != null || balances?.upi != null) && (
                   <span
                     style={{
                       fontSize: '0.78rem',
@@ -1472,7 +1472,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                     }}
                     title="Official statement Closing Balance synced with wallet"
                   >
-                    💰 Balance: ₹{Number(bankOverview.latestClosingBalance).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    💰 Balance: ₹{Number(bankOverview?.latestClosingBalance != null ? bankOverview.latestClosingBalance : balances.upi).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </span>
                 )}
 

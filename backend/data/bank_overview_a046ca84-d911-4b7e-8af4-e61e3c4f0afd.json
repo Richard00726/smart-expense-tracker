@@ -1,25 +1,65 @@
 {
   "accountNo": "XXXXXXXXX300005",
   "customerDetails": {
-    "customerId": "1579871",
     "name": "LOURDURAJ M",
-    "address": "Thanjavur, Tamil Nadu - 613004",
-    "accountType": "Saving Account",
+    "email": "LO******@G***.COM",
     "mobile": "9196XXXXX144",
-    "email": "LO******@G***.COM"
+    "address": "Thanjavur, Tamil Nadu - 613004",
+    "customerId": "1579871",
+    "accountType": "Saving Account"
   },
   "branchDetails": {
-    "branchCode": "078",
-    "branchName": "KALLIMANDAYAM",
-    "address": "2/110F, Dharapuram Road, Kallimandayam",
     "ifsc": "TMBL0000078",
     "micr": "624060103",
-    "phone": "919965526022",
     "email": "kallimandayam@tmb.bank.in",
+    "phone": "919965526022",
+    "address": "2/110F, Dharapuram Road, Kallimandayam",
+    "branchCode": "078",
+    "branchName": "KALLIMANDAYAM",
     "customerCare": "+91-9842461461"
   },
-  "latestClosingBalance": 11.53,
+  "latestClosingBalance": 53196.03,
   "dailySummaries": [
+    {
+      "statementDate": "30-10-2026",
+      "period": "30-10-2026 to 30-10-2026",
+      "openingBalance": 912.28,
+      "totalDeposits": 52283.75,
+      "totalWithdrawals": 0,
+      "closingBalance": 53196.03,
+      "txnCount": 1,
+      "updatedAt": "2026-11-02T10:02:37.614Z"
+    },
+    {
+      "statementDate": "26-10-2026",
+      "period": "26-10-2026 to 26-10-2026",
+      "openingBalance": 936.53,
+      "totalDeposits": 0,
+      "totalWithdrawals": 24.25,
+      "closingBalance": 912.28,
+      "txnCount": 1,
+      "updatedAt": "2026-11-02T10:02:37.614Z"
+    },
+    {
+      "statementDate": "25-10-2026",
+      "period": "25-10-2026 to 25-10-2026",
+      "openingBalance": 1311.53,
+      "totalDeposits": 4000,
+      "totalWithdrawals": 4375,
+      "closingBalance": 936.53,
+      "txnCount": 3,
+      "updatedAt": "2026-11-02T10:02:37.614Z"
+    },
+    {
+      "statementDate": "24-10-2026",
+      "period": "24-10-2026 to 24-10-2026",
+      "openingBalance": 11.53,
+      "totalDeposits": 1300,
+      "totalWithdrawals": 0,
+      "closingBalance": 1311.53,
+      "txnCount": 1,
+      "updatedAt": "2026-11-02T10:02:37.614Z"
+    },
     {
       "statementDate": "23-10-2026",
       "period": "23-10-2026 to 23-10-2026",
@@ -28,7 +68,7 @@
       "totalWithdrawals": 24.25,
       "closingBalance": 11.53,
       "txnCount": 1,
-      "updatedAt": "2026-10-24T12:36:58.760Z"
+      "updatedAt": "2026-11-02T10:02:37.614Z"
     },
     {
       "statementDate": "20-10-2026",
@@ -38,7 +78,7 @@
       "totalWithdrawals": 24.25,
       "closingBalance": 35.78,
       "txnCount": 1,
-      "updatedAt": "2026-10-24T12:36:57.520Z"
+      "updatedAt": "2026-11-02T10:02:37.614Z"
     },
     {
       "statementDate": "19-10-2026",
@@ -48,7 +88,7 @@
       "totalWithdrawals": 588,
       "closingBalance": 60.03,
       "txnCount": 1,
-      "updatedAt": "2026-10-24T12:36:56.413Z"
+      "updatedAt": "2026-11-02T10:02:37.614Z"
     },
     {
       "statementDate": "17-10-2026",
@@ -58,17 +98,17 @@
       "totalWithdrawals": 3192,
       "closingBalance": 648.03,
       "txnCount": 3,
-      "updatedAt": "2026-10-18T06:38:54.562Z"
+      "updatedAt": "2026-11-02T10:02:37.614Z"
     },
     {
       "statementDate": "16-10-2026",
       "period": "16-10-2026 to 16-10-2026",
-      "openingBalance": 2865.28,
+      "openingBalance": 5889.53,
       "totalDeposits": 2000,
       "totalWithdrawals": 4024.25,
-      "closingBalance": 841.03,
+      "closingBalance": 3865.28,
       "txnCount": 4,
-      "updatedAt": "2026-10-17T05:04:55.750Z"
+      "updatedAt": "2026-11-02T10:02:37.614Z"
     },
     {
       "statementDate": "15-10-2026",
@@ -78,7 +118,7 @@
       "totalWithdrawals": 60,
       "closingBalance": 2865.28,
       "txnCount": 3,
-      "updatedAt": "2026-10-16T16:17:41.566Z"
+      "updatedAt": "2026-11-02T10:02:37.614Z"
     },
     {
       "statementDate": "13-10-2026",
@@ -88,7 +128,7 @@
       "totalWithdrawals": 0,
       "closingBalance": 1565.28,
       "txnCount": 1,
-      "updatedAt": "2026-10-15T10:43:37.282Z"
+      "updatedAt": "2026-11-02T10:02:37.614Z"
     },
     {
       "statementDate": "12-10-2026",
@@ -98,17 +138,17 @@
       "totalWithdrawals": 24.25,
       "closingBalance": 165.28,
       "txnCount": 1,
-      "updatedAt": "2026-10-15T10:43:36.463Z"
+      "updatedAt": "2026-11-02T10:02:37.614Z"
     },
     {
       "statementDate": "10-10-2026",
       "period": "10-10-2026 to 10-10-2026",
-      "openingBalance": 26.53,
+      "openingBalance": 2513.53,
       "totalDeposits": 4000,
       "totalWithdrawals": 3837,
-      "closingBalance": 189.53,
+      "closingBalance": 2676.53,
       "txnCount": 9,
-      "updatedAt": "2026-10-15T10:43:35.601Z"
+      "updatedAt": "2026-11-02T10:02:37.614Z"
     },
     {
       "statementDate": "09-10-2026",
@@ -118,7 +158,7 @@
       "totalWithdrawals": 100,
       "closingBalance": 26.53,
       "txnCount": 1,
-      "updatedAt": "2026-10-15T10:43:32.104Z"
+      "updatedAt": "2026-11-02T10:02:37.614Z"
     },
     {
       "statementDate": "07-10-2026",
@@ -128,37 +168,37 @@
       "totalWithdrawals": 19.4,
       "closingBalance": 126.53,
       "txnCount": 1,
-      "updatedAt": "2026-10-16T17:59:48.411Z"
+      "updatedAt": "2026-11-02T10:02:37.614Z"
     },
     {
       "statementDate": "06-10-2026",
       "period": "06-10-2026 to 06-10-2026",
       "openingBalance": 175.03,
       "totalDeposits": 0,
-      "totalWithdrawals": 29.099999999999998,
+      "totalWithdrawals": 29.1,
       "closingBalance": 145.93,
       "txnCount": 2,
-      "updatedAt": "2026-10-16T17:59:48.106Z"
+      "updatedAt": "2026-11-02T10:02:37.614Z"
     },
     {
       "statementDate": "05-10-2026",
       "period": "05-10-2026 to 05-10-2026",
-      "openingBalance": 270.28,
+      "openingBalance": 10365.53,
       "totalDeposits": 10000,
       "totalWithdrawals": 10095.25,
-      "closingBalance": 175.03,
+      "closingBalance": 10270.28,
       "txnCount": 4,
-      "updatedAt": "2026-10-16T17:59:47.507Z"
+      "updatedAt": "2026-11-02T10:02:37.614Z"
     },
     {
       "statementDate": "04-10-2026",
       "period": "04-10-2026 to 04-10-2026",
-      "openingBalance": 279.98,
+      "openingBalance": 5289.68,
       "totalDeposits": 5000,
       "totalWithdrawals": 5009.7,
-      "closingBalance": 270.28,
+      "closingBalance": 5279.98,
       "txnCount": 3,
-      "updatedAt": "2026-10-16T17:59:46.526Z"
+      "updatedAt": "2026-11-02T10:02:37.614Z"
     },
     {
       "statementDate": "03-10-2026",
@@ -168,47 +208,47 @@
       "totalWithdrawals": 320,
       "closingBalance": 279.98,
       "txnCount": 1,
-      "updatedAt": "2026-10-16T17:59:45.575Z"
+      "updatedAt": "2026-11-02T10:02:37.614Z"
     },
     {
       "statementDate": "02-10-2026",
       "period": "02-10-2026 to 02-10-2026",
-      "openingBalance": 479.98,
+      "openingBalance": 45859.98,
       "totalDeposits": 47000,
       "totalWithdrawals": 46880,
-      "closingBalance": 599.98,
+      "closingBalance": 45979.98,
       "txnCount": 4,
-      "updatedAt": "2026-10-16T17:59:45.188Z"
+      "updatedAt": "2026-11-02T10:02:37.614Z"
     },
     {
       "statementDate": "01-10-2026",
       "period": "01-10-2026 to 01-10-2026",
-      "openingBalance": 1004.23,
+      "openingBalance": 6004.23,
       "totalDeposits": 7500,
       "totalWithdrawals": 8024.25,
-      "closingBalance": 479.98,
+      "closingBalance": 5479.98,
       "txnCount": 5,
-      "updatedAt": "2026-10-16T17:59:44.536Z"
+      "updatedAt": "2026-11-02T10:02:37.614Z"
     },
     {
       "statementDate": "30-09-2026",
       "period": "30-09-2026 to 30-09-2026",
-      "openingBalance": 338.23,
+      "openingBalance": 1995.77,
       "totalDeposits": 3000,
       "totalWithdrawals": 1995.77,
-      "closingBalance": 1004.23,
+      "closingBalance": 3000,
       "txnCount": 4,
-      "updatedAt": "2026-10-16T17:59:43.770Z"
+      "updatedAt": "2026-11-02T10:02:37.614Z"
     },
     {
       "statementDate": "29-09-2026",
       "period": "29-09-2026 to 29-09-2026",
-      "openingBalance": 67388.23,
+      "openingBalance": 67438.23,
       "totalDeposits": 0,
       "totalWithdrawals": 67050,
-      "closingBalance": 338.23,
+      "closingBalance": 388.23,
       "txnCount": 2,
-      "updatedAt": "2026-10-16T17:59:40.183Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "28-09-2026",
@@ -218,47 +258,47 @@
       "totalWithdrawals": 24.25,
       "closingBalance": 67388.23,
       "txnCount": 2,
-      "updatedAt": "2026-10-16T17:59:35.906Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "27-09-2026",
       "period": "27-09-2026 to 27-09-2026",
-      "openingBalance": 579.73,
+      "openingBalance": 5079.73,
       "totalDeposits": 6026,
       "totalWithdrawals": 6050,
-      "closingBalance": 555.73,
+      "closingBalance": 5055.73,
       "txnCount": 10,
-      "updatedAt": "2026-10-16T17:59:35.253Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "26-09-2026",
       "period": "26-09-2026 to 26-09-2026",
-      "openingBalance": 198.44,
+      "openingBalance": 898.44,
       "totalDeposits": 2000,
       "totalWithdrawals": 1618.71,
-      "closingBalance": 579.73,
+      "closingBalance": 1279.73,
       "txnCount": 6,
-      "updatedAt": "2026-10-16T17:59:33.156Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "25-09-2026",
       "period": "25-09-2026 to 25-09-2026",
-      "openingBalance": 722.69,
+      "openingBalance": 2746.94,
       "totalDeposits": 1500,
       "totalWithdrawals": 2024.25,
-      "closingBalance": 198.44,
+      "closingBalance": 2222.69,
       "txnCount": 3,
-      "updatedAt": "2026-10-16T17:59:32.287Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "23-09-2026",
       "period": "23-09-2026 to 23-09-2026",
-      "openingBalance": 802.69,
+      "openingBalance": 812.69,
       "totalDeposits": 0,
       "totalWithdrawals": 80,
-      "closingBalance": 722.69,
+      "closingBalance": 732.69,
       "txnCount": 2,
-      "updatedAt": "2026-10-16T17:59:31.828Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "22-09-2026",
@@ -268,27 +308,27 @@
       "totalWithdrawals": 0,
       "closingBalance": 802.69,
       "txnCount": 1,
-      "updatedAt": "2026-10-16T17:59:31.428Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "21-09-2026",
       "period": "21-09-2026 to 21-09-2026",
-      "openingBalance": 172.94,
+      "openingBalance": 519.94,
       "totalDeposits": 1000,
       "totalWithdrawals": 371.25,
-      "closingBalance": 801.69,
+      "closingBalance": 1148.69,
       "txnCount": 3,
-      "updatedAt": "2026-10-16T17:59:31.145Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "19-09-2026",
       "period": "19-09-2026 to 19-09-2026",
-      "openingBalance": 197.19,
+      "openingBalance": 2221.44,
       "totalDeposits": 2000,
       "totalWithdrawals": 2024.25,
-      "closingBalance": 172.94,
+      "closingBalance": 2197.19,
       "txnCount": 3,
-      "updatedAt": "2026-10-16T17:59:22.506Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "17-09-2026",
@@ -298,17 +338,17 @@
       "totalWithdrawals": 24.25,
       "closingBalance": 197.19,
       "txnCount": 1,
-      "updatedAt": "2026-10-16T17:59:14.592Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "15-09-2026",
       "period": "15-09-2026 to 15-09-2026",
-      "openingBalance": 1709.14,
+      "openingBalance": 3709.14,
       "totalDeposits": 2000,
       "totalWithdrawals": 3487.7,
-      "closingBalance": 221.44,
+      "closingBalance": 2221.44,
       "txnCount": 6,
-      "updatedAt": "2026-10-16T17:59:13.548Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "10-09-2026",
@@ -318,7 +358,7 @@
       "totalWithdrawals": 0,
       "closingBalance": 1709.14,
       "txnCount": 1,
-      "updatedAt": "2026-10-16T17:59:04.215Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "08-09-2026",
@@ -328,7 +368,7 @@
       "totalWithdrawals": 454.25,
       "closingBalance": 309.14,
       "txnCount": 2,
-      "updatedAt": "2026-10-16T17:59:03.883Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "17-08-2026",
@@ -338,27 +378,27 @@
       "totalWithdrawals": 373.25,
       "closingBalance": 526.14,
       "txnCount": 2,
-      "updatedAt": "2026-10-16T17:59:03.474Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "15-08-2026",
       "period": "15-08-2026 to 15-08-2026",
-      "openingBalance": 376.39,
+      "openingBalance": 853.39,
       "totalDeposits": 1000,
       "totalWithdrawals": 477,
-      "closingBalance": 899.39,
+      "closingBalance": 1376.39,
       "txnCount": 2,
-      "updatedAt": "2026-10-16T17:59:02.987Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "14-08-2026",
       "period": "14-08-2026 to 14-08-2026",
-      "openingBalance": 400.64,
+      "openingBalance": 3424.89,
       "totalDeposits": 3000,
       "totalWithdrawals": 3024.25,
-      "closingBalance": 376.39,
+      "closingBalance": 3400.64,
       "txnCount": 3,
-      "updatedAt": "2026-10-16T17:59:02.625Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "13-08-2026",
@@ -368,17 +408,17 @@
       "totalWithdrawals": 60,
       "closingBalance": 400.64,
       "txnCount": 1,
-      "updatedAt": "2026-10-16T17:59:02.159Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "11-08-2026",
       "period": "11-08-2026 to 11-08-2026",
-      "openingBalance": 121.89,
+      "openingBalance": 835.64,
       "totalDeposits": 2000,
       "totalWithdrawals": 1637,
-      "closingBalance": 484.89,
+      "closingBalance": 1198.64,
       "txnCount": 6,
-      "updatedAt": "2026-10-16T17:59:01.899Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "10-08-2026",
@@ -388,27 +428,27 @@
       "totalWithdrawals": 24.25,
       "closingBalance": 121.89,
       "txnCount": 1,
-      "updatedAt": "2026-10-16T17:59:01.115Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "02-08-2026",
       "period": "02-08-2026 to 02-08-2026",
-      "openingBalance": 6.22,
+      "openingBalance": 1888.13,
       "totalDeposits": 2000,
       "totalWithdrawals": 1881.91,
-      "closingBalance": 124.31,
+      "closingBalance": 2006.22,
       "txnCount": 8,
-      "updatedAt": "2026-10-16T17:59:00.852Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "01-08-2026",
       "period": "01-08-2026 to 01-08-2026",
-      "openingBalance": 2930.47,
+      "openingBalance": 7954.72,
       "totalDeposits": 2100,
       "totalWithdrawals": 5024.25,
-      "closingBalance": 6.22,
+      "closingBalance": 5030.47,
       "txnCount": 3,
-      "updatedAt": "2026-10-16T17:58:59.414Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "31-07-2026",
@@ -418,7 +458,7 @@
       "totalWithdrawals": 2235,
       "closingBalance": 2930.47,
       "txnCount": 1,
-      "updatedAt": "2026-10-16T17:58:55.185Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "30-07-2026",
@@ -428,7 +468,7 @@
       "totalWithdrawals": 50524.25,
       "closingBalance": 5165.47,
       "txnCount": 4,
-      "updatedAt": "2026-10-16T17:58:50.288Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "27-07-2026",
@@ -438,17 +478,17 @@
       "totalWithdrawals": 24.25,
       "closingBalance": 109.97,
       "txnCount": 1,
-      "updatedAt": "2026-10-16T17:58:46.249Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "25-07-2026",
       "period": "25-07-2026 to 25-07-2026",
-      "openingBalance": 184.22,
+      "openingBalance": 2234.22,
       "totalDeposits": 2000,
       "totalWithdrawals": 2050,
-      "closingBalance": 134.22,
+      "closingBalance": 2184.22,
       "txnCount": 4,
-      "updatedAt": "2026-10-16T17:58:45.963Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "24-07-2026",
@@ -458,7 +498,7 @@
       "totalWithdrawals": 24.25,
       "closingBalance": 184.22,
       "txnCount": 1,
-      "updatedAt": "2026-10-16T17:58:45.375Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "22-07-2026",
@@ -468,7 +508,7 @@
       "totalWithdrawals": 1,
       "closingBalance": 208.47,
       "txnCount": 1,
-      "updatedAt": "2026-10-16T17:58:45.097Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "20-07-2026",
@@ -478,7 +518,7 @@
       "totalWithdrawals": 24.25,
       "closingBalance": 209.47,
       "txnCount": 1,
-      "updatedAt": "2026-10-16T17:58:44.833Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "18-07-2026",
@@ -488,17 +528,17 @@
       "totalWithdrawals": 24.25,
       "closingBalance": 233.72,
       "txnCount": 1,
-      "updatedAt": "2026-10-16T17:58:44.575Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "16-07-2026",
       "period": "16-07-2026 to 16-07-2026",
-      "openingBalance": 452.22,
+      "openingBalance": 5452.22,
       "totalDeposits": 8800,
       "totalWithdrawals": 8970,
-      "closingBalance": 282.22,
+      "closingBalance": 5282.22,
       "txnCount": 9,
-      "updatedAt": "2026-10-16T17:58:44.297Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "13-07-2026",
@@ -508,7 +548,7 @@
       "totalWithdrawals": 24.25,
       "closingBalance": 1452.22,
       "txnCount": 2,
-      "updatedAt": "2026-10-16T17:58:43.255Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "12-07-2026",
@@ -518,17 +558,17 @@
       "totalWithdrawals": 1400,
       "closingBalance": 76.47,
       "txnCount": 1,
-      "updatedAt": "2026-10-16T17:58:42.875Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     },
     {
       "statementDate": "11-07-2026",
       "period": "11-07-2026 to 11-07-2026",
-      "openingBalance": 796.47,
+      "openingBalance": 1366.47,
       "totalDeposits": 1800,
       "totalWithdrawals": 1120,
-      "closingBalance": 1476.47,
+      "closingBalance": 2046.47,
       "txnCount": 4,
-      "updatedAt": "2026-10-16T17:58:42.489Z"
+      "updatedAt": "2026-11-02T10:02:37.613Z"
     }
   ]
 }

@@ -475,6 +475,7 @@ function App() {
               handleDeleteTransaction={handleDeleteTransaction}
               getCurrency={getCurrency}
               currentUser={currentUser}
+              balances={balances}
             />
           )}
 
