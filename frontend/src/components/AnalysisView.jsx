@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { getSummary, getCurrency } from '../services/api';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { PieChart as PieChartIcon, BarChart2, TrendingUp, Activity, ArrowDownLeft, ArrowUpRight, Wallet, Landmark } from 'lucide-react';
+import DateHierarchyFilter from './DateHierarchyFilter';
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899'];
 
@@ -534,43 +535,17 @@ const AnalysisView = ({ refreshTrigger }) => {
               </span>
             )}
           </h3>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-            {spendingFilterType === 'day' && (
-              <input type="date" className="form-control" style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }} value={spendingFilterValue} onChange={e => setSpendingFilterValue(e.target.value)} />
-            )}
-            {spendingFilterType === 'month' && (
-              <select
-                className="form-control"
-                style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem', fontWeight: 500 }}
-                value={spendingFilterValue || latestMonthWithData || currentMonthString}
-                onChange={e => {
-                  setUserChangedSpendingMonth(true);
-                  setSpendingFilterValue(e.target.value);
-                }}
-              >
-                {availableMonths.map(m => (
-                  <option key={`spend-month-${m.key}`} value={m.key}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
-            )}
-            {spendingFilterType === 'year' && (
-              <input type="number" min="2000" max="2100" placeholder="YYYY" className="form-control" style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }} value={spendingFilterValue} onChange={e => setSpendingFilterValue(e.target.value)} />
-            )}
-            <select
-              className="form-control"
-              style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem', fontWeight: 600 }}
-              value={spendingFilterType}
-              onChange={(e) => handleFilterTypeChange(e.target.value, setSpendingFilterType, setSpendingFilterValue)}
-            >
-              <option value="month">By Month</option>
-              <option value="all">All Time</option>
-              <option value="today">Today</option>
-              <option value="day">By Day</option>
-              <option value="year">By Year</option>
-            </select>
-          </div>
+          <DateHierarchyFilter
+            filterType={spendingFilterType}
+            filterValue={spendingFilterValue}
+            onFilterChange={(newType, newValue) => {
+              setUserChangedSpendingMonth(true);
+              setSpendingFilterType(newType);
+              setSpendingFilterValue(newValue);
+            }}
+            transactions={refreshTrigger}
+            defaultMonthWithData={latestMonthWithData}
+          />
         </div>
 
 
@@ -841,43 +816,17 @@ const AnalysisView = ({ refreshTrigger }) => {
               </span>
             )}
           </h3>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-            {incomeFilterType === 'day' && (
-              <input type="date" className="form-control" style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }} value={incomeFilterValue} onChange={e => setIncomeFilterValue(e.target.value)} />
-            )}
-            {incomeFilterType === 'month' && (
-              <select
-                className="form-control"
-                style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem', fontWeight: 500 }}
-                value={incomeFilterValue || latestMonthWithData || currentMonthString}
-                onChange={e => {
-                  setUserChangedIncomeMonth(true);
-                  setIncomeFilterValue(e.target.value);
-                }}
-              >
-                {availableMonths.map(m => (
-                  <option key={`inc-month-${m.key}`} value={m.key}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
-            )}
-            {incomeFilterType === 'year' && (
-              <input type="number" min="2000" max="2100" placeholder="YYYY" className="form-control" style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }} value={incomeFilterValue} onChange={e => setIncomeFilterValue(e.target.value)} />
-            )}
-            <select
-              className="form-control"
-              style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem', fontWeight: 600 }}
-              value={incomeFilterType}
-              onChange={(e) => handleFilterTypeChange(e.target.value, setIncomeFilterType, setIncomeFilterValue)}
-            >
-              <option value="month">By Month</option>
-              <option value="all">All Time</option>
-              <option value="today">Today</option>
-              <option value="day">By Day</option>
-              <option value="year">By Year</option>
-            </select>
-          </div>
+          <DateHierarchyFilter
+            filterType={incomeFilterType}
+            filterValue={incomeFilterValue}
+            onFilterChange={(newType, newValue) => {
+              setUserChangedIncomeMonth(true);
+              setIncomeFilterType(newType);
+              setIncomeFilterValue(newValue);
+            }}
+            transactions={refreshTrigger}
+            defaultMonthWithData={latestMonthWithData}
+          />
         </div>
 
 
@@ -986,41 +935,17 @@ const AnalysisView = ({ refreshTrigger }) => {
               <option value="UPI">💳 UPI Flow (UPI Only)</option>
             </select>
 
-            {flowFilterType === 'day' && (
-              <input type="date" className="form-control" style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }} value={flowFilterValue} onChange={e => setFlowFilterValue(e.target.value)} />
-            )}
-            {flowFilterType === 'month' && (
-              <select
-                className="form-control"
-                style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem', fontWeight: 500 }}
-                value={flowFilterValue || latestMonthWithData || currentMonthString}
-                onChange={e => {
-                  setUserChangedFlowMonth(true);
-                  setFlowFilterValue(e.target.value);
-                }}
-              >
-                {availableMonths.map(m => (
-                  <option key={`flow-month-${m.key}`} value={m.key}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
-            )}
-            {flowFilterType === 'year' && (
-              <input type="number" min="2000" max="2100" placeholder="YYYY" className="form-control" style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }} value={flowFilterValue} onChange={e => setFlowFilterValue(e.target.value)} />
-            )}
-            <select
-              className="form-control"
-              style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem', fontWeight: 600 }}
-              value={flowFilterType}
-              onChange={(e) => handleFilterTypeChange(e.target.value, setFlowFilterType, setFlowFilterValue)}
-            >
-              <option value="month">By Month</option>
-              <option value="all">All Time</option>
-              <option value="today">Today</option>
-              <option value="day">By Day</option>
-              <option value="year">By Year</option>
-            </select>
+            <DateHierarchyFilter
+              filterType={flowFilterType}
+              filterValue={flowFilterValue}
+              onFilterChange={(newType, newValue) => {
+                setUserChangedFlowMonth(true);
+                setFlowFilterType(newType);
+                setFlowFilterValue(newValue);
+              }}
+              transactions={refreshTrigger}
+              defaultMonthWithData={latestMonthWithData}
+            />
           </div>
         </div>
 
