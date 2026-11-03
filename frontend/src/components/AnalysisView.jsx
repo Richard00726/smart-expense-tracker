@@ -724,7 +724,7 @@ const AnalysisView = ({ refreshTrigger }) => {
                   {/* Donut Chart */}
                   <div style={{ position: 'relative', width: '135px', height: '135px', flexShrink: 0, margin: '0 auto' }}>
                     <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
+                      <PieChart style={{ outline: 'none' }}>
                         <Pie
                           data={categoryData}
                           cx="50%"
@@ -734,6 +734,8 @@ const AnalysisView = ({ refreshTrigger }) => {
                           paddingAngle={3}
                           minAngle={4}
                           dataKey="value"
+                          tabIndex={-1}
+                          style={{ outline: 'none' }}
                           onMouseEnter={(_, index) => {
                             const cat = categoryData[index];
                             if (cat) {
@@ -754,7 +756,8 @@ const AnalysisView = ({ refreshTrigger }) => {
                                 fill={getCategoryColor(entry.name, index)}
                                 stroke="var(--card-bg)"
                                 strokeWidth={isHovered ? 2.5 : 1.5}
-                                style={{ cursor: 'pointer', transition: 'all 0.15s ease' }}
+                                tabIndex={-1}
+                                style={{ cursor: 'pointer', transition: 'all 0.15s ease', outline: 'none' }}
                                 onMouseEnter={() => {
                                   setHoveredCategory(entry);
                                   const el = document.getElementById(`cat-row-${index}`);

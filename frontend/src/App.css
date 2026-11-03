@@ -541,6 +541,41 @@ tr:hover td {
   width: 100%;
 }
 
+/* Remove click/focus outline box on charts, SVGs, and sectors */
+.recharts-wrapper,
+.recharts-wrapper *,
+.recharts-surface,
+.recharts-sector,
+.recharts-pie-sector,
+.recharts-pie,
+.recharts-layer,
+.recharts-bar-rectangle,
+.recharts-responsive-container,
+svg,
+svg *,
+path {
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.recharts-wrapper:focus,
+.recharts-wrapper *:focus,
+.recharts-wrapper:focus-visible,
+.recharts-wrapper *:focus-visible,
+.recharts-surface:focus,
+.recharts-surface:focus-visible,
+.recharts-sector:focus,
+.recharts-sector:focus-visible,
+svg:focus,
+svg *:focus,
+svg:focus-visible,
+svg *:focus-visible,
+path:focus,
+path:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 /* Enhanced Empty States */
 .empty-state {
   display: flex;
