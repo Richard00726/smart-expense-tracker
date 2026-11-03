@@ -294,15 +294,15 @@ const TransactionsTable = ({
       ) : isBankSyncTable ? (
         /* Read-Only Bank Statement Table Layout (Official Bank Records) */
         <div className="table-container transaction-table-container">
-          <table>
-            <thead>
+          <table style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+            <thead style={{ position: 'sticky', top: 0, zIndex: 20 }}>
               <tr>
-                <th style={{ width: '140px', minWidth: '125px', whiteSpace: 'nowrap' }}>Date</th>
-                <th>Particulars & Payee</th>
-                <th style={{ width: '170px', minWidth: '155px', whiteSpace: 'nowrap' }}>Category</th>
-                <th style={{ width: '150px', minWidth: '130px', whiteSpace: 'nowrap' }}>Ref / UTR</th>
-                <th style={{ width: '130px', minWidth: '110px', textAlign: 'center', whiteSpace: 'nowrap' }}>Type</th>
-                <th style={{ width: '150px', minWidth: '130px', textAlign: 'right', whiteSpace: 'nowrap' }}>Amount</th>
+                <th style={{ width: '140px', minWidth: '125px', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 20, background: 'var(--table-header)' }}>Date</th>
+                <th style={{ position: 'sticky', top: 0, zIndex: 20, background: 'var(--table-header)' }}>Particulars & Payee</th>
+                <th style={{ width: '170px', minWidth: '155px', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 20, background: 'var(--table-header)' }}>Category</th>
+                <th style={{ width: '150px', minWidth: '130px', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 20, background: 'var(--table-header)' }}>Ref / UTR</th>
+                <th style={{ width: '130px', minWidth: '110px', textAlign: 'center', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 20, background: 'var(--table-header)' }}>Type</th>
+                <th style={{ width: '150px', minWidth: '130px', textAlign: 'right', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 20, background: 'var(--table-header)' }}>Amount</th>
               </tr>
             </thead>
             <tbody>
@@ -362,17 +362,17 @@ const TransactionsTable = ({
       ) : (
         /* Standard Activity & Manual Table Layout */
         <div className="table-container transaction-table-container">
-          <table>
-            <thead>
+          <table style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+            <thead style={{ position: 'sticky', top: 0, zIndex: 20 }}>
               <tr>
-                <th style={{ width: '140px', minWidth: '125px', whiteSpace: 'nowrap' }}>Date</th>
-                {!shouldHideWallet && <th style={{ width: '110px', minWidth: '90px', whiteSpace: 'nowrap' }}>Wallet</th>}
-                <th>Particulars & Payee</th>
-                {!shouldHideCategory && <th style={{ width: '170px', minWidth: '155px', whiteSpace: 'nowrap' }}>Category</th>}
-                {!shouldHideRef && <th style={{ width: '150px', minWidth: '130px', whiteSpace: 'nowrap' }}>Ref / UTR</th>}
-                <th style={{ width: '130px', minWidth: '110px', textAlign: 'center', whiteSpace: 'nowrap' }}>Type</th>
-                <th style={{ width: '150px', minWidth: '130px', textAlign: 'right', whiteSpace: 'nowrap' }}>Amount</th>
-                {!hideActions && <th style={{ textAlign: 'center', width: '80px', minWidth: '80px', whiteSpace: 'nowrap' }}>Action</th>}
+                <th style={{ width: '140px', minWidth: '125px', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 20, background: 'var(--table-header)' }}>Date</th>
+                {!shouldHideWallet && <th style={{ width: '110px', minWidth: '90px', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 20, background: 'var(--table-header)' }}>Wallet</th>}
+                <th style={{ position: 'sticky', top: 0, zIndex: 20, background: 'var(--table-header)' }}>Particulars & Payee</th>
+                {!shouldHideCategory && <th style={{ width: '170px', minWidth: '155px', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 20, background: 'var(--table-header)' }}>Category</th>}
+                {!shouldHideRef && <th style={{ width: '150px', minWidth: '130px', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 20, background: 'var(--table-header)' }}>Ref / UTR</th>}
+                <th style={{ width: '130px', minWidth: '110px', textAlign: 'center', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 20, background: 'var(--table-header)' }}>Type</th>
+                <th style={{ width: '150px', minWidth: '130px', textAlign: 'right', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 20, background: 'var(--table-header)' }}>Amount</th>
+                {!hideActions && <th style={{ textAlign: 'center', width: '80px', minWidth: '80px', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 20, background: 'var(--table-header)' }}>Action</th>}
               </tr>
             </thead>
             <tbody>

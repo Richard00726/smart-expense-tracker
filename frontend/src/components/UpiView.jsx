@@ -2473,15 +2473,15 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                   </div>
 
                   <div className="transaction-table-container" style={{ margin: 0 }}>
-                    <table style={{ tableLayout: 'fixed', width: '100%', minWidth: '650px' }}>
-                      <thead>
+                    <table style={{ tableLayout: 'fixed', width: '100%', minWidth: '650px', borderCollapse: 'separate', borderSpacing: 0 }}>
+                      <thead style={{ position: 'sticky', top: 0, zIndex: 20 }}>
                         <tr>
-                          <th style={{ width: '130px' }}>Statement Date</th>
-                          <th style={{ textAlign: 'right', width: '130px' }}>Opening Balance</th>
-                          <th style={{ textAlign: 'right', width: '140px' }}>Total Deposits (+)</th>
-                          <th style={{ textAlign: 'right', width: '140px' }}>Total Withdrawals (-)</th>
-                          <th style={{ textAlign: 'right', width: '140px' }}>Closing Balance</th>
-                          <th style={{ textAlign: 'center', width: '100px' }}>Status</th>
+                          <th style={{ width: '130px', position: 'sticky', top: 0, zIndex: 20, background: 'var(--table-header)' }}>Statement Date</th>
+                          <th style={{ textAlign: 'right', width: '130px', position: 'sticky', top: 0, zIndex: 20, background: 'var(--table-header)' }}>Opening Balance</th>
+                          <th style={{ textAlign: 'right', width: '140px', position: 'sticky', top: 0, zIndex: 20, background: 'var(--table-header)' }}>Total Deposits (+)</th>
+                          <th style={{ textAlign: 'right', width: '140px', position: 'sticky', top: 0, zIndex: 20, background: 'var(--table-header)' }}>Total Withdrawals (-)</th>
+                          <th style={{ textAlign: 'right', width: '140px', position: 'sticky', top: 0, zIndex: 20, background: 'var(--table-header)' }}>Closing Balance</th>
+                          <th style={{ textAlign: 'center', width: '100px', position: 'sticky', top: 0, zIndex: 20, background: 'var(--table-header)' }}>Status</th>
                         </tr>
                       </thead>
                       <tbody>

@@ -319,14 +319,32 @@
   -webkit-overflow-scrolling: touch;
 }
 
+.table-container table,
+.transaction-table-container table,
 table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   text-align: left;
 }
 
+.table-container thead,
+.transaction-table-container thead,
+thead {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.table-container th,
+.transaction-table-container th,
 th {
-  background: var(--table-header);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background-color: var(--table-header) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   padding: 0.9rem 1.5rem;
   font-size: 0.75rem;
   font-weight: 700;
@@ -334,6 +352,7 @@ th {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   border-bottom: 1px solid var(--border);
+  box-shadow: inset 0 -1px 0 var(--border), 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 td {
