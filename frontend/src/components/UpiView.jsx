@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import TransactionForm from './TransactionForm';
 import TransactionsTable from './TransactionsTable';
+import DateHierarchyFilter from './DateHierarchyFilter';
 import {
   Smartphone, FileText, UploadCloud, CheckCircle2, AlertCircle,
   RefreshCw, Eye, EyeOff, ShieldCheck, Mail, Key, HelpCircle,
@@ -1135,125 +1136,33 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
   }, [bankOverview?.dailySummaries, ledgerFilterType, ledgerFilterValue, effectiveLedgerMonth, todayLocalDateStr]);
 
   const renderLedgerFilterControls = () => (
-    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-      {ledgerFilterType === 'day' && (
-        <input
-          type="date"
-          className="form-control"
-          style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
-          value={ledgerFilterValue}
-          onChange={e => {
-            setUserChangedLedgerMonth(true);
-            setLedgerFilterValue(e.target.value);
-          }}
-        />
-      )}
-      {ledgerFilterType === 'month' && (
-        <select
-          className="form-control"
-          style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem', fontWeight: 500 }}
-          value={effectiveLedgerMonth}
-          onChange={e => {
-            setUserChangedLedgerMonth(true);
-            setLedgerFilterValue(e.target.value);
-          }}
-        >
-          {availableMonths.map(m => (
-            <option key={`ledger-${m.key}`} value={m.key}>
-              {m.label}
-            </option>
-          ))}
-        </select>
-      )}
-      {ledgerFilterType === 'year' && (
-        <input
-          type="number"
-          min="2000"
-          max="2100"
-          placeholder="YYYY"
-          className="form-control"
-          style={{ width: '90px', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
-          value={ledgerFilterValue}
-          onChange={e => {
-            setUserChangedLedgerMonth(true);
-            setLedgerFilterValue(e.target.value);
-          }}
-        />
-      )}
-      <select
-        className="form-control"
-        style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem', fontWeight: 600 }}
-        value={ledgerFilterType}
-        onChange={e => handleLedgerFilterTypeChange(e.target.value)}
-      >
-        <option value="month">By Month</option>
-        <option value="today">Today</option>
-        <option value="day">By Day</option>
-        <option value="year">By Year</option>
-        <option value="all">All Time</option>
-      </select>
-    </div>
+    <DateHierarchyFilter
+      filterType={ledgerFilterType}
+      filterValue={ledgerFilterValue}
+      onFilterChange={(newType, newValue) => {
+        setUserChangedLedgerMonth(true);
+        setLedgerFilterType(newType);
+        setLedgerFilterValue(newValue);
+      }}
+      dailySummaries={bankOverview?.dailySummaries}
+      transactions={upiTransactions}
+      defaultMonthWithData={latestMonthWithData}
+    />
   );
 
   const renderTxFilterControls = () => (
-    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-      {txFilterType === 'day' && (
-        <input
-          type="date"
-          className="form-control"
-          style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
-          value={txFilterValue}
-          onChange={e => {
-            setUserChangedTxMonth(true);
-            setTxFilterValue(e.target.value);
-          }}
-        />
-      )}
-      {txFilterType === 'month' && (
-        <select
-          className="form-control"
-          style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem', fontWeight: 500 }}
-          value={effectiveTxMonth}
-          onChange={e => {
-            setUserChangedTxMonth(true);
-            setTxFilterValue(e.target.value);
-          }}
-        >
-          {availableMonths.map(m => (
-            <option key={`tx-${m.key}`} value={m.key}>
-              {m.label}
-            </option>
-          ))}
-        </select>
-      )}
-      {txFilterType === 'year' && (
-        <input
-          type="number"
-          min="2000"
-          max="2100"
-          placeholder="YYYY"
-          className="form-control"
-          style={{ width: '90px', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
-          value={txFilterValue}
-          onChange={e => {
-            setUserChangedTxMonth(true);
-            setTxFilterValue(e.target.value);
-          }}
-        />
-      )}
-      <select
-        className="form-control"
-        style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem', fontWeight: 600 }}
-        value={txFilterType}
-        onChange={e => handleTxFilterTypeChange(e.target.value)}
-      >
-        <option value="month">By Month</option>
-        <option value="today">Today</option>
-        <option value="day">By Day</option>
-        <option value="year">By Year</option>
-        <option value="all">All Time</option>
-      </select>
-    </div>
+    <DateHierarchyFilter
+      filterType={txFilterType}
+      filterValue={txFilterValue}
+      onFilterChange={(newType, newValue) => {
+        setUserChangedTxMonth(true);
+        setTxFilterType(newType);
+        setTxFilterValue(newValue);
+      }}
+      transactions={upiTransactions}
+      dailySummaries={bankOverview?.dailySummaries}
+      defaultMonthWithData={latestMonthWithData}
+    />
   );
 
   return (
