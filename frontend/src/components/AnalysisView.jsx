@@ -603,18 +603,18 @@ const AnalysisView = ({ refreshTrigger }) => {
                   Wallets
                 </span>
               </div>
-              <div className="chart-container" style={{ height: '180px' }}>
+              <div className="chart-container" style={{ height: '180px', maxWidth: '270px', margin: '0 auto', width: '100%' }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={walletSpendingData} margin={{ top: 12, right: 20, left: 10, bottom: 0 }}>
+                  <BarChart data={walletSpendingData} margin={{ top: 12, right: 15, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
                     <XAxis dataKey="name" stroke="var(--text-secondary)" tick={{ fontSize: 12 }} />
                     <YAxis stroke="var(--text-secondary)" tick={{ fontSize: 11 }} />
                     <Tooltip 
                       cursor={{ fill: 'var(--hover-bg)' }}
                       contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', color: 'var(--text-primary)' }}
-                      formatter={(value) => `${getCurrency()}${value}`}
+                      formatter={(value) => `${getCurrency()}${Number(value).toFixed(2)}`}
                     />
-                    <Bar dataKey="value" fill="var(--danger)" maxBarSize={45} radius={[4, 4, 0, 0]}>
+                    <Bar dataKey="value" fill="var(--danger)" maxBarSize={40} radius={[4, 4, 0, 0]}>
                       {walletSpendingData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.name === 'Cash' ? '#f59e0b' : 'var(--danger)'} />
                       ))}
