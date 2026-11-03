@@ -343,15 +343,25 @@ const AnalysisView = ({ refreshTrigger }) => {
     value: item.total
   })) : [];
 
-  const walletSpendingData = spendingSummary?.walletSpending ? spendingSummary.walletSpending.map(item => ({
-    name: item._id,
-    value: item.total
-  })) : [];
+  const rawWalletSpending = spendingSummary?.walletSpending || [];
+  const rawCashSpend = rawWalletSpending.find(w => w._id === 'Cash')?.total || 0;
+  const rawUpiSpend = rawWalletSpending.find(w => w._id === 'UPI')?.total || 0;
+  const walletSpendingData = (rawCashSpend > 0 || rawUpiSpend > 0)
+    ? [
+        { name: 'Cash', value: rawCashSpend },
+        { name: 'UPI', value: rawUpiSpend }
+      ]
+    : rawWalletSpending.map(item => ({ name: item._id, value: item.total }));
 
-  const walletIncomeData = incomeSummary?.walletIncome ? incomeSummary.walletIncome.map(item => ({
-    name: item._id,
-    value: item.total
-  })) : [];
+  const rawWalletIncome = incomeSummary?.walletIncome || [];
+  const rawCashIncome = rawWalletIncome.find(w => w._id === 'Cash')?.total || 0;
+  const rawUpiIncome = rawWalletIncome.find(w => w._id === 'UPI')?.total || 0;
+  const walletIncomeData = (rawCashIncome > 0 || rawUpiIncome > 0)
+    ? [
+        { name: 'Cash', value: rawCashIncome },
+        { name: 'UPI', value: rawUpiIncome }
+      ]
+    : rawWalletIncome.map(item => ({ name: item._id, value: item.total }));
 
   const filteredMonthlyFlow = (flowSummary?.monthlyFlow || []).filter(item => {
     if (flowFilterType === 'month' && flowFilterValue) {
@@ -574,13 +584,26 @@ const AnalysisView = ({ refreshTrigger }) => {
             <p style={{ color: 'var(--text-secondary)' }}>No spending recorded for this period.</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem', marginTop: '1rem' }}>
-            {/* 1. CASH VS UPI SPENDING - FIRST, BIG LIKE INCOME */}
-            <div className="chart-wrapper" style={{ maxWidth: '650px', margin: '0 auto', width: '100%' }}>
-              <h4 style={{ textAlign: 'center', marginBottom: '1.25rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                Cash vs UPI Spending
-              </h4>
-              <div className="chart-container">
+          <div className="charts-grid" style={{ marginTop: '1.25rem', alignItems: 'start', gap: '1.75rem' }}>
+            {/* 1. CASH VS UPI SPENDING - LEFT */}
+            <div className="chart-wrapper" style={{ width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', minHeight: '26px' }}>
+                <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.05rem', fontWeight: 600 }}>
+                  Cash vs UPI Spending
+                </h4>
+                <span style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  background: 'var(--empty-state-bg)',
+                  border: '1px solid var(--card-border)',
+                  color: 'var(--text-muted)'
+                }}>
+                  Wallets
+                </span>
+              </div>
+              <div className="chart-container" style={{ height: '300px' }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={walletSpendingData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
@@ -591,7 +614,7 @@ const AnalysisView = ({ refreshTrigger }) => {
                       contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', color: 'var(--text-primary)' }}
                       formatter={(value) => `${getCurrency()}${value}`}
                     />
-                    <Bar dataKey="value" fill="var(--danger)">
+                    <Bar dataKey="value" fill="var(--danger)" maxBarSize={60} radius={[6, 6, 0, 0]}>
                       {walletSpendingData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.name === 'Cash' ? '#f59e0b' : 'var(--danger)'} />
                       ))}
@@ -599,17 +622,17 @@ const AnalysisView = ({ refreshTrigger }) => {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.9rem', color: 'var(--text-secondary)', background: 'var(--empty-state-bg)', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--card-border)' }}>
+              <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.88rem', color: 'var(--text-secondary)', background: 'var(--empty-state-bg)', padding: '0.65rem 0.75rem', borderRadius: '10px', border: '1px solid var(--card-border)' }}>
                 <span style={{ marginRight: '0.5rem' }}>Total: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{totalSpend.toFixed(2)}</strong></span>
                 <span style={{ margin: '0 0.5rem', opacity: 0.5 }}>|</span>
-                <span style={{ color: '#f59e0b', fontWeight: '500' }}>Cash: {getCurrency()}{cashSpend.toFixed(2)}</span>
+                <span style={{ color: '#f59e0b', fontWeight: '600' }}>Cash: {getCurrency()}{cashSpend.toFixed(2)}</span>
                 <span style={{ margin: '0 0.5rem', opacity: 0.5 }}>|</span>
-                <span style={{ color: 'var(--danger)', fontWeight: '500' }}>UPI: {getCurrency()}{upiSpend.toFixed(2)}</span>
+                <span style={{ color: 'var(--danger)', fontWeight: '600' }}>UPI: {getCurrency()}{upiSpend.toFixed(2)}</span>
               </div>
             </div>
 
-            {/* 2. SPEND BY CATEGORY - SECOND, COMES DOWN (NOT ON RIGHT SIDE) */}
-            <div className="chart-wrapper" style={{ maxWidth: '650px', margin: '0 auto', width: '100%' }}>
+            {/* 2. SPEND BY CATEGORY - RIGHT */}
+            <div className="chart-wrapper" style={{ width: '100%' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                 <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.05rem', fontWeight: 600 }}>
                   Spend by Category
