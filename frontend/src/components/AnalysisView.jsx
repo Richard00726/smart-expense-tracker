@@ -453,6 +453,15 @@ const AnalysisView = ({ refreshTrigger }) => {
     return isNaN(num) ? '0.00' : num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
+  const formatCompactAmt = (val) => {
+    const num = Number(val ?? 0);
+    if (isNaN(num) || num === 0) return '0.00';
+    if (num >= 10000000) return `${(num / 10000000).toFixed(2)}Cr`;
+    if (num >= 100000) return `${(num / 100000).toFixed(2)}L`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}k`;
+    return num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
   const fallbackLedger = {
     opening: 0,
     inflow: Number(activeIn || 0),
@@ -584,263 +593,305 @@ const AnalysisView = ({ refreshTrigger }) => {
             <p style={{ color: 'var(--text-secondary)' }}>No spending recorded for this period.</p>
           </div>
         ) : (
-          <div className="charts-grid" style={{ marginTop: '1.25rem', alignItems: 'start', gap: '1.75rem' }}>
-            {/* 1. CASH VS UPI SPENDING - LEFT */}
-            <div className="chart-wrapper" style={{ width: '100%' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', minHeight: '26px' }}>
-                <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.02rem', fontWeight: 600 }}>
-                  Cash vs UPI Spending
-                </h4>
-                <span style={{
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  padding: '2px 8px',
-                  borderRadius: '12px',
-                  background: 'var(--empty-state-bg)',
+          <div style={{ padding: '24px' }}>
+            <div
+              className="charts-grid"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                gap: '24px',
+                alignItems: 'stretch',
+                margin: 0
+              }}
+            >
+              {/* 1. CASH VS UPI SPENDING - LEFT CARD (16px internal padding) */}
+              <div
+                className="chart-wrapper"
+                style={{
+                  width: '100%',
+                  background: 'var(--bg-card-subtle)',
                   border: '1px solid var(--card-border)',
-                  color: 'var(--text-muted)'
-                }}>
-                  Wallets
-                </span>
-              </div>
-              <div className="chart-container" style={{ height: '180px', maxWidth: '270px', margin: '0 auto', width: '100%' }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={walletSpendingData} margin={{ top: 12, right: 15, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
-                    <XAxis dataKey="name" stroke="var(--text-secondary)" tick={{ fontSize: 12 }} />
-                    <YAxis stroke="var(--text-secondary)" tick={{ fontSize: 11 }} />
-                    <Tooltip 
-                      cursor={{ fill: 'var(--hover-bg)' }}
-                      contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', color: 'var(--text-primary)' }}
-                      formatter={(value) => `${getCurrency()}${Number(value).toFixed(2)}`}
-                    />
-                    <Bar dataKey="value" fill="var(--danger)" maxBarSize={40} radius={[4, 4, 0, 0]}>
-                      {walletSpendingData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.name === 'Cash' ? '#f59e0b' : 'var(--danger)'} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              <div style={{
-                marginTop: '0.65rem',
-                textAlign: 'center',
-                fontSize: '0.82rem',
-                color: 'var(--text-secondary)',
-                background: 'var(--empty-state-bg)',
-                padding: '0.45rem 0.65rem',
-                borderRadius: '8px',
-                border: '1px solid var(--card-border)',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: '0.4rem'
-              }}>
-                <span>Total: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{totalSpend.toFixed(2)}</strong></span>
-                <span style={{ opacity: 0.4 }}>|</span>
-                <span style={{ color: '#f59e0b', fontWeight: '600' }}>Cash: {getCurrency()}{cashSpend.toFixed(2)} ({cashPct}%)</span>
-                <span style={{ opacity: 0.4 }}>|</span>
-                <span style={{ color: 'var(--danger)', fontWeight: '600' }}>UPI: {getCurrency()}{upiSpend.toFixed(2)} ({upiPct}%)</span>
-              </div>
-            </div>
-
-            {/* 2. SPEND BY CATEGORY - RIGHT */}
-            <div className="chart-wrapper" style={{ width: '100%' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', minHeight: '26px' }}>
-                <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.02rem', fontWeight: 600 }}>
-                  Spend by Category
-                </h4>
-                <span style={{
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  padding: '2px 8px',
-                  borderRadius: '12px',
-                  background: 'var(--empty-state-bg)',
-                  border: '1px solid var(--card-border)',
-                  color: 'var(--text-muted)'
-                }}>
-                  {categoryData.length} {categoryData.length === 1 ? 'category' : 'categories'}
-                </span>
-              </div>
-
-              {/* Side-by-side Donut & Category List Container */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                {/* Donut Chart - Compact & Centered */}
-                <div style={{ position: 'relative', width: '170px', height: '170px', flexShrink: 0, margin: '0 auto' }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={categoryData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={46}
-                        outerRadius={68}
-                        paddingAngle={3}
-                        minAngle={4}
-                        dataKey="value"
-                        onMouseEnter={(_, index) => {
-                          const cat = categoryData[index];
-                          if (cat) {
-                            setHoveredCategory(cat);
-                            const el = document.getElementById(`cat-row-${index}`);
-                            if (el) {
-                              el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                            }
-                          }
-                        }}
-                        onMouseLeave={() => setHoveredCategory(null)}
-                      >
-                        {categoryData.map((entry, index) => {
-                          const isHovered = hoveredCategory && hoveredCategory.name === entry.name;
-                          return (
-                            <Cell
-                              key={`cell-${index}`}
-                              fill={getCategoryColor(entry.name, index)}
-                              stroke="var(--card-bg)"
-                              strokeWidth={isHovered ? 3 : 2}
-                              style={{ cursor: 'pointer', transition: 'all 0.15s ease' }}
-                              onMouseEnter={() => {
-                                setHoveredCategory(entry);
-                                const el = document.getElementById(`cat-row-${index}`);
-                                if (el) {
-                                  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                                }
-                              }}
-                              onMouseLeave={() => setHoveredCategory(null)}
-                            />
-                          );
-                        })}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                  {/* Center Hub: Clean Steady TOTAL SPENT & Total Amount */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                      textAlign: 'center',
-                      pointerEvents: 'none',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '90px'
-                    }}
-                  >
-                    <span style={{ fontSize: '0.58rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                      TOTAL SPENT
-                    </span>
-                    <span style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-primary)', margin: '1px 0', lineHeight: 1.1 }}>
-                      {getCurrency()}{formatAmt(totalCategorySpend)}
-                    </span>
-                  </div>
+                  borderRadius: '14px',
+                  padding: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minHeight: '290px'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', minHeight: '26px' }}>
+                  <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.02rem', fontWeight: 600 }}>
+                    Cash vs UPI Spending
+                  </h4>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    background: 'var(--empty-state-bg)',
+                    border: '1px solid var(--card-border)',
+                    color: 'var(--text-muted)'
+                  }}>
+                    Wallets
+                  </span>
                 </div>
 
-                {/* Category Breakdown Ranking List */}
-                <div
-                  className="custom-scrollbar"
-                  style={{
-                    flex: '1 1 200px',
-                    minWidth: '180px',
-                    maxHeight: '180px',
-                    overflowY: 'auto',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.35rem',
-                    paddingRight: '4px'
-                  }}
-                >
-                  {categoryData.map((cat, idx) => {
-                    const pct = totalCategorySpend > 0 ? ((cat.value / totalCategorySpend) * 100).toFixed(1) : '0.0';
-                    const catColor = getCategoryColor(cat.name, idx);
-                    const isHovered = hoveredCategory && hoveredCategory.name === cat.name;
-                    return (
-                      <div
-                        id={`cat-row-${idx}`}
-                        key={cat.name || idx}
-                        onMouseEnter={() => setHoveredCategory(cat)}
-                        onMouseLeave={() => setHoveredCategory(null)}
-                        style={{
-                          background: isHovered ? 'var(--hover-bg)' : 'var(--empty-state-bg)',
-                          border: isHovered ? `1.5px solid ${catColor}` : '1px solid var(--card-border)',
-                          boxShadow: isHovered ? `0 0 8px ${catColor}33` : 'none',
-                          borderRadius: '8px',
-                          padding: '0.38rem 0.6rem',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '4px',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease',
-                          transform: isHovered ? 'scale(1.01)' : 'scale(1)'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0 }}>
-                            <span
+                {/* Bar chart area */}
+                <div style={{ height: '175px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={walletSpendingData} margin={{ top: 10, right: 15, left: -5, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
+                      <XAxis dataKey="name" stroke="var(--text-secondary)" tick={{ fontSize: 12 }} />
+                      <YAxis 
+                        stroke="var(--text-secondary)" 
+                        tick={{ fontSize: 11 }}
+                        width={42}
+                        tickFormatter={(v) => v >= 100000 ? `${(v / 100000).toFixed(1)}L` : v >= 1000 ? `${Math.round(v / 1000)}k` : v}
+                      />
+                      <Tooltip 
+                        cursor={{ fill: 'var(--hover-bg)' }}
+                        contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', color: 'var(--text-primary)' }}
+                        formatter={(value) => [`${getCurrency()}${formatAmt(value)}`, 'Spent']}
+                      />
+                      <Bar dataKey="value" fill="var(--danger)" maxBarSize={45} radius={[4, 4, 0, 0]}>
+                        {walletSpendingData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.name === 'Cash' ? '#f59e0b' : 'var(--danger)'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Total | Cash | UPI pill */}
+                <div style={{
+                  marginTop: '0.85rem',
+                  textAlign: 'center',
+                  fontSize: '0.82rem',
+                  color: 'var(--text-secondary)',
+                  background: 'var(--card-bg)',
+                  padding: '0.55rem 0.75rem',
+                  borderRadius: '10px',
+                  border: '1px solid var(--card-border)',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '0.45rem',
+                  width: '100%'
+                }}>
+                  <span>Total: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{formatAmt(totalSpend)}</strong></span>
+                  <span style={{ opacity: 0.4 }}>|</span>
+                  <span style={{ color: '#f59e0b', fontWeight: '600' }}>Cash: {getCurrency()}{formatAmt(cashSpend)} ({cashPct}%)</span>
+                  <span style={{ opacity: 0.4 }}>|</span>
+                  <span style={{ color: 'var(--danger)', fontWeight: '600' }}>UPI: {getCurrency()}{formatAmt(upiSpend)} ({upiPct}%)</span>
+                </div>
+              </div>
+
+              {/* 2. SPEND BY CATEGORY - RIGHT CARD (16px internal padding) */}
+              <div
+                className="chart-wrapper"
+                style={{
+                  width: '100%',
+                  background: 'var(--bg-card-subtle)',
+                  border: '1px solid var(--card-border)',
+                  borderRadius: '14px',
+                  padding: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minHeight: '290px'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', minHeight: '26px' }}>
+                  <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.02rem', fontWeight: 600 }}>
+                    Spend by Category
+                  </h4>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    background: 'var(--empty-state-bg)',
+                    border: '1px solid var(--card-border)',
+                    color: 'var(--text-muted)'
+                  }}>
+                    {categoryData.length}
+                  </span>
+                </div>
+
+                {/* Side-by-side Donut & Category List Container */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, minHeight: '220px' }}>
+                  {/* Donut Chart */}
+                  <div style={{ position: 'relative', width: '135px', height: '135px', flexShrink: 0, margin: '0 auto' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={categoryData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={38}
+                          outerRadius={56}
+                          paddingAngle={3}
+                          minAngle={4}
+                          dataKey="value"
+                          onMouseEnter={(_, index) => {
+                            const cat = categoryData[index];
+                            if (cat) {
+                              setHoveredCategory(cat);
+                              const el = document.getElementById(`cat-row-${index}`);
+                              if (el) {
+                                el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                              }
+                            }
+                          }}
+                          onMouseLeave={() => setHoveredCategory(null)}
+                        >
+                          {categoryData.map((entry, index) => {
+                            const isHovered = hoveredCategory && hoveredCategory.name === entry.name;
+                            return (
+                              <Cell
+                                key={`cell-${index}`}
+                                fill={getCategoryColor(entry.name, index)}
+                                stroke="var(--card-bg)"
+                                strokeWidth={isHovered ? 2.5 : 1.5}
+                                style={{ cursor: 'pointer', transition: 'all 0.15s ease' }}
+                                onMouseEnter={() => {
+                                  setHoveredCategory(entry);
+                                  const el = document.getElementById(`cat-row-${index}`);
+                                  if (el) {
+                                    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                  }
+                                }}
+                                onMouseLeave={() => setHoveredCategory(null)}
+                              />
+                            );
+                          })}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                    {/* Center Hub: Clean TOTAL SPENT */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        textAlign: 'center',
+                        pointerEvents: 'none',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '70px'
+                      }}
+                    >
+                      <span style={{ fontSize: '0.52rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        TOTAL
+                      </span>
+                      <span style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-primary)', margin: '1px 0', lineHeight: 1.1, whiteSpace: 'nowrap' }}>
+                        {getCurrency()}{formatCompactAmt(totalCategorySpend)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Category Breakdown Ranking List */}
+                  <div
+                    className="custom-scrollbar"
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      height: '220px',
+                      overflowY: 'auto',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.35rem',
+                      paddingRight: '4px'
+                    }}
+                  >
+                    {categoryData.map((cat, idx) => {
+                      const pct = totalCategorySpend > 0 ? ((cat.value / totalCategorySpend) * 100).toFixed(0) : '0';
+                      const catColor = getCategoryColor(cat.name, idx);
+                      const isHovered = hoveredCategory && hoveredCategory.name === cat.name;
+                      return (
+                        <div
+                          id={`cat-row-${idx}`}
+                          key={cat.name || idx}
+                          onMouseEnter={() => setHoveredCategory(cat)}
+                          onMouseLeave={() => setHoveredCategory(null)}
+                          style={{
+                            background: isHovered ? 'var(--hover-bg)' : 'var(--card-bg)',
+                            border: isHovered ? `1.5px solid ${catColor}` : '1px solid var(--card-border)',
+                            borderRadius: '8px',
+                            padding: '0.4rem 0.65rem',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '3px',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                            transform: isHovered ? 'scale(1.01)' : 'scale(1)'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0, flex: 1 }}>
+                              <span
+                                style={{
+                                  width: '8px',
+                                  height: '8px',
+                                  borderRadius: '50%',
+                                  backgroundColor: catColor,
+                                  boxShadow: `0 0 0 1.5px var(--card-bg), 0 0 4px ${catColor}66`,
+                                  flexShrink: 0
+                                }}
+                              />
+                              <span
+                                style={{
+                                  fontWeight: isHovered ? 700 : 600,
+                                  fontSize: '0.78rem',
+                                  color: isHovered ? catColor : 'var(--text-primary)',
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis'
+                                }}
+                              >
+                                {cat.name}
+                              </span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
+                              <span
+                                style={{
+                                  fontSize: '0.7rem',
+                                  fontWeight: 700,
+                                  color: 'var(--text-secondary)'
+                                }}
+                              >
+                                {pct}%
+                              </span>
+                              <span
+                                style={{
+                                  fontWeight: 700,
+                                  fontSize: '0.8rem',
+                                  color: 'var(--text-primary)',
+                                  whiteSpace: 'nowrap'
+                                }}
+                              >
+                                {getCurrency()}{formatAmt(cat.value)}
+                              </span>
+                            </div>
+                          </div>
+                          <div style={{ width: '100%', height: '3px', background: 'var(--card-border)', borderRadius: '9999px', overflow: 'hidden' }}>
+                            <div
                               style={{
-                                width: '8px',
-                                height: '8px',
-                                borderRadius: '50%',
+                                width: `${Math.max(3.5, Math.min(100, Number(pct)))}%`,
+                                height: '100%',
                                 backgroundColor: catColor,
-                                boxShadow: `0 0 0 1.5px var(--card-bg), 0 0 4px ${catColor}66`,
-                                flexShrink: 0
+                                borderRadius: '9999px'
                               }}
                             />
-                            <span
-                              style={{
-                                fontWeight: isHovered ? 700 : 600,
-                                fontSize: '0.78rem',
-                                color: isHovered ? catColor : 'var(--text-primary)',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis'
-                              }}
-                            >
-                              {cat.name}
-                            </span>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
-                            <span
-                              style={{
-                                fontSize: '0.68rem',
-                                fontWeight: 700,
-                                padding: '1px 5px',
-                                borderRadius: '4px',
-                                background: 'var(--card-bg)',
-                                border: '1px solid var(--card-border)',
-                                color: 'var(--text-secondary)'
-                              }}
-                            >
-                              {pct}%
-                            </span>
-                            <span
-                              style={{
-                                fontWeight: 700,
-                                fontSize: '0.8rem',
-                                color: 'var(--text-primary)',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {getCurrency()}{formatAmt(cat.value)}
-                            </span>
                           </div>
                         </div>
-                        <div style={{ width: '100%', height: '3px', background: 'var(--card-border)', borderRadius: '9999px', overflow: 'hidden' }}>
-                          <div
-                            style={{
-                              width: `${Math.max(3.5, Math.min(100, Number(pct)))}%`,
-                              height: '100%',
-                              backgroundColor: catColor,
-                              borderRadius: '9999px'
-                            }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
