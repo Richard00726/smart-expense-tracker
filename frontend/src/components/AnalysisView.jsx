@@ -653,7 +653,7 @@ const AnalysisView = ({ refreshTrigger }) => {
                         contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', color: 'var(--text-primary)' }}
                         formatter={(value) => [`${getCurrency()}${formatAmt(value)}`, 'Spent']}
                       />
-                      <Bar dataKey="value" fill="var(--danger)" maxBarSize={45} radius={[4, 4, 0, 0]}>
+                      <Bar dataKey="value" fill="var(--danger)" barSize={68} maxBarSize={75} radius={[6, 6, 0, 0]}>
                         {walletSpendingData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.name === 'Cash' ? '#f59e0b' : 'var(--danger)'} />
                         ))}
@@ -966,7 +966,7 @@ const AnalysisView = ({ refreshTrigger }) => {
                       contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', color: 'var(--text-primary)' }}
                       formatter={(value) => `${getCurrency()}${value}`}
                     />
-                    <Bar dataKey="value" fill="var(--success)">
+                    <Bar dataKey="value" fill="var(--success)" barSize={68} maxBarSize={75} radius={[6, 6, 0, 0]}>
                       {walletIncomeData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.name === 'Cash' ? '#10b981' : '#3b82f6'} />
                       ))}
