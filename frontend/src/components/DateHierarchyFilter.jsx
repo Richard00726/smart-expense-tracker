@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -17,14 +17,16 @@ const getTodayISTString = () => {
 /**
  * DateHierarchyFilter
  * 
- * Drill-down hierarchical filter matching exact 3-4 pill design:
- * 1. Primary Mode: [Today ∨] / [All Time ∨] / [By Year ∨]
- * 2. Year (if By Year): [2026 ∨]
- * 3. Month (if By Year): [All Months ∨] or [November 2026 ∨]
- * 4. Day (if specific Month): [All Days ∨] or [03 Nov (Today) ∨]
+ * Drill-down hierarchical filter with 4 modes:
+ * 1. Today: [Today ∨]
+ * 2. All Time: [All Time ∨]
+ * 3. Select Period (Year + Month + Day dropdowns):
+ *    [Select Period ∨]  [2026 ∨]  [All Months ∨] (or [November 2026 ∨]  [03 Nov (Today) ∨])
+ * 4. Custom Range (From and To date pickers):
+ *    [Custom Range ∨]  From: [YYYY-MM-DD]  To: [YYYY-MM-DD]
  */
 const DateHierarchyFilter = ({
-  filterType = 'today', // 'today' | 'all' | 'year' | 'month' | 'day'
+  filterType = 'today', // 'today' | 'all' | 'period' | 'year' | 'month' | 'day' | 'custom'
   filterValue = '',
   onFilterChange,
   transactions = [],
@@ -38,7 +40,7 @@ const DateHierarchyFilter = ({
   const currentMonthIndex = currentMonthNum - 1; // 0-11
   const currentDayNum = parseInt(curDStr, 10);
 
-  // 1. Available Years extracted from data + current calendar year
+  // Available Years extracted from data + current calendar year
   const availableYears = useMemo(() => {
     const yearSet = new Set();
     yearSet.add(curYStr);
@@ -94,16 +96,17 @@ const DateHierarchyFilter = ({
     return Array.from(yearSet).sort((a, b) => b.localeCompare(a));
   }, [transactions, dailySummaries, curYStr]);
 
-  // Determine current active mode
+  // Determine current active primary mode
   const primaryMode = useMemo(() => {
     if (filterType === 'today') return 'today';
     if (filterType === 'all') return 'all';
-    return 'year';
+    if (filterType === 'custom') return 'custom';
+    return 'period'; // 'period', 'year', 'month', 'day'
   }, [filterType]);
 
   // Determine current selected Year
   const selectedYear = useMemo(() => {
-    if (filterType === 'year' && filterValue) return String(filterValue);
+    if ((filterType === 'year' || filterType === 'period') && filterValue) return String(filterValue);
     if ((filterType === 'month' || filterType === 'day') && filterValue) {
       return String(filterValue).split('-')[0];
     }
@@ -115,10 +118,10 @@ const DateHierarchyFilter = ({
 
   // Determine current selected Month ('all' or 'YYYY-MM')
   const selectedMonth = useMemo(() => {
-    if (filterType === 'year') return 'all';
+    if (filterType === 'year' || filterType === 'period') return 'all';
     if (filterType === 'month' && filterValue) return String(filterValue);
     if (filterType === 'day' && filterValue) return String(filterValue).slice(0, 7);
-    if (primaryMode === 'year') {
+    if (primaryMode === 'period') {
       if (defaultMonthWithData && defaultMonthWithData.startsWith(selectedYear)) {
         return defaultMonthWithData;
       }
@@ -133,7 +136,36 @@ const DateHierarchyFilter = ({
     return 'all';
   }, [filterType, filterValue]);
 
-  // 2. Month Options for the selected Year
+  // Custom Range State
+  const initialFrom = useMemo(() => {
+    if (filterType === 'custom' && filterValue && filterValue.includes(':')) {
+      return filterValue.split(':')[0];
+    }
+    if (defaultMonthWithData) {
+      return `${defaultMonthWithData}-01`;
+    }
+    return `${curYStr}-${curMStr}-01`;
+  }, [filterType, filterValue, defaultMonthWithData, curYStr, curMStr]);
+
+  const initialTo = useMemo(() => {
+    if (filterType === 'custom' && filterValue && filterValue.includes(':')) {
+      return filterValue.split(':')[1];
+    }
+    return todayIST;
+  }, [filterType, filterValue, todayIST]);
+
+  const [customFrom, setCustomFrom] = useState(initialFrom);
+  const [customTo, setCustomTo] = useState(initialTo);
+
+  useEffect(() => {
+    if (filterType === 'custom' && filterValue && filterValue.includes(':')) {
+      const [f, t] = filterValue.split(':');
+      if (f) setCustomFrom(f);
+      if (t) setCustomTo(t);
+    }
+  }, [filterType, filterValue]);
+
+  // Month Options for the selected Year
   const monthOptions = useMemo(() => {
     const options = [{ value: 'all', label: 'All Months' }];
     const yearNum = parseInt(selectedYear, 10);
@@ -151,7 +183,7 @@ const DateHierarchyFilter = ({
     return options;
   }, [selectedYear, currentYearNum, currentMonthIndex]);
 
-  // 3. Day Options for the selected Month
+  // Day Options for the selected Month
   const dayOptions = useMemo(() => {
     if (selectedMonth === 'all') return [];
 
@@ -162,7 +194,6 @@ const DateHierarchyFilter = ({
     const daysInMonth = new Date(y, mIndex + 1, 0).getDate();
     const isCurrentMonth = (y === currentYearNum && mIndex === currentMonthIndex);
 
-    // List days in descending order
     const startDay = isCurrentMonth ? currentDayNum : daysInMonth;
 
     for (let d = startDay; d >= 1; d--) {
@@ -185,9 +216,21 @@ const DateHierarchyFilter = ({
       onFilterChange('today', todayIST);
     } else if (newMode === 'all') {
       onFilterChange('all', '');
-    } else if (newMode === 'year') {
+    } else if (newMode === 'period') {
       const y = selectedYear || availableYears[0] || curYStr;
-      onFilterChange('year', y);
+      if (selectedMonth && selectedMonth !== 'all') {
+        if (selectedDay && selectedDay !== 'all') {
+          onFilterChange('day', selectedDay);
+        } else {
+          onFilterChange('month', selectedMonth);
+        }
+      } else {
+        onFilterChange('year', y);
+      }
+    } else if (newMode === 'custom') {
+      const from = customFrom || (defaultMonthWithData ? `${defaultMonthWithData}-01` : `${curYStr}-01-01`);
+      const to = customTo || todayIST;
+      onFilterChange('custom', `${from}:${to}`);
     }
   };
 
@@ -214,9 +257,18 @@ const DateHierarchyFilter = ({
     }
   };
 
+  const handleCustomDateChange = (from, to) => {
+    setCustomFrom(from);
+    setCustomTo(to);
+    if (!onFilterChange) return;
+    if (from && to) {
+      onFilterChange('custom', `${from}:${to}`);
+    }
+  };
+
   return (
     <div className="date-hierarchy-filter animate-fade-in">
-      {/* Pill 1: Primary Mode (Today / All Time / By Year) */}
+      {/* Pill 1: Primary Mode (Today / All Time / Select Period / Custom Range) */}
       <select
         className="filter-pill-select"
         value={primaryMode}
@@ -225,11 +277,12 @@ const DateHierarchyFilter = ({
       >
         <option value="today">Today</option>
         <option value="all">All Time</option>
-        <option value="year">By Year</option>
+        <option value="period">Select Period</option>
+        <option value="custom">Custom Range</option>
       </select>
 
-      {/* Pill 2: Year Selector (Visible when By Year is active) */}
-      {primaryMode === 'year' && (
+      {/* Pill 2: Year Selector (Visible when Select Period is active) */}
+      {primaryMode === 'period' && (
         <select
           className="filter-pill-select animate-fade-in"
           value={selectedYear}
@@ -242,8 +295,8 @@ const DateHierarchyFilter = ({
         </select>
       )}
 
-      {/* Pill 3: Month Selector (Visible when By Year is active) */}
-      {primaryMode === 'year' && (
+      {/* Pill 3: Month Selector (Visible when Select Period is active) */}
+      {primaryMode === 'period' && (
         <select
           className="filter-pill-select animate-fade-in"
           value={selectedMonth}
@@ -256,8 +309,8 @@ const DateHierarchyFilter = ({
         </select>
       )}
 
-      {/* Pill 4: Day Selector (Visible when a specific Month is selected) */}
-      {primaryMode === 'year' && selectedMonth !== 'all' && (
+      {/* Pill 4: Day Selector (Visible when Select Period is active AND a specific Month is selected) */}
+      {primaryMode === 'period' && selectedMonth !== 'all' && (
         <select
           className="filter-pill-select animate-fade-in"
           value={selectedDay}
@@ -268,6 +321,30 @@ const DateHierarchyFilter = ({
             <option key={d.value} value={d.value}>{d.label}</option>
           ))}
         </select>
+      )}
+
+      {/* Custom Range: From and To Date Pickers */}
+      {primaryMode === 'custom' && (
+        <>
+          <div className="filter-date-pill animate-fade-in" title="From Date">
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>From</span>
+            <input
+              type="date"
+              value={customFrom}
+              max={customTo || undefined}
+              onChange={e => handleCustomDateChange(e.target.value, customTo)}
+            />
+          </div>
+          <div className="filter-date-pill animate-fade-in" title="To Date">
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>To</span>
+            <input
+              type="date"
+              value={customTo}
+              min={customFrom || undefined}
+              onChange={e => handleCustomDateChange(customFrom, e.target.value)}
+            />
+          </div>
+        </>
       )}
     </div>
   );

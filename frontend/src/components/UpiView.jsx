@@ -1056,11 +1056,19 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
       });
     }
 
-    if (txFilterType === 'year') {
+    if (txFilterType === 'year' || txFilterType === 'period') {
       if (!txFilterValue) return autoTransactions;
       return autoTransactions.filter(tx => {
         const d = new Date(tx.date || tx.txnDate);
         return !isNaN(d.getTime()) && d.getFullYear().toString() === String(txFilterValue);
+      });
+    }
+
+    if (txFilterType === 'custom' && txFilterValue) {
+      const [fromStr, toStr] = txFilterValue.split(':');
+      return autoTransactions.filter(tx => {
+        const dKey = getLocalDateKey(tx.date || tx.txnDate);
+        return (!fromStr || dKey >= fromStr) && (!toStr || dKey <= toStr);
       });
     }
 
@@ -1089,11 +1097,19 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
       });
     }
 
-    if (txFilterType === 'year') {
+    if (txFilterType === 'year' || txFilterType === 'period') {
       if (!txFilterValue) return upiTransactions;
       return upiTransactions.filter(tx => {
         const d = new Date(tx.date || tx.txnDate);
         return !isNaN(d.getTime()) && d.getFullYear().toString() === String(txFilterValue);
+      });
+    }
+
+    if (txFilterType === 'custom' && txFilterValue) {
+      const [fromStr, toStr] = txFilterValue.split(':');
+      return upiTransactions.filter(tx => {
+        const dKey = getLocalDateKey(tx.date || tx.txnDate);
+        return (!fromStr || dKey >= fromStr) && (!toStr || dKey <= toStr);
       });
     }
 
@@ -1128,8 +1144,21 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
       });
     }
 
-    if (ledgerFilterType === 'year' && ledgerFilterValue) {
+    if ((ledgerFilterType === 'year' || ledgerFilterType === 'period') && ledgerFilterValue) {
       return list.filter(s => (s.statementDate || s.period || '').includes(String(ledgerFilterValue)));
+    }
+
+    if (ledgerFilterType === 'custom' && ledgerFilterValue) {
+      const [fromStr, toStr] = ledgerFilterValue.split(':');
+      return list.filter(s => {
+        const dateStr = s.statementDate || s.period || '';
+        const parts = dateStr.split('-');
+        if (parts.length >= 3) {
+          const sDateKey = `${parts[2].slice(0, 4)}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+          return (!fromStr || sDateKey >= fromStr) && (!toStr || sDateKey <= toStr);
+        }
+        return true;
+      });
     }
 
     return list;

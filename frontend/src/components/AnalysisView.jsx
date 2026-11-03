@@ -235,6 +235,15 @@ const AnalysisView = ({ refreshTrigger }) => {
       const end = new Date();
       end.setHours(23, 59, 59, 999);
       filters = { startDate: start.toISOString(), endDate: end.toISOString() };
+    } else if (type === 'custom' && value) {
+      const [fromDate, toDate] = value.split(':');
+      if (fromDate && toDate) {
+        const start = new Date(fromDate);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(toDate);
+        end.setHours(23, 59, 59, 999);
+        filters = { startDate: start.toISOString(), endDate: end.toISOString() };
+      }
     } else if (value) {
       if (type === 'day') {
         const start = new Date(value);
@@ -247,7 +256,7 @@ const AnalysisView = ({ refreshTrigger }) => {
         const start = new Date(year, month - 1, 1);
         const end = new Date(year, month, 0, 23, 59, 59, 999);
         filters = { startDate: start.toISOString(), endDate: end.toISOString() };
-      } else if (type === 'year') {
+      } else if (type === 'year' || type === 'period') {
         const start = new Date(value, 0, 1);
         const end = new Date(value, 11, 31, 23, 59, 59, 999);
         filters = { startDate: start.toISOString(), endDate: end.toISOString() };
@@ -348,8 +357,14 @@ const AnalysisView = ({ refreshTrigger }) => {
     if (flowFilterType === 'month' && flowFilterValue) {
       return item._id === flowFilterValue;
     }
-    if (flowFilterType === 'year' && flowFilterValue) {
+    if ((flowFilterType === 'year' || flowFilterType === 'period') && flowFilterValue) {
       return item._id.startsWith(flowFilterValue);
+    }
+    if (flowFilterType === 'custom' && flowFilterValue) {
+      const [fromStr, toStr] = flowFilterValue.split(':');
+      const mFrom = (fromStr || '').slice(0, 7);
+      const mTo = (toStr || '').slice(0, 7);
+      return item._id >= mFrom && item._id <= mTo;
     }
     return true;
   });
