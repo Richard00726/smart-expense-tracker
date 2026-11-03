@@ -453,6 +453,15 @@ const AnalysisView = ({ refreshTrigger }) => {
     return isNaN(num) ? '0.00' : num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
+  const formatCompactAmt = (val) => {
+    const num = Number(val ?? 0);
+    if (isNaN(num) || num === 0) return '0.00';
+    if (num >= 10000000) return `${(num / 10000000).toFixed(2)}Cr`;
+    if (num >= 100000) return `${(num / 100000).toFixed(2)}L`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}k`;
+    return num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
   const fallbackLedger = {
     opening: 0,
     inflow: Number(activeIn || 0),
@@ -584,15 +593,15 @@ const AnalysisView = ({ refreshTrigger }) => {
             <p style={{ color: 'var(--text-secondary)' }}>No spending recorded for this period.</p>
           </div>
         ) : (
-          <div className="charts-grid" style={{ marginTop: '1.25rem', alignItems: 'start', gap: '1.75rem' }}>
+          <div className="charts-grid" style={{ marginTop: '1.25rem', alignItems: 'stretch', gap: '1.5rem' }}>
             {/* 1. CASH VS UPI SPENDING - LEFT */}
-            <div className="chart-wrapper" style={{ width: '100%' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', minHeight: '26px' }}>
-                <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.02rem', fontWeight: 600 }}>
+            <div className="chart-wrapper" style={{ width: '100%', display: 'flex', flexDirection: 'column', minHeight: '235px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', minHeight: '26px' }}>
+                <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1rem', fontWeight: 600 }}>
                   Cash vs UPI Spending
                 </h4>
                 <span style={{
-                  fontSize: '0.75rem',
+                  fontSize: '0.72rem',
                   fontWeight: 600,
                   padding: '2px 8px',
                   borderRadius: '12px',
@@ -603,18 +612,23 @@ const AnalysisView = ({ refreshTrigger }) => {
                   Wallets
                 </span>
               </div>
-              <div className="chart-container" style={{ height: '180px' }}>
+              <div className="chart-container" style={{ height: '155px' }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={walletSpendingData} margin={{ top: 12, right: 20, left: 10, bottom: 0 }}>
+                  <BarChart data={walletSpendingData} margin={{ top: 8, right: 15, left: -10, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
-                    <XAxis dataKey="name" stroke="var(--text-secondary)" tick={{ fontSize: 12 }} />
-                    <YAxis stroke="var(--text-secondary)" tick={{ fontSize: 11 }} />
+                    <XAxis dataKey="name" stroke="var(--text-secondary)" tick={{ fontSize: 11 }} />
+                    <YAxis 
+                      stroke="var(--text-secondary)" 
+                      tick={{ fontSize: 10 }}
+                      width={40}
+                      tickFormatter={(v) => v >= 100000 ? `${(v / 100000).toFixed(1)}L` : v >= 1000 ? `${Math.round(v / 1000)}k` : v}
+                    />
                     <Tooltip 
                       cursor={{ fill: 'var(--hover-bg)' }}
-                      contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', color: 'var(--text-primary)' }}
-                      formatter={(value) => `${getCurrency()}${value}`}
+                      contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', color: 'var(--text-primary)', fontSize: '0.82rem', padding: '0.45rem 0.65rem' }}
+                      formatter={(value) => [`${getCurrency()}${formatAmt(value)}`, 'Spent']}
                     />
-                    <Bar dataKey="value" fill="var(--danger)" maxBarSize={45} radius={[4, 4, 0, 0]}>
+                    <Bar dataKey="value" fill="var(--danger)" maxBarSize={40} radius={[4, 4, 0, 0]}>
                       {walletSpendingData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.name === 'Cash' ? '#f59e0b' : 'var(--danger)'} />
                       ))}
@@ -623,36 +637,37 @@ const AnalysisView = ({ refreshTrigger }) => {
                 </ResponsiveContainer>
               </div>
               <div style={{
-                marginTop: '0.65rem',
+                marginTop: 'auto',
                 textAlign: 'center',
-                fontSize: '0.82rem',
+                fontSize: '0.8rem',
                 color: 'var(--text-secondary)',
                 background: 'var(--empty-state-bg)',
-                padding: '0.45rem 0.65rem',
+                padding: '0.45rem 0.6rem',
                 borderRadius: '8px',
                 border: '1px solid var(--card-border)',
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
                 flexWrap: 'wrap',
-                gap: '0.4rem'
+                gap: '0.4rem',
+                lineHeight: 1.4
               }}>
-                <span>Total: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{totalSpend.toFixed(2)}</strong></span>
+                <span>Total: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{formatAmt(totalSpend)}</strong></span>
                 <span style={{ opacity: 0.4 }}>|</span>
-                <span style={{ color: '#f59e0b', fontWeight: '600' }}>Cash: {getCurrency()}{cashSpend.toFixed(2)} ({cashPct}%)</span>
+                <span style={{ color: '#f59e0b', fontWeight: '600' }}>Cash: {getCurrency()}{formatAmt(cashSpend)} ({cashPct}%)</span>
                 <span style={{ opacity: 0.4 }}>|</span>
-                <span style={{ color: 'var(--danger)', fontWeight: '600' }}>UPI: {getCurrency()}{upiSpend.toFixed(2)} ({upiPct}%)</span>
+                <span style={{ color: 'var(--danger)', fontWeight: '600' }}>UPI: {getCurrency()}{formatAmt(upiSpend)} ({upiPct}%)</span>
               </div>
             </div>
 
             {/* 2. SPEND BY CATEGORY - RIGHT */}
-            <div className="chart-wrapper" style={{ width: '100%' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', minHeight: '26px' }}>
-                <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.02rem', fontWeight: 600 }}>
+            <div className="chart-wrapper" style={{ width: '100%', display: 'flex', flexDirection: 'column', minHeight: '235px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', minHeight: '26px' }}>
+                <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1rem', fontWeight: 600 }}>
                   Spend by Category
                 </h4>
                 <span style={{
-                  fontSize: '0.75rem',
+                  fontSize: '0.72rem',
                   fontWeight: 600,
                   padding: '2px 8px',
                   borderRadius: '12px',
@@ -665,17 +680,17 @@ const AnalysisView = ({ refreshTrigger }) => {
               </div>
 
               {/* Side-by-side Donut & Category List Container */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                {/* Donut Chart - Compact & Centered */}
-                <div style={{ position: 'relative', width: '170px', height: '170px', flexShrink: 0, margin: '0 auto' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flex: 1, minHeight: '195px' }}>
+                {/* Donut Chart - Compact & Perfectly Fitted Center */}
+                <div style={{ position: 'relative', width: '125px', height: '125px', flexShrink: 0, margin: '0 auto' }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={categoryData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={46}
-                        outerRadius={68}
+                        innerRadius={36}
+                        outerRadius={52}
                         paddingAngle={3}
                         minAngle={4}
                         dataKey="value"
@@ -698,7 +713,7 @@ const AnalysisView = ({ refreshTrigger }) => {
                               key={`cell-${index}`}
                               fill={getCategoryColor(entry.name, index)}
                               stroke="var(--card-bg)"
-                              strokeWidth={isHovered ? 3 : 2}
+                              strokeWidth={isHovered ? 2.5 : 1.5}
                               style={{ cursor: 'pointer', transition: 'all 0.15s ease' }}
                               onMouseEnter={() => {
                                 setHoveredCategory(entry);
@@ -714,7 +729,7 @@ const AnalysisView = ({ refreshTrigger }) => {
                       </Pie>
                     </PieChart>
                   </ResponsiveContainer>
-                  {/* Center Hub: Clean Steady TOTAL SPENT & Total Amount */}
+                  {/* Center Hub: Compact Clean TOTAL SPENT - Fits within 72px hole */}
                   <div
                     style={{
                       position: 'absolute',
@@ -727,25 +742,25 @@ const AnalysisView = ({ refreshTrigger }) => {
                       flexDirection: 'column',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      width: '90px'
+                      width: '68px'
                     }}
                   >
-                    <span style={{ fontSize: '0.58rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                      TOTAL SPENT
+                    <span style={{ fontSize: '0.52rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      TOTAL
                     </span>
-                    <span style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-primary)', margin: '1px 0', lineHeight: 1.1 }}>
-                      {getCurrency()}{formatAmt(totalCategorySpend)}
+                    <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-primary)', margin: '1px 0', lineHeight: 1.1, whiteSpace: 'nowrap' }}>
+                      {getCurrency()}{formatCompactAmt(totalCategorySpend)}
                     </span>
                   </div>
                 </div>
 
-                {/* Category Breakdown Ranking List */}
+                {/* Category Breakdown Ranking List - Expanded Width */}
                 <div
                   className="custom-scrollbar"
                   style={{
-                    flex: '1 1 200px',
-                    minWidth: '180px',
-                    maxHeight: '180px',
+                    flex: 1,
+                    minWidth: 0,
+                    height: '195px',
                     overflowY: 'auto',
                     display: 'flex',
                     flexDirection: 'column',
@@ -768,21 +783,21 @@ const AnalysisView = ({ refreshTrigger }) => {
                           border: isHovered ? `1.5px solid ${catColor}` : '1px solid var(--card-border)',
                           boxShadow: isHovered ? `0 0 8px ${catColor}33` : 'none',
                           borderRadius: '8px',
-                          padding: '0.38rem 0.6rem',
+                          padding: '0.35rem 0.55rem',
                           display: 'flex',
                           flexDirection: 'column',
-                          gap: '4px',
+                          gap: '3px',
                           cursor: 'pointer',
                           transition: 'all 0.15s ease',
                           transform: isHovered ? 'scale(1.01)' : 'scale(1)'
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.35rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0, flex: 1 }}>
                             <span
                               style={{
-                                width: '8px',
-                                height: '8px',
+                                width: '7px',
+                                height: '7px',
                                 borderRadius: '50%',
                                 backgroundColor: catColor,
                                 boxShadow: `0 0 0 1.5px var(--card-bg), 0 0 4px ${catColor}66`,
@@ -792,7 +807,7 @@ const AnalysisView = ({ refreshTrigger }) => {
                             <span
                               style={{
                                 fontWeight: isHovered ? 700 : 600,
-                                fontSize: '0.78rem',
+                                fontSize: '0.76rem',
                                 color: isHovered ? catColor : 'var(--text-primary)',
                                 whiteSpace: 'nowrap',
                                 overflow: 'hidden',
@@ -802,10 +817,10 @@ const AnalysisView = ({ refreshTrigger }) => {
                               {cat.name}
                             </span>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
                             <span
                               style={{
-                                fontSize: '0.68rem',
+                                fontSize: '0.66rem',
                                 fontWeight: 700,
                                 padding: '1px 5px',
                                 borderRadius: '4px',
@@ -819,7 +834,7 @@ const AnalysisView = ({ refreshTrigger }) => {
                             <span
                               style={{
                                 fontWeight: 700,
-                                fontSize: '0.8rem',
+                                fontSize: '0.78rem',
                                 color: 'var(--text-primary)',
                                 whiteSpace: 'nowrap'
                               }}
