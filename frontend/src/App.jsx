@@ -257,36 +257,18 @@ function App() {
     if (isAuthenticated) loadTransactions();
   }, [txFilterType, txFilterValue, txWalletFilter, isAuthenticated, currentUser?.email, currentUser?._id, currentUser?.id]);
 
-  // Quiet background prefetch of latest active month analysis summary so Analysis tab opens in 0ms
+  // Quiet background prefetch of all-time analysis summary so Analysis tab opens in 0ms
   useEffect(() => {
     if (!isAuthenticated) return;
     const timer = setTimeout(() => {
-      const now = new Date();
-      let targetMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      const txList = Array.isArray(transactions) && transactions.length > 0 ? transactions : [];
-      if (txList.length > 0) {
-        for (const t of txList) {
-          const d = t.date || t.txnDate;
-          if (d) {
-            const m = new Date(d).toISOString().slice(0, 7);
-            if (m) {
-              targetMonth = m;
-              break;
-            }
-          }
-        }
-      }
-      const [y, m] = targetMonth.split('-');
-      const start = new Date(y, m - 1, 1).toISOString();
-      const end = new Date(y, m, 0, 23, 59, 59, 999).toISOString();
-      getSummary({ startDate: start, endDate: end })
+      getSummary({})
         .then(res => {
           try {
-            sessionStorage.setItem(`summary_month_${targetMonth}`, JSON.stringify(res.data));
+            sessionStorage.setItem('summary_all_', JSON.stringify(res.data));
           } catch (e) {}
         })
         .catch(() => {});
-    }, 800);
+    }, 600);
     return () => clearTimeout(timer);
   }, [isAuthenticated, transactions.length]);
 

@@ -26,7 +26,7 @@ const getTodayISTString = () => {
  *    [Custom Range ∨]  From: [YYYY-MM-DD]  To: [YYYY-MM-DD]
  */
 const DateHierarchyFilter = ({
-  filterType = 'today', // 'today' | 'all' | 'period' | 'year' | 'month' | 'day' | 'custom'
+  filterType = 'all', // 'all' (default) | 'today' | 'period' | 'year' | 'month' | 'day' | 'custom'
   filterValue = '',
   onFilterChange,
   transactions = [],

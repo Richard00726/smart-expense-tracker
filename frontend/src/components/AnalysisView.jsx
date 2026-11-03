@@ -165,7 +165,7 @@ const AnalysisView = ({ refreshTrigger }) => {
   }, [availableMonths, currentMonthString, refreshTrigger]);
 
   const defaultMonth = latestMonthWithData || currentMonthString;
-  const defaultKey = `month_${defaultMonth}`;
+  const defaultKey = 'all_';
   const initialData = getInitialSummary(defaultKey);
 
   const [spendingSummary, setSpendingSummary] = useState(() => initialData);
@@ -176,14 +176,14 @@ const AnalysisView = ({ refreshTrigger }) => {
   const [incomeLoading, setIncomeLoading] = useState(!initialData);
   const [flowLoading, setFlowLoading] = useState(!initialData);
 
-  const [spendingFilterType, setSpendingFilterType] = useState('month');
-  const [spendingFilterValue, setSpendingFilterValue] = useState(() => defaultMonth);
+  const [spendingFilterType, setSpendingFilterType] = useState('all');
+  const [spendingFilterValue, setSpendingFilterValue] = useState('');
 
-  const [incomeFilterType, setIncomeFilterType] = useState('month');
-  const [incomeFilterValue, setIncomeFilterValue] = useState(() => defaultMonth);
+  const [incomeFilterType, setIncomeFilterType] = useState('all');
+  const [incomeFilterValue, setIncomeFilterValue] = useState('');
 
-  const [flowFilterType, setFlowFilterType] = useState('month');
-  const [flowFilterValue, setFlowFilterValue] = useState(() => defaultMonth);
+  const [flowFilterType, setFlowFilterType] = useState('all');
+  const [flowFilterValue, setFlowFilterValue] = useState('');
   const [flowWalletFilter, setFlowWalletFilter] = useState('all'); // 'all' (Combined - Default), 'Cash', 'UPI'
   const [hoveredCategory, setHoveredCategory] = useState(null);
 
@@ -191,24 +191,24 @@ const AnalysisView = ({ refreshTrigger }) => {
   const [userChangedIncomeMonth, setUserChangedIncomeMonth] = useState(false);
   const [userChangedFlowMonth, setUserChangedFlowMonth] = useState(false);
 
-  // Sync to latest month with data if user hasn't explicitly selected another month
+  // Sync to latest month with data if user selects month
   useEffect(() => {
-    if (latestMonthWithData && !userChangedSpendingMonth && spendingFilterType === 'month' && spendingFilterValue !== latestMonthWithData) {
+    if (latestMonthWithData && !userChangedSpendingMonth && spendingFilterType === 'month' && !spendingFilterValue) {
       setSpendingFilterValue(latestMonthWithData);
     }
-  }, [latestMonthWithData, userChangedSpendingMonth, spendingFilterType]);
+  }, [latestMonthWithData, userChangedSpendingMonth, spendingFilterType, spendingFilterValue]);
 
   useEffect(() => {
-    if (latestMonthWithData && !userChangedIncomeMonth && incomeFilterType === 'month' && incomeFilterValue !== latestMonthWithData) {
+    if (latestMonthWithData && !userChangedIncomeMonth && incomeFilterType === 'month' && !incomeFilterValue) {
       setIncomeFilterValue(latestMonthWithData);
     }
-  }, [latestMonthWithData, userChangedIncomeMonth, incomeFilterType]);
+  }, [latestMonthWithData, userChangedIncomeMonth, incomeFilterType, incomeFilterValue]);
 
   useEffect(() => {
-    if (latestMonthWithData && !userChangedFlowMonth && flowFilterType === 'month' && flowFilterValue !== latestMonthWithData) {
+    if (latestMonthWithData && !userChangedFlowMonth && flowFilterType === 'month' && !flowFilterValue) {
       setFlowFilterValue(latestMonthWithData);
     }
-  }, [latestMonthWithData, userChangedFlowMonth, flowFilterType]);
+  }, [latestMonthWithData, userChangedFlowMonth, flowFilterType, flowFilterValue]);
 
   const handleFilterTypeChange = (newType, setType, setValue) => {
     setType(newType);

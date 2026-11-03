@@ -887,12 +887,12 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
   }, [effectiveLiveBalance, bankOverview, userCacheKey]);
 
   // Top Table (Daily Statement Ledger) Filter State
-  const [ledgerFilterType, setLedgerFilterType] = useState('month');
+  const [ledgerFilterType, setLedgerFilterType] = useState('all');
   const [ledgerFilterValue, setLedgerFilterValue] = useState('');
   const [userChangedLedgerMonth, setUserChangedLedgerMonth] = useState(false);
 
   // Bottom Table (Auto Bank & UPI Transactions) Filter State
-  const [txFilterType, setTxFilterType] = useState('month');
+  const [txFilterType, setTxFilterType] = useState('all');
   const [txFilterValue, setTxFilterValue] = useState('');
   const [userChangedTxMonth, setUserChangedTxMonth] = useState(false);
 
@@ -1006,18 +1006,18 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
     return availableMonths[0]?.key || currentLocalMonthStr;
   }, [availableMonths, currentLocalMonthStr, bankOverview?.dailySummaries, upiTransactions]);
 
-  // Sync to the latest month that has records so the view is never empty on load
+  // Sync to the latest month that has records when user chooses month filter
   useEffect(() => {
-    if (latestMonthWithData && !userChangedLedgerMonth) {
+    if (latestMonthWithData && !userChangedLedgerMonth && ledgerFilterType === 'month' && !ledgerFilterValue) {
       setLedgerFilterValue(latestMonthWithData);
     }
-  }, [latestMonthWithData, userChangedLedgerMonth]);
+  }, [latestMonthWithData, userChangedLedgerMonth, ledgerFilterType, ledgerFilterValue]);
 
   useEffect(() => {
-    if (latestMonthWithData && !userChangedTxMonth) {
+    if (latestMonthWithData && !userChangedTxMonth && txFilterType === 'month' && !txFilterValue) {
       setTxFilterValue(latestMonthWithData);
     }
-  }, [latestMonthWithData, userChangedTxMonth]);
+  }, [latestMonthWithData, userChangedTxMonth, txFilterType, txFilterValue]);
 
   const effectiveLedgerMonth = ledgerFilterValue || latestMonthWithData || currentLocalMonthStr;
   const effectiveTxMonth = txFilterValue || latestMonthWithData || currentLocalMonthStr;
