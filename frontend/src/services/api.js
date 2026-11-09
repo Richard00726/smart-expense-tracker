@@ -34,11 +34,14 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Token is invalid or expired
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      // Dispatch a custom event so App.jsx can listen and update state
-      window.dispatchEvent(new Event('auth_error'));
+      // Don't wipe session if the 401 was from third-party bank-sync / Gmail OAuth issues
+      const url = error.config?.url || '';
+      if (!url.includes('/bank-sync/')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        // Dispatch a custom event so App.jsx can listen and update state
+        window.dispatchEvent(new Event('auth_error'));
+      }
     }
     return Promise.reject(error);
   }

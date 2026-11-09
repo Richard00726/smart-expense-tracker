@@ -34,8 +34,12 @@ function getTxSignature(userId, t) {
  * @param {object} options - { fullSync: boolean, forceReprocess: boolean }
  */
 async function syncUserBankStatements(user, options = {}) {
-  if (!user?.googleRefreshToken) {
-    return { success: false, code: 'NOT_CONNECTED', message: 'Gmail is not connected.' };
+  if (!user?.googleRefreshToken || user?.googleTokenExpired) {
+    return {
+      success: false,
+      code: 'GMAIL_TOKEN_EXPIRED',
+      message: 'Google authorization expired or not connected. Please re-authorize Gmail to resume sync.'
+    };
   }
 
   if (!user?.statementPassword) {
@@ -61,6 +65,28 @@ async function syncUserBankStatements(user, options = {}) {
     const oauth2Client = createOAuth2Client(clientId, clientSecret);
     oauth2Client.setCredentials({ refresh_token: user.googleRefreshToken });
 
+    // Listen for rotated or refreshed tokens and automatically persist them to DB
+    oauth2Client.on('tokens', async (tokens) => {
+      try {
+        if (tokens.refresh_token) {
+          console.log(`[Auto-Sync] Received newly rotated Google OAuth refresh token for user ${user.email}. Persisting to DB...`);
+          await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              googleRefreshToken: tokens.refresh_token,
+              googleTokenExpired: false
+            }
+          });
+          try {
+            const { invalidateUserCache } = require('../middleware/authMiddleware');
+            invalidateUserCache(user.id);
+          } catch {}
+        }
+      } catch (tokenSaveErr) {
+        console.warn(`[Auto-Sync] Failed to save updated refresh token for user ${user.email}:`, tokenSaveErr.message);
+      }
+    });
+
     // Determine sync mode:
     // If user has not yet completed a full historical inbox sweep, run FULL inbox ingestion automatically!
     const fullSyncAlreadyDone = hasCompletedFullInboxSync(user.id);
@@ -80,8 +106,13 @@ async function syncUserBankStatements(user, options = {}) {
       const isExpired =
         fetchErr.message?.includes('invalid_grant') ||
         fetchErr.response?.data?.error === 'invalid_grant' ||
+        fetchErr.response?.data?.error_description?.toLowerCase()?.includes('expired') ||
+        fetchErr.response?.data?.error_description?.toLowerCase()?.includes('revoked') ||
         fetchErr.message?.includes('Token has been expired') ||
-        fetchErr.code === 401;
+        fetchErr.message?.includes('invalid_request') ||
+        fetchErr.code === 401 ||
+        fetchErr.status === 401 ||
+        fetchErr.response?.status === 401;
 
       if (isExpired) {
         console.warn(`[Auto-Sync] User ${user.email}: Google refresh token has expired (Google limits test app tokens to 7 days) or was revoked.`);

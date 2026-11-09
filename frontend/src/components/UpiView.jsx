@@ -468,9 +468,23 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
               }
             })
             .catch((syncErr) => {
-              if (syncErr.response?.data?.code === 'GMAIL_TOKEN_EXPIRED') {
+              const isAuthIssue =
+                syncErr.response?.data?.code === 'GMAIL_TOKEN_EXPIRED' ||
+                syncErr.response?.data?.code === 'NOT_CONNECTED' ||
+                syncErr.response?.data?.message?.toLowerCase().includes('expired') ||
+                syncErr.response?.data?.message?.toLowerCase().includes('not connected') ||
+                syncErr.response?.data?.message?.toLowerCase().includes('invalid_grant');
+
+              if (isAuthIssue) {
                 setGoogleTokenExpired(true);
                 setHasGoogleAuth(false);
+                try {
+                  const currentCache = JSON.parse(localStorage.getItem('bank_sync_settings_cache') || '{}');
+                  currentCache.hasGoogleAuth = false;
+                  currentCache.googleTokenExpired = true;
+                  localStorage.setItem('bank_sync_settings_cache', JSON.stringify(currentCache));
+                  localStorage.setItem(`bank_sync_settings_cache_${userCacheKey}`, JSON.stringify(currentCache));
+                } catch {}
               }
             });
         }
@@ -660,15 +674,17 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
       return;
     }
     if (!hasGoogleAuth || googleTokenExpired) {
-      setAlertInfo({
-        type: 'error',
-        message: 'Gmail authorization expired or not connected. Click "Re-link Gmail" to authorize.'
-      });
+      handleConnectGmail();
       return;
     }
 
     setSyncingGmail(true);
     setAlertInfo(null);
+    // 45-second fallback timer so the UI never stays stuck in "Auto-syncing..."
+    const safetyTimer = setTimeout(() => {
+      setSyncingGmail(false);
+    }, 45000);
+
     try {
       const res = await syncGmailNow(options);
       const processed = res.data?.statementsProcessed || 0;
@@ -704,12 +720,29 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
       }
     } catch (err) {
       console.log('Sync check error:', err.message);
-      if (err.response?.data?.code === 'GMAIL_TOKEN_EXPIRED' || err.response?.data?.message?.includes('expired') || err.message?.includes('invalid_grant')) {
+      const isAuthIssue =
+        err.response?.data?.code === 'GMAIL_TOKEN_EXPIRED' ||
+        err.response?.data?.code === 'NOT_CONNECTED' ||
+        err.response?.data?.message?.toLowerCase().includes('expired') ||
+        err.response?.data?.message?.toLowerCase().includes('not connected') ||
+        err.response?.data?.message?.toLowerCase().includes('invalid_grant') ||
+        err.message?.toLowerCase().includes('invalid_grant');
+
+      if (isAuthIssue) {
         setGoogleTokenExpired(true);
         setHasGoogleAuth(false);
+        try {
+          const currentCache = JSON.parse(localStorage.getItem('bank_sync_settings_cache') || '{}');
+          currentCache.hasGoogleAuth = false;
+          currentCache.googleTokenExpired = true;
+          localStorage.setItem('bank_sync_settings_cache', JSON.stringify(currentCache));
+          localStorage.setItem(`bank_sync_settings_cache_${userCacheKey}`, JSON.stringify(currentCache));
+        } catch {}
         setAlertInfo({
           type: 'error',
-          message: '⚠️ Google authorization has expired (Google limits test app tokens to 7 days). Please click "Re-link Gmail" above to resume sync.'
+          actionText: 'Re-link Gmail Now',
+          onAction: handleConnectGmail,
+          message: '⚠️ Google authorization has expired (Google limits test app tokens to 7 days). Click "Re-link Gmail Now" to restore sync, and set your Google Cloud App to "Production" for permanent sync.'
         });
       } else {
         setAlertInfo({
@@ -718,6 +751,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
         });
       }
     } finally {
+      clearTimeout(safetyTimer);
       setSyncingGmail(false);
     }
   };
@@ -1279,9 +1313,31 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
               color: alertInfo.type === 'error' ? '#ef4444' : '#10b981',
               fontSize: '0.9rem'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                {alertInfo.type === 'error' ? <AlertCircle size={18} /> : <CheckCircle2 size={18} />}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                {alertInfo.type === 'error' ? <AlertCircle size={18} style={{ flexShrink: 0 }} /> : <CheckCircle2 size={18} style={{ flexShrink: 0 }} />}
                 <span>{alertInfo.message}</span>
+                {alertInfo.actionText && (
+                  <button
+                    onClick={alertInfo.onAction}
+                    style={{
+                      background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '0.25rem 0.75rem',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                      fontSize: '0.82rem',
+                      marginLeft: '0.5rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      boxShadow: '0 2px 8px rgba(239, 68, 68, 0.35)'
+                    }}
+                  >
+                    {alertInfo.actionText} →
+                  </button>
+                )}
               </div>
               <button
                 onClick={() => setAlertInfo(null)}
@@ -1312,19 +1368,19 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                 {/* 1. Main Bank Sync Status Indicator */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <span
-                    className={(!googleTokenExpired && (hasGoogleAuth || (isConfigured && settingsLoading))) ? "pulse-dot-green" : "pulse-dot-orange"}
+                    className={(!googleTokenExpired && hasGoogleAuth) ? "pulse-dot-green" : "pulse-dot-orange"}
                     style={{
                       width: 10,
                       height: 10,
                       borderRadius: '50%',
-                      background: (!googleTokenExpired && (hasGoogleAuth || (isConfigured && settingsLoading))) ? '#10b981' : '#f59e0b',
+                      background: (!googleTokenExpired && hasGoogleAuth) ? '#10b981' : '#f59e0b',
                       flexShrink: 0
                     }}
                   />
                   <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>
                     {googleTokenExpired
                       ? 'Gmail Session Expired'
-                      : (hasGoogleAuth || (isConfigured && settingsLoading))
+                      : hasGoogleAuth
                         ? 'TMB Bank Auto-Sync Active'
                         : hasGoogleCredentials
                           ? 'Google Credentials Saved'
@@ -1356,7 +1412,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                     <AlertCircle size={12} />
                     Session Expired – Re-link Gmail →
                   </button>
-                ) : (hasGoogleAuth || (isConfigured && settingsLoading && localStorage.getItem('bank_has_google_auth') !== 'false')) ? (
+                ) : (hasGoogleAuth && !googleTokenExpired) ? (
                   <span
                     style={{
                       fontSize: '0.76rem',
@@ -1469,13 +1525,19 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                       Last sync: {lastSyncTime.toLocaleDateString() === new Date().toLocaleDateString() ? 'Today' : lastSyncTime.toLocaleDateString()} at {lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                     <button
-                      onClick={() => handleSyncGmailNow({ fullSync: false })}
-                      disabled={syncingGmail || googleTokenExpired || !hasGoogleAuth}
+                      onClick={() => {
+                        if (googleTokenExpired || !hasGoogleAuth) {
+                          handleConnectGmail();
+                        } else {
+                          handleSyncGmailNow({ fullSync: false });
+                        }
+                      }}
+                      disabled={syncingGmail}
                       style={{
-                        background: 'rgba(56, 189, 248, 0.08)',
-                        border: '1px solid rgba(56, 189, 248, 0.2)',
-                        color: (syncingGmail || googleTokenExpired || !hasGoogleAuth) ? 'var(--text-secondary)' : '#38bdf8',
-                        cursor: (syncingGmail || googleTokenExpired || !hasGoogleAuth) ? 'not-allowed' : 'pointer',
+                        background: (googleTokenExpired || !hasGoogleAuth) ? 'rgba(239, 68, 68, 0.1)' : 'rgba(56, 189, 248, 0.08)',
+                        border: `1px solid ${(googleTokenExpired || !hasGoogleAuth) ? 'rgba(239, 68, 68, 0.3)' : 'rgba(56, 189, 248, 0.2)'}`,
+                        color: (googleTokenExpired || !hasGoogleAuth) ? '#ef4444' : '#38bdf8',
+                        cursor: syncingGmail ? 'not-allowed' : 'pointer',
                         padding: '3px 6px',
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -1484,7 +1546,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                         transition: 'all 0.2s ease',
                         marginLeft: '0.2rem'
                       }}
-                      title={googleTokenExpired ? "Please re-link Gmail first" : "Check Gmail for new statements now"}
+                      title={googleTokenExpired ? "Gmail authorization expired. Click to re-link." : "Check Gmail for new statements now"}
                     >
                       <RefreshCw size={12} style={{ animation: syncingGmail ? 'spin 1s linear infinite' : 'none' }} />
                     </button>

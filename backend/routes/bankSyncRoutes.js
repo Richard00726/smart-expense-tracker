@@ -74,6 +74,8 @@ router.get(['/google-callback', '/google-callback-popup'], async (req, res) => {
     };
     if (tokens.refresh_token) {
       updateData.googleRefreshToken = tokens.refresh_token;
+    } else {
+      console.warn('[Gmail OAuth] Warning: No refresh_token returned by Google. Prompt: consent ensures it is generated.');
     }
 
     await prisma.user.update({
@@ -130,8 +132,8 @@ router.get('/settings', async (req, res) => {
         : null,
       googleEmail: user.googleEmail || null,
       hasGoogleCredentials: Boolean(user.googleClientId && (user.googleClientSecret || process.env.GOOGLE_CLIENT_SECRET)),
-      hasGoogleAuth: Boolean(user.googleRefreshToken),
-      googleTokenExpired: Boolean(user.googleTokenExpired),
+      hasGoogleAuth: Boolean(user.googleRefreshToken && !user.googleTokenExpired),
+      googleTokenExpired: Boolean(user.googleTokenExpired || (!user.googleRefreshToken && user.bankSyncActive && user.googleClientId)),
       googleClientId: user.googleClientId || process.env.GOOGLE_CLIENT_ID || null,
       bankSyncActive: user.bankSyncActive,
       lastBankSyncAt: user.lastBankSyncAt
@@ -376,6 +378,8 @@ router.post('/google-connect', async (req, res) => {
       };
       if (tokens.refresh_token) {
         updateData.googleRefreshToken = tokens.refresh_token;
+      } else {
+        console.warn('[Gmail OAuth] Warning: No refresh_token returned by Google in /google-connect.');
       }
 
       await prisma.user.update({
@@ -418,7 +422,27 @@ router.post('/sync-gmail-now', async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error('Error during Gmail sync:', err);
-    res.status(500).json({ message: err.message || 'Failed to sync with Gmail' });
+    const isTokenExpired =
+      err.message?.includes('invalid_grant') ||
+      err.response?.data?.error === 'invalid_grant' ||
+      err.response?.data?.error_description?.toLowerCase()?.includes('expired') ||
+      err.response?.data?.error_description?.toLowerCase()?.includes('revoked') ||
+      err.message?.includes('expired') ||
+      err.code === 401 ||
+      err.status === 401;
+
+    if (isTokenExpired) {
+      return res.status(400).json({
+        success: false,
+        code: 'GMAIL_TOKEN_EXPIRED',
+        message: 'Google authorization expired (Google limits test app tokens to 7 days). Please click "Re-link Gmail" to resume auto-sync.'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: err.message || 'Failed to sync with Gmail. Please try again.'
+    });
   }
 });
 
