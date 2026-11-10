@@ -1354,30 +1354,31 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
           ══════════════════════════════════════════════════════════════ */}
           {isConfigured && (
             <div className="data-card glass animate-fade-in" style={{
-              padding: '0.75rem 1.25rem',
+              padding: '0.65rem 1.15rem',
               borderRadius: '14px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              flexWrap: 'wrap',
               gap: '0.75rem',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.05)'
+              boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+              overflowX: 'auto',
+              scrollbarWidth: 'none'
             }}>
-              {/* Left: Status Badges */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              {/* Left: Status Badges - Always in single top row next to balance */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'nowrap', minWidth: 0 }}>
                 {/* 1. Main Bank Sync Status Indicator */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
                   <span
                     className={(!googleTokenExpired && hasGoogleAuth) ? "pulse-dot-green" : "pulse-dot-orange"}
                     style={{
-                      width: 10,
-                      height: 10,
+                      width: 9,
+                      height: 9,
                       borderRadius: '50%',
                       background: (!googleTokenExpired && hasGoogleAuth) ? '#10b981' : '#f59e0b',
                       flexShrink: 0
                     }}
                   />
-                  <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>
+                  <strong style={{ fontSize: '0.92rem', color: 'var(--text-primary)' }}>
                     {googleTokenExpired
                       ? 'Gmail Session Expired'
                       : hasGoogleAuth
@@ -1405,6 +1406,8 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                       alignItems: 'center',
                       gap: '0.35rem',
                       fontWeight: 600,
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
                       boxShadow: '0 2px 8px rgba(239,68,68,0.3)'
                     }}
                     title="Google refresh token expired after 7-day limit in test mode. Click to re-authorize and resume sync."
@@ -1419,12 +1422,14 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                       background: 'rgba(16, 185, 129, 0.12)',
                       color: '#10b981',
                       border: '1px solid rgba(16, 185, 129, 0.25)',
-                      padding: '0.2rem 0.6rem',
+                      padding: '0.18rem 0.55rem',
                       borderRadius: '20px',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '0.35rem',
-                      fontWeight: 600
+                      fontWeight: 600,
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0
                     }}
                     title="Google Cloud OAuth authorization is active and verified"
                   >
@@ -1447,6 +1452,8 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                       alignItems: 'center',
                       gap: '0.35rem',
                       fontWeight: 600,
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
                       boxShadow: '0 2px 8px rgba(66,133,244,0.3)'
                     }}
                     title="Click to authorize with Google so statements can be read from Gmail"
@@ -1460,19 +1467,26 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                 {(googleEmail || targetBankEmail) && (
                   <span
                     style={{
-                      fontSize: '0.78rem',
+                      fontSize: '0.76rem',
                       background: 'rgba(59,130,246,0.1)',
                       color: '#3b82f6',
-                      padding: '0.2rem 0.6rem',
+                      padding: '0.18rem 0.55rem',
                       borderRadius: '20px',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '0.35rem'
+                      gap: '0.35rem',
+                      whiteSpace: 'nowrap',
+                      maxWidth: '220px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      flexShrink: 1
                     }}
-                    title="Bank registered email"
+                    title={`Bank registered email: ${googleEmail || targetBankEmail}`}
                   >
-                    <Mail size={11} />
-                    {googleEmail || targetBankEmail}
+                    <Mail size={11} style={{ flexShrink: 0 }} />
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {googleEmail || targetBankEmail}
+                    </span>
                   </span>
                 )}
 
@@ -1480,16 +1494,18 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                 {bankOverview?.accountNo && (
                   <span
                     style={{
-                      fontSize: '0.78rem',
+                      fontSize: '0.76rem',
                       background: 'rgba(99, 102, 241, 0.1)',
                       color: '#818cf8',
                       border: '1px solid rgba(99, 102, 241, 0.25)',
-                      padding: '0.2rem 0.6rem',
+                      padding: '0.18rem 0.55rem',
                       borderRadius: '20px',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '0.35rem',
-                      fontWeight: 600
+                      fontWeight: 600,
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0
                     }}
                     title="Masked TMB Savings Account Number"
                   >
@@ -1505,22 +1521,39 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                     background: 'rgba(56, 189, 248, 0.12)',
                     color: '#38bdf8',
                     border: '1px solid rgba(56, 189, 248, 0.25)',
-                    padding: '0.2rem 0.6rem',
+                    padding: '0.18rem 0.55rem',
                     borderRadius: '20px',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.35rem',
-                    fontWeight: 700
+                    fontWeight: 700,
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0
                   }}
                   title="Live statement Closing Balance synchronized with wallet"
                 >
                   💰 Balance: ₹{effectiveLiveBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
 
-                {/* 6. Timestamp when data was actually fetched */}
+                {/* 6. Timestamp placed in top row next to balance */}
                 {lastSyncTime && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                    <Clock size={13} style={{ color: '#10b981' }} />
+                  <span
+                    style={{
+                      fontSize: '0.76rem',
+                      background: 'rgba(16, 185, 129, 0.08)',
+                      border: '1px solid rgba(16, 185, 129, 0.22)',
+                      color: 'var(--text-secondary)',
+                      padding: '0.18rem 0.55rem',
+                      borderRadius: '20px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0
+                    }}
+                    title="Last time bank statements were checked"
+                  >
+                    <Clock size={11} style={{ color: '#10b981', flexShrink: 0 }} />
                     <span>
                       Last sync: {lastSyncTime.toLocaleDateString() === new Date().toLocaleDateString() ? 'Today' : lastSyncTime.toLocaleDateString()} at {lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
@@ -1534,28 +1567,28 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                       }}
                       disabled={syncingGmail}
                       style={{
-                        background: (googleTokenExpired || !hasGoogleAuth) ? 'rgba(239, 68, 68, 0.1)' : 'rgba(56, 189, 248, 0.08)',
-                        border: `1px solid ${(googleTokenExpired || !hasGoogleAuth) ? 'rgba(239, 68, 68, 0.3)' : 'rgba(56, 189, 248, 0.2)'}`,
+                        background: (googleTokenExpired || !hasGoogleAuth) ? 'rgba(239, 68, 68, 0.15)' : 'rgba(56, 189, 248, 0.12)',
+                        border: 'none',
                         color: (googleTokenExpired || !hasGoogleAuth) ? '#ef4444' : '#38bdf8',
                         cursor: syncingGmail ? 'not-allowed' : 'pointer',
-                        padding: '3px 6px',
+                        padding: '2px 4px',
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        borderRadius: '6px',
+                        borderRadius: '4px',
                         transition: 'all 0.2s ease',
-                        marginLeft: '0.2rem'
+                        marginLeft: '0.15rem'
                       }}
                       title={googleTokenExpired ? "Gmail authorization expired. Click to re-link." : "Check Gmail for new statements now"}
                     >
-                      <RefreshCw size={12} style={{ animation: syncingGmail ? 'spin 1s linear infinite' : 'none' }} />
+                      <RefreshCw size={11} style={{ animation: syncingGmail ? 'spin 1s linear infinite' : 'none' }} />
                     </button>
-                  </div>
+                  </span>
                 )}
               </div>
 
               {/* Right: Actions */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexShrink: 0 }}>
                 {syncingGmail && (
                   <span
                     style={{
