@@ -1354,18 +1354,15 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
           ══════════════════════════════════════════════════════════════ */}
           {isConfigured && (
             <div className="data-card glass animate-fade-in" style={{
-              padding: '0.65rem 1.15rem',
+              padding: '0.85rem 1.25rem',
               borderRadius: '14px',
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
+              flexDirection: 'column',
               gap: '0.75rem',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-              overflowX: 'auto',
-              scrollbarWidth: 'none'
+              boxShadow: '0 4px 20px rgba(0,0,0,0.05)'
             }}>
-              {/* Left: Status Badges - Always in single top row next to balance */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'nowrap', minWidth: 0 }}>
+              {/* Row 1: Status Badges (with Last Sync right next to Balance) */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
                 {/* 1. Main Bank Sync Status Indicator */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
                   <span
@@ -1587,8 +1584,8 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                 )}
               </div>
 
-              {/* Right: Actions */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexShrink: 0 }}>
+              {/* Row 2: Action Buttons */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
                 {syncingGmail && (
                   <span
                     style={{
