@@ -115,19 +115,23 @@ const AnalysisView = ({ refreshTrigger }) => {
     return Array.from(monthsMap.values()).sort((a, b) => b.key.localeCompare(a.key));
   }, [refreshTrigger, currentMonthString]);
 
-  // Find latest month with real transactions so analysis isn't blank on 1st of month
-  const latestMonthWithData = React.useMemo(() => {
-    let allTx = Array.isArray(refreshTrigger) && refreshTrigger.length > 0 ? refreshTrigger : [];
-    if (allTx.length === 0) {
+  // All transactions available for analysis & breakdowns
+  const allTx = useMemo(() => {
+    let list = Array.isArray(refreshTrigger) && refreshTrigger.length > 0 ? refreshTrigger : [];
+    if (list.length === 0) {
       try {
         const cached = localStorage.getItem('cached_transactions');
         if (cached) {
           const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed)) allTx = parsed;
+          if (Array.isArray(parsed)) list = parsed;
         }
       } catch (e) {}
     }
+    return list;
+  }, [refreshTrigger]);
 
+  // Find latest month with real transactions so analysis isn't blank on 1st of month
+  const latestMonthWithData = React.useMemo(() => {
     if (allTx.length === 0) {
       try {
         const bankCache = localStorage.getItem('bank_overview_cache');
@@ -162,7 +166,7 @@ const AnalysisView = ({ refreshTrigger }) => {
       if (hasTx) return m.key;
     }
     return availableMonths[0]?.key || currentMonthString;
-  }, [availableMonths, currentMonthString, refreshTrigger]);
+  }, [availableMonths, currentMonthString, allTx]);
 
   const defaultMonth = latestMonthWithData || currentMonthString;
   const defaultKey = 'all_';
