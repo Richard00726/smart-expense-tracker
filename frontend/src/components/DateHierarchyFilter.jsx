@@ -60,11 +60,8 @@ const DateHierarchyFilter = ({
     if (Array.isArray(dailySummaries)) {
       dailySummaries.forEach(s => {
         const dateStr = s.statementDate || s.period || '';
-        const parts = dateStr.split('-');
-        if (parts.length >= 3) {
-          const y = parts[2].slice(0, 4);
-          if (y && y.length === 4) yearSet.add(y);
-        }
+        const m = dateStr.match(/\b(20\d\d)\b/);
+        if (m) yearSet.add(m[1]);
       });
     }
 
@@ -83,11 +80,8 @@ const DateHierarchyFilter = ({
         if (Array.isArray(parsed?.dailySummaries)) {
           parsed.dailySummaries.forEach(s => {
             const dateStr = s.statementDate || s.period || '';
-            const parts = dateStr.split('-');
-            if (parts.length >= 3) {
-              const y = parts[2].slice(0, 4);
-              if (y && y.length === 4) yearSet.add(y);
-            }
+            const m = dateStr.match(/\b(20\d\d)\b/);
+            if (m) yearSet.add(m[1]);
           });
         }
       }

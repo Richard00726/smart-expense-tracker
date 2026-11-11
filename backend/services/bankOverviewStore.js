@@ -114,10 +114,61 @@ function reconstructOverviewFromTxns(txns) {
 }
 
 async function getBankOverview(userId) {
-  const filePath = getUserOverviewPath(userId);
   let overview = null;
 
-  // 1. Check disk file first for ultra-fast response
+  // 1. Primary: Query PostgreSQL DB (source of truth across all deployments & workers)
+  if (userId) {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { bankOverviewData: true }
+      });
+      if (user?.bankOverviewData && typeof user.bankOverviewData === 'object') {
+        const dbOverview = user.bankOverviewData;
+        if (Array.isArray(dbOverview.dailySummaries) && dbOverview.dailySummaries.length > 0) {
+          if (dbOverview.dailySummaries[0]?.closingBalance !== undefined && dbOverview.dailySummaries[0]?.closingBalance !== null) {
+            dbOverview.latestClosingBalance = dbOverview.dailySummaries[0].closingBalance;
+          }
+          // Also check if any recent auto transactions exist that are not yet in dailySummaries
+          try {
+            const recentTxns = await prisma.transaction.findMany({
+              where: { userId, wallet: 'UPI', entryMode: 'auto' },
+              orderBy: [{ date: 'asc' }]
+            });
+            if (recentTxns && recentTxns.length > 0) {
+              const existingDates = new Set(dbOverview.dailySummaries.map(s => s.statementDate || (s.period ? s.period.split(' to ')[0] : '')));
+              const recon = reconstructOverviewFromTxns(recentTxns);
+              let hasNew = false;
+              for (const sum of recon.dailySummaries) {
+                if (!existingDates.has(sum.statementDate)) {
+                  dbOverview.dailySummaries.push(sum);
+                  existingDates.add(sum.statementDate);
+                  hasNew = true;
+                }
+              }
+              if (hasNew) {
+                dbOverview.dailySummaries.sort((a, b) => parsePeriodDate(b.statementDate) - parsePeriodDate(a.statementDate));
+                if (dbOverview.dailySummaries[0]?.closingBalance !== undefined) {
+                  dbOverview.latestClosingBalance = dbOverview.dailySummaries[0].closingBalance;
+                }
+                saveBankOverview(userId, dbOverview, true);
+              }
+            }
+          } catch (mErr) {
+            console.warn('Could not check missing txns for overview:', mErr.message);
+          }
+
+          saveBankOverview(userId, dbOverview, false);
+          return dbOverview;
+        }
+      }
+    } catch (dbErr) {
+      console.warn('Could not query database for bankOverviewData, falling back to disk:', dbErr.message);
+    }
+  }
+
+  // 2. Fallback: Disk file cache if DB is temporarily unreachable
+  const filePath = getUserOverviewPath(userId);
   try {
     if (fs.existsSync(filePath)) {
       const raw = fs.readFileSync(filePath, 'utf8');
@@ -132,26 +183,6 @@ async function getBankOverview(userId) {
       overview.latestClosingBalance = overview.dailySummaries[0].closingBalance;
     }
     return overview;
-  }
-
-  // 2. Disk file missing or empty (e.g. Render restart): fetch from PostgreSQL DB
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { bankOverviewData: true }
-    });
-    if (user?.bankOverviewData && typeof user.bankOverviewData === 'object') {
-      const dbOverview = user.bankOverviewData;
-      if (Array.isArray(dbOverview.dailySummaries) && dbOverview.dailySummaries.length > 0) {
-        if (dbOverview.dailySummaries[0]?.closingBalance !== undefined && dbOverview.dailySummaries[0]?.closingBalance !== null) {
-          dbOverview.latestClosingBalance = dbOverview.dailySummaries[0].closingBalance;
-        }
-        saveBankOverview(userId, dbOverview, false);
-        return dbOverview;
-      }
-    }
-  } catch (dbErr) {
-    console.warn('Could not query database for bankOverviewData:', dbErr.message);
   }
 
   // 3. Fallback: Reconstruct from stored auto transactions in PostgreSQL DB

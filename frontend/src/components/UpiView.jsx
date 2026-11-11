@@ -972,6 +972,104 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
     else setTxFilterValue('');
   };
 
+  // Helper to parse statementDate / period into standardized components (DD, MM, YYYY)
+  const parseSummaryDateParts = (s) => {
+    if (!s) return null;
+    const str = s.statementDate || (s.period ? s.period.split(' to ')[0] : '') || '';
+    // DD-MM-YYYY or DD/MM/YYYY
+    const dmy = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+    if (dmy) {
+      const d = dmy[1].padStart(2, '0');
+      const m = dmy[2].padStart(2, '0');
+      const y = dmy[3];
+      return { day: d, month: m, year: y, dmyStr: `${d}-${m}-${y}`, ymdStr: `${y}-${m}-${d}` };
+    }
+    // YYYY-MM-DD or YYYY/MM/DD
+    const ymd = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+    if (ymd) {
+      const y = ymd[1];
+      const m = ymd[2].padStart(2, '0');
+      const d = ymd[3].padStart(2, '0');
+      return { day: d, month: m, year: y, dmyStr: `${d}-${m}-${y}`, ymdStr: `${y}-${m}-${d}` };
+    }
+    return null;
+  };
+
+  // Comprehensive Daily Summaries: merges bank overview dailySummaries with transactions so no day is ever omitted
+  const effectiveDailySummaries = useMemo(() => {
+    const list = Array.isArray(bankOverview?.dailySummaries) ? [...bankOverview.dailySummaries] : [];
+    const dateSet = new Set();
+    list.forEach(s => {
+      const p = parseSummaryDateParts(s);
+      if (p) dateSet.add(p.dmyStr);
+    });
+
+    // If transactions exist for days not present in dailySummaries, synthesize summaries from transactions
+    if (Array.isArray(upiTransactions) && upiTransactions.length > 0) {
+      const dayMap = new Map();
+      upiTransactions.forEach(t => {
+        const rawDate = t.date || t.txnDate;
+        if (!rawDate) return;
+        const d = new Date(rawDate);
+        if (isNaN(d.getTime())) return;
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = String(d.getFullYear());
+        const dmy = `${day}-${month}-${year}`;
+
+        if (!dateSet.has(dmy)) {
+          if (!dayMap.has(dmy)) {
+            dayMap.set(dmy, {
+              dateStr: dmy,
+              deposits: 0,
+              withdrawals: 0,
+              txnCount: 0,
+              balance: null
+            });
+          }
+          const group = dayMap.get(dmy);
+          group.txnCount += 1;
+          const amt = Number(t.amount || 0);
+          if (t.type === 'credit' || t.type === 'DEPOSIT') {
+            group.deposits += amt;
+          } else {
+            group.withdrawals += amt;
+          }
+          if (t.balance !== null && t.balance !== undefined && !isNaN(t.balance)) {
+            group.balance = Number(t.balance);
+          }
+        }
+      });
+
+      dayMap.forEach(group => {
+        const closing = group.balance !== null ? group.balance : 0;
+        const opening = closing - group.deposits + group.withdrawals;
+        list.push({
+          statementDate: group.dateStr,
+          period: `${group.dateStr} to ${group.dateStr}`,
+          openingBalance: Math.round(opening * 100) / 100,
+          totalDeposits: Math.round(group.deposits * 100) / 100,
+          totalWithdrawals: Math.round(group.withdrawals * 100) / 100,
+          closingBalance: Math.round(closing * 100) / 100,
+          txnCount: group.txnCount,
+          updatedAt: new Date().toISOString()
+        });
+        dateSet.add(group.dateStr);
+      });
+    }
+
+    // Sort descending (newest first)
+    list.sort((a, b) => {
+      const pA = parseSummaryDateParts(a);
+      const pB = parseSummaryDateParts(b);
+      const timeA = pA ? new Date(parseInt(pA.year, 10), parseInt(pA.month, 10) - 1, parseInt(pA.day, 10)).getTime() : 0;
+      const timeB = pB ? new Date(parseInt(pB.year, 10), parseInt(pB.month, 10) - 1, parseInt(pB.day, 10)).getTime() : 0;
+      return timeB - timeA;
+    });
+
+    return list;
+  }, [bankOverview?.dailySummaries, upiTransactions]);
+
   const availableMonths = useMemo(() => {
     const monthsMap = new Map();
 
@@ -983,15 +1081,12 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
       monthsMap.set(currentLocalMonthStr, { key: currentLocalMonthStr, label });
     }
 
-    (bankOverview?.dailySummaries || []).forEach(s => {
-      const dateStr = s.statementDate || s.period || '';
-      const parts = dateStr.split('-');
-      if (parts.length >= 3) {
-        const m = parts[1];
-        const y = parts[2].slice(0, 4);
-        const monthKey = `${y}-${m}`;
+    effectiveDailySummaries.forEach(s => {
+      const p = parseSummaryDateParts(s);
+      if (p) {
+        const monthKey = `${p.year}-${p.month}`;
         if (!monthsMap.has(monthKey)) {
-          const sampleDate = new Date(parseInt(y, 10), parseInt(m, 10) - 1, 1);
+          const sampleDate = new Date(parseInt(p.year, 10), parseInt(p.month, 10) - 1, 1);
           const label = sampleDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
           monthsMap.set(monthKey, { key: monthKey, label });
         }
@@ -1007,18 +1102,14 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
       }
     });
     return Array.from(monthsMap.values()).sort((a, b) => b.key.localeCompare(a.key));
-  }, [upiTransactions, bankOverview?.dailySummaries, currentLocalMonthStr]);
+  }, [upiTransactions, effectiveDailySummaries, currentLocalMonthStr]);
 
   // Compute the newest month that actually holds statement summaries or transactions
   const latestMonthWithData = useMemo(() => {
     // 1. If current calendar month has data, use it
-    const hasCurrentLedger = (bankOverview?.dailySummaries || []).some(s => {
-      const dateStr = s.statementDate || s.period || '';
-      const parts = dateStr.split('-');
-      if (parts.length >= 3) {
-        return parts[1] === currentLocalMonthStr.split('-')[1] && parts[2].startsWith(currentLocalMonthStr.split('-')[0]);
-      }
-      return false;
+    const hasCurrentLedger = effectiveDailySummaries.some(s => {
+      const p = parseSummaryDateParts(s);
+      return p && p.year === currentLocalMonthStr.split('-')[0] && p.month === currentLocalMonthStr.split('-')[1];
     });
     const hasCurrentTx = upiTransactions.some(tx => getLocalMonthKey(tx.date || tx.txnDate) === currentLocalMonthStr);
     if (hasCurrentLedger || hasCurrentTx) return currentLocalMonthStr;
@@ -1026,19 +1117,16 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
     // 2. Otherwise find the most recent month with actual data
     for (const m of availableMonths) {
       if (m.key === currentLocalMonthStr) continue;
-      const hasLedger = (bankOverview?.dailySummaries || []).some(s => {
-        const dateStr = s.statementDate || s.period || '';
-        const parts = dateStr.split('-');
-        if (parts.length >= 3) {
-          return parts[1] === m.key.split('-')[1] && parts[2].startsWith(m.key.split('-')[0]);
-        }
-        return false;
+      const [mY, mM] = m.key.split('-');
+      const hasLedger = effectiveDailySummaries.some(s => {
+        const p = parseSummaryDateParts(s);
+        return p && p.year === mY && p.month === mM;
       });
       const hasTx = upiTransactions.some(tx => getLocalMonthKey(tx.date || tx.txnDate) === m.key);
       if (hasLedger || hasTx) return m.key;
     }
     return availableMonths[0]?.key || currentLocalMonthStr;
-  }, [availableMonths, currentLocalMonthStr, bankOverview?.dailySummaries, upiTransactions]);
+  }, [availableMonths, currentLocalMonthStr, effectiveDailySummaries, upiTransactions]);
 
   // Sync to the latest month that has records when user chooses month filter
   useEffect(() => {
@@ -1151,52 +1239,52 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
   }, [upiTransactions, txFilterType, txFilterValue, effectiveTxMonth, todayLocalDateStr]);
 
   const displayedDailySummaries = useMemo(() => {
-    const list = bankOverview?.dailySummaries || [];
+    const list = effectiveDailySummaries;
     if (ledgerFilterType === 'all') return list;
 
     if (ledgerFilterType === 'today') {
       const [y, m, d] = todayLocalDateStr.split('-');
-      const target = `${d}-${m}-${y}`;
-      return list.filter(s => (s.statementDate || '').includes(target) || (s.period || '').includes(target));
+      return list.filter(s => {
+        const p = parseSummaryDateParts(s);
+        return p && p.year === y && p.month === m && p.day === d;
+      });
     }
 
     if (ledgerFilterType === 'day' && ledgerFilterValue) {
       const [y, m, d] = ledgerFilterValue.split('-');
-      const target = `${d}-${m}-${y}`;
-      return list.filter(s => (s.statementDate || '').includes(target) || (s.period || '').includes(target));
+      return list.filter(s => {
+        const p = parseSummaryDateParts(s);
+        return p && p.year === y && p.month === m && p.day === d;
+      });
     }
 
     if (ledgerFilterType === 'month') {
       const [y, m] = effectiveLedgerMonth.split('-');
       return list.filter(s => {
-        const dateStr = s.statementDate || s.period || '';
-        const parts = dateStr.split('-');
-        if (parts.length >= 3) {
-          return parts[1] === m && parts[2].startsWith(y);
-        }
-        return true;
+        const p = parseSummaryDateParts(s);
+        return p && p.year === y && p.month === m;
       });
     }
 
     if ((ledgerFilterType === 'year' || ledgerFilterType === 'period') && ledgerFilterValue) {
-      return list.filter(s => (s.statementDate || s.period || '').includes(String(ledgerFilterValue)));
+      const yStr = String(ledgerFilterValue).split('-')[0];
+      return list.filter(s => {
+        const p = parseSummaryDateParts(s);
+        return p && p.year === yStr;
+      });
     }
 
     if (ledgerFilterType === 'custom' && ledgerFilterValue) {
       const [fromStr, toStr] = ledgerFilterValue.split(':');
       return list.filter(s => {
-        const dateStr = s.statementDate || s.period || '';
-        const parts = dateStr.split('-');
-        if (parts.length >= 3) {
-          const sDateKey = `${parts[2].slice(0, 4)}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-          return (!fromStr || sDateKey >= fromStr) && (!toStr || sDateKey <= toStr);
-        }
-        return true;
+        const p = parseSummaryDateParts(s);
+        if (!p) return false;
+        return (!fromStr || p.ymdStr >= fromStr) && (!toStr || p.ymdStr <= toStr);
       });
     }
 
     return list;
-  }, [bankOverview?.dailySummaries, ledgerFilterType, ledgerFilterValue, effectiveLedgerMonth, todayLocalDateStr]);
+  }, [effectiveDailySummaries, ledgerFilterType, ledgerFilterValue, effectiveLedgerMonth, todayLocalDateStr]);
 
   const renderLedgerFilterControls = () => (
     <DateHierarchyFilter
@@ -1207,7 +1295,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
         setLedgerFilterType(newType);
         setLedgerFilterValue(newValue);
       }}
-      dailySummaries={bankOverview?.dailySummaries}
+      dailySummaries={effectiveDailySummaries}
       transactions={upiTransactions}
       defaultMonthWithData={latestMonthWithData}
     />
@@ -1223,7 +1311,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
         setTxFilterValue(newValue);
       }}
       transactions={upiTransactions}
-      dailySummaries={bankOverview?.dailySummaries}
+      dailySummaries={effectiveDailySummaries}
       defaultMonthWithData={latestMonthWithData}
     />
   );
@@ -1361,21 +1449,31 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
               gap: '0.75rem',
               boxShadow: '0 4px 20px rgba(0,0,0,0.05)'
             }}>
-              {/* Row 1: Status Badges (with Last Sync right next to Balance) */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+              {/* Row 1: Status Badges (Strict single row: Last Sync locked next to Balance, never wraps down) */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                flexWrap: 'nowrap',
+                overflowX: 'auto',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+                WebkitOverflowScrolling: 'touch',
+                paddingBottom: '2px'
+              }}>
                 {/* 1. Main Bank Sync Status Indicator */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
                   <span
                     className={(!googleTokenExpired && hasGoogleAuth) ? "pulse-dot-green" : "pulse-dot-orange"}
                     style={{
-                      width: 9,
-                      height: 9,
+                      width: 8,
+                      height: 8,
                       borderRadius: '50%',
                       background: (!googleTokenExpired && hasGoogleAuth) ? '#10b981' : '#f59e0b',
                       flexShrink: 0
                     }}
                   />
-                  <strong style={{ fontSize: '0.92rem', color: 'var(--text-primary)' }}>
+                  <strong style={{ fontSize: '0.88rem', color: 'var(--text-primary)' }}>
                     {googleTokenExpired
                       ? 'Gmail Session Expired'
                       : hasGoogleAuth
@@ -1392,16 +1490,16 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                     onClick={handleConnectGmail}
                     className="btn"
                     style={{
-                      fontSize: '0.78rem',
+                      fontSize: '0.74rem',
                       background: 'linear-gradient(135deg, #ef4444, #dc2626)',
                       color: '#fff',
-                      padding: '0.25rem 0.75rem',
+                      padding: '0.2rem 0.65rem',
                       borderRadius: '20px',
                       border: 'none',
                       cursor: 'pointer',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '0.35rem',
+                      gap: '0.3rem',
                       fontWeight: 600,
                       whiteSpace: 'nowrap',
                       flexShrink: 0,
@@ -1409,28 +1507,28 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                     }}
                     title="Google refresh token expired after 7-day limit in test mode. Click to re-authorize and resume sync."
                   >
-                    <AlertCircle size={12} />
+                    <AlertCircle size={11} />
                     Session Expired – Re-link Gmail →
                   </button>
                 ) : (hasGoogleAuth && !googleTokenExpired) ? (
                   <span
                     style={{
-                      fontSize: '0.76rem',
+                      fontSize: '0.74rem',
                       background: 'rgba(16, 185, 129, 0.12)',
                       color: '#10b981',
                       border: '1px solid rgba(16, 185, 129, 0.25)',
-                      padding: '0.18rem 0.55rem',
+                      padding: '0.16rem 0.5rem',
                       borderRadius: '20px',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '0.35rem',
+                      gap: '0.3rem',
                       fontWeight: 600,
                       whiteSpace: 'nowrap',
                       flexShrink: 0
                     }}
                     title="Google Cloud OAuth authorization is active and verified"
                   >
-                    <CheckCircle2 size={12} />
+                    <CheckCircle2 size={11} />
                     Gmail Linked
                   </span>
                 ) : hasGoogleCredentials ? (
@@ -1438,16 +1536,16 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                     onClick={handleConnectGmail}
                     className="btn"
                     style={{
-                      fontSize: '0.78rem',
+                      fontSize: '0.74rem',
                       background: 'linear-gradient(135deg, #4285f4, #2563eb)',
                       color: '#fff',
-                      padding: '0.25rem 0.75rem',
+                      padding: '0.2rem 0.65rem',
                       borderRadius: '20px',
                       border: 'none',
                       cursor: 'pointer',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '0.35rem',
+                      gap: '0.3rem',
                       fontWeight: 600,
                       whiteSpace: 'nowrap',
                       flexShrink: 0,
@@ -1464,16 +1562,16 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                 {(googleEmail || targetBankEmail) && (
                   <span
                     style={{
-                      fontSize: '0.76rem',
+                      fontSize: '0.74rem',
                       background: 'rgba(59,130,246,0.1)',
                       color: '#3b82f6',
-                      padding: '0.18rem 0.55rem',
+                      padding: '0.16rem 0.5rem',
                       borderRadius: '20px',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '0.35rem',
+                      gap: '0.3rem',
                       whiteSpace: 'nowrap',
-                      maxWidth: '220px',
+                      maxWidth: '150px',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       flexShrink: 1
@@ -1491,15 +1589,15 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                 {bankOverview?.accountNo && (
                   <span
                     style={{
-                      fontSize: '0.76rem',
+                      fontSize: '0.74rem',
                       background: 'rgba(99, 102, 241, 0.1)',
                       color: '#818cf8',
                       border: '1px solid rgba(99, 102, 241, 0.25)',
-                      padding: '0.18rem 0.55rem',
+                      padding: '0.16rem 0.5rem',
                       borderRadius: '20px',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '0.35rem',
+                      gap: '0.3rem',
                       fontWeight: 600,
                       whiteSpace: 'nowrap',
                       flexShrink: 0
@@ -1514,15 +1612,15 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                 {/* 5. Live Statement Closing Balance */}
                 <span
                   style={{
-                    fontSize: '0.78rem',
+                    fontSize: '0.76rem',
                     background: 'rgba(56, 189, 248, 0.12)',
                     color: '#38bdf8',
                     border: '1px solid rgba(56, 189, 248, 0.25)',
-                    padding: '0.18rem 0.55rem',
+                    padding: '0.16rem 0.55rem',
                     borderRadius: '20px',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '0.35rem',
+                    gap: '0.3rem',
                     fontWeight: 700,
                     whiteSpace: 'nowrap',
                     flexShrink: 0
@@ -1532,15 +1630,15 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                   💰 Balance: ₹{effectiveLiveBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
 
-                {/* 6. Timestamp placed in top row next to balance */}
+                {/* 6. Timestamp strictly locked on the top row next to balance */}
                 {lastSyncTime && (
                   <span
                     style={{
-                      fontSize: '0.76rem',
+                      fontSize: '0.74rem',
                       background: 'rgba(16, 185, 129, 0.08)',
                       border: '1px solid rgba(16, 185, 129, 0.22)',
                       color: 'var(--text-secondary)',
-                      padding: '0.18rem 0.55rem',
+                      padding: '0.16rem 0.55rem',
                       borderRadius: '20px',
                       display: 'inline-flex',
                       alignItems: 'center',
