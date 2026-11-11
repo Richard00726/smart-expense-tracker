@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { getSummary, getCurrency } from '../services/api';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { PieChart as PieChartIcon, BarChart2, TrendingUp, Activity, ArrowDownLeft, ArrowUpRight, Wallet, Landmark } from 'lucide-react';
