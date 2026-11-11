@@ -216,6 +216,7 @@ router.get("/summary", protect, async (req, res) => {
     const walletSpendMap = {};
     const walletIncomeMap = {};
     const categorySpendMap = {};
+    const categoryIncomeMap = {};
     const dailyMap = {};
     const monthlyMap = {};
 
@@ -252,6 +253,14 @@ router.get("/summary", protect, async (req, res) => {
         dailyMap[dayKey] = (dailyMap[dayKey] || 0) + t.amount;
       } else if (isCredit) {
         walletIncomeMap[t.wallet] = (walletIncomeMap[t.wallet] || 0) + t.amount;
+        if (t.category) {
+          if (!categoryIncomeMap[t.category]) {
+            categoryIncomeMap[t.category] = { total: 0, cash: 0, upi: 0 };
+          }
+          categoryIncomeMap[t.category].total += t.amount;
+          if (t.wallet === 'Cash') categoryIncomeMap[t.category].cash += t.amount;
+          else if (t.wallet === 'UPI') categoryIncomeMap[t.category].upi += t.amount;
+        }
       }
 
       if (!monthlyMap[monthKey]) {
@@ -283,6 +292,15 @@ router.get("/summary", protect, async (req, res) => {
         total: categorySpendMap[c].total,
         cash: categorySpendMap[c].cash,
         upi: categorySpendMap[c].upi
+      }))
+      .sort((a, b) => b.total - a.total);
+
+    const formattedCategoryIncome = Object.keys(categoryIncomeMap)
+      .map(c => ({
+        _id: c,
+        total: categoryIncomeMap[c].total,
+        cash: categoryIncomeMap[c].cash,
+        upi: categoryIncomeMap[c].upi
       }))
       .sort((a, b) => b.total - a.total);
 
@@ -348,6 +366,7 @@ router.get("/summary", protect, async (req, res) => {
       walletSpending: formattedWalletSpending,
       walletIncome: formattedWalletIncome,
       categorySpending: formattedCategorySpending,
+      categoryIncome: formattedCategoryIncome,
       dailySpending: formattedDailySpending,
       monthlyFlow: formattedMonthlyFlow,
       flowLedger

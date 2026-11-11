@@ -191,6 +191,8 @@ const AnalysisView = ({ refreshTrigger }) => {
   const [flowWalletFilter, setFlowWalletFilter] = useState('all'); // 'all' (Combined - Default), 'Cash', 'UPI'
   const [categoryWalletFilter, setCategoryWalletFilter] = useState('all'); // 'all' (Both), 'UPI', 'Cash'
   const [hoveredCategory, setHoveredCategory] = useState(null);
+  const [incomeCategoryWalletFilter, setIncomeCategoryWalletFilter] = useState('all'); // 'all' (Both), 'UPI', 'Cash'
+  const [hoveredIncomeCategory, setHoveredIncomeCategory] = useState(null);
 
   const [userChangedSpendingMonth, setUserChangedSpendingMonth] = useState(false);
   const [userChangedIncomeMonth, setUserChangedIncomeMonth] = useState(false);
@@ -425,6 +427,76 @@ const AnalysisView = ({ refreshTrigger }) => {
       ]
     : rawWalletIncome.map(item => ({ name: item._id, value: item.total }));
 
+  // Calculate Cash vs UPI breakdown for income categories from transactions if not present in summary payload
+  const incomeCategoryWalletBreakdownFromTx = useMemo(() => {
+    if (!Array.isArray(allTx) || allTx.length === 0) return new Map();
+    const filterObj = getFilterObj(incomeFilterType, incomeFilterValue);
+    const start = filterObj.startDate ? new Date(filterObj.startDate).getTime() : null;
+    const end = filterObj.endDate ? new Date(filterObj.endDate).getTime() : null;
+
+    const map = new Map();
+    allTx.forEach(t => {
+      if (t.type !== 'credit') return;
+      const d = t.date || t.txnDate;
+      if (d) {
+        const time = new Date(d).getTime();
+        if (start && time < start) return;
+        if (end && time > end) return;
+      }
+      const cat = t.category || 'Income';
+      if (!map.has(cat)) {
+        map.set(cat, { cash: 0, upi: 0 });
+      }
+      const entry = map.get(cat);
+      const amt = Number(t.amount || 0);
+      if (t.wallet === 'Cash') entry.cash += amt;
+      else if (t.wallet === 'UPI') entry.upi += amt;
+    });
+    return map;
+  }, [allTx, incomeFilterType, incomeFilterValue]);
+
+  // Format income category data for Recharts filtered by selected wallet mode (Both / UPI / Cash)
+  const incomeCategoryData = useMemo(() => {
+    const rawCategories = incomeSummary?.categoryIncome || [];
+    let enriched = [];
+    if (rawCategories.length > 0) {
+      enriched = rawCategories.map(item => {
+        const fromTx = incomeCategoryWalletBreakdownFromTx.get(item._id);
+        const cash = item.cash !== undefined ? Number(item.cash) : (fromTx?.cash || 0);
+        const upi = item.upi !== undefined ? Number(item.upi) : (fromTx?.upi || 0);
+        const total = Number(item.total) || (cash + upi);
+        return { name: item._id, total, cash, upi };
+      });
+    } else {
+      incomeCategoryWalletBreakdownFromTx.forEach((val, catName) => {
+        enriched.push({
+          name: catName,
+          total: val.cash + val.upi,
+          cash: val.cash,
+          upi: val.upi
+        });
+      });
+    }
+
+    if (incomeCategoryWalletFilter === 'UPI') {
+      return enriched
+        .filter(c => c.upi > 0)
+        .map(c => ({ name: c.name, value: c.upi }))
+        .sort((a, b) => b.value - a.value);
+    }
+    if (incomeCategoryWalletFilter === 'Cash') {
+      return enriched
+        .filter(c => c.cash > 0)
+        .map(c => ({ name: c.name, value: c.cash }))
+        .sort((a, b) => b.value - a.value);
+    }
+    // 'all' -> Both (combined)
+    return enriched
+      .filter(c => c.total > 0)
+      .map(c => ({ name: c.name, value: c.total }))
+      .sort((a, b) => b.value - a.value);
+  }, [incomeSummary?.categoryIncome, incomeCategoryWalletFilter, incomeCategoryWalletBreakdownFromTx]);
+
   const filteredMonthlyFlow = (flowSummary?.monthlyFlow || []).filter(item => {
     if (flowFilterType === 'month' && flowFilterValue) {
       return item._id === flowFilterValue;
@@ -548,7 +620,8 @@ const AnalysisView = ({ refreshTrigger }) => {
   }
 
   const hasSpendingData = categoryData.length > 0 || walletSpendingData.length > 0;
-  const hasIncomeData = walletIncomeData.length > 0;
+  const totalIncomeCategory = incomeCategoryData.reduce((acc, curr) => acc + (Number(curr.value) || 0), 0);
+  const hasIncomeData = walletIncomeData.length > 0 || incomeCategoryData.length > 0;
   const hasFlowData = monthlyFlowData.length > 0;
 
   const cashSpend = walletSpendingData.find(item => item.name === 'Cash')?.value || 0;
@@ -562,6 +635,9 @@ const AnalysisView = ({ refreshTrigger }) => {
   const cashIncome = walletIncomeData.find(item => item.name === 'Cash')?.value || 0;
   const upiIncome = walletIncomeData.find(item => item.name === 'UPI')?.value || 0;
   const totalIncome = cashIncome + upiIncome;
+  const totalIncomeNum = Number(totalIncome) || 0;
+  const cashIncomePct = totalIncomeNum > 0 ? ((cashIncome / totalIncomeNum) * 100).toFixed(1) : '0.0';
+  const upiIncomePct = totalIncomeNum > 0 ? ((upiIncome / totalIncomeNum) * 100).toFixed(1) : '0.0';
 
   // Global empty state check removed to ensure filter controls remain accessible
 
@@ -1096,20 +1172,54 @@ const AnalysisView = ({ refreshTrigger }) => {
           </div>
         ) : (
           <div className="charts-grid">
-            <div className="chart-wrapper" style={{ gridColumn: '1 / -1', maxWidth: '600px', margin: '0 auto', width: '100%' }}>
-              <h4 style={{ textAlign: 'center', marginBottom: '1rem', color: 'var(--text-secondary)' }}>
-                Cash vs UPI Income
-              </h4>
-              <div className="chart-container">
+            {/* 1. CASH VS UPI INCOME - LEFT CARD (16px internal padding) */}
+            <div
+              className="chart-wrapper"
+              style={{
+                width: '100%',
+                background: 'var(--bg-card-subtle)',
+                border: '1px solid var(--card-border)',
+                borderRadius: '14px',
+                padding: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                minHeight: '290px'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', minHeight: '26px' }}>
+                <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.02rem', fontWeight: 600 }}>
+                  Cash vs UPI Income
+                </h4>
+                <span style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  background: 'var(--empty-state-bg)',
+                  border: '1px solid var(--card-border)',
+                  color: 'var(--text-muted)'
+                }}>
+                  Wallets
+                </span>
+              </div>
+
+              {/* Bar chart area */}
+              <div style={{ height: '175px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={walletIncomeData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <BarChart data={walletIncomeData} margin={{ top: 10, right: 15, left: -5, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
-                    <XAxis dataKey="name" stroke="var(--text-secondary)" />
-                    <YAxis stroke="var(--text-secondary)" />
+                    <XAxis dataKey="name" stroke="var(--text-secondary)" tick={{ fontSize: 12 }} />
+                    <YAxis 
+                      stroke="var(--text-secondary)" 
+                      tick={{ fontSize: 11 }}
+                      width={42}
+                      tickFormatter={(v) => v >= 100000 ? `${(v / 100000).toFixed(1)}L` : v >= 1000 ? `${Math.round(v / 1000)}k` : v}
+                    />
                     <Tooltip 
                       cursor={{ fill: 'var(--hover-bg)' }}
                       contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', color: 'var(--text-primary)' }}
-                      formatter={(value) => `${getCurrency()}${value}`}
+                      formatter={(value) => [`${getCurrency()}${formatAmt(value)}`, 'Income']}
                     />
                     <Bar dataKey="value" fill="var(--success)" barSize={68} maxBarSize={75} radius={[6, 6, 0, 0]}>
                       {walletIncomeData.map((entry, index) => (
@@ -1119,12 +1229,323 @@ const AnalysisView = ({ refreshTrigger }) => {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.9rem', color: 'var(--text-secondary)', background: 'var(--empty-state-bg)', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--card-border)' }}>
-                <span style={{ marginRight: '0.5rem' }}>Total: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{totalIncome.toFixed(2)}</strong></span>
-                <span style={{ margin: '0 0.5rem', opacity: 0.5 }}>|</span>
-                <span style={{ color: '#10b981', fontWeight: '500' }}>Cash: {getCurrency()}{cashIncome.toFixed(2)}</span>
-                <span style={{ margin: '0 0.5rem', opacity: 0.5 }}>|</span>
-                <span style={{ color: '#3b82f6', fontWeight: '500' }}>UPI: {getCurrency()}{upiIncome.toFixed(2)}</span>
+
+              {/* Total | Cash | UPI pill */}
+              <div style={{
+                marginTop: '0.85rem',
+                textAlign: 'center',
+                fontSize: '0.82rem',
+                color: 'var(--text-secondary)',
+                background: 'var(--card-bg)',
+                padding: '0.55rem 0.75rem',
+                borderRadius: '10px',
+                border: '1px solid var(--card-border)',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '0.45rem',
+                width: '100%'
+              }}>
+                <span>Total: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{formatAmt(totalIncome)}</strong></span>
+                <span style={{ opacity: 0.4 }}>|</span>
+                <span style={{ color: '#10b981', fontWeight: '600' }}>Cash: {getCurrency()}{formatAmt(cashIncome)} ({cashIncomePct}%)</span>
+                <span style={{ opacity: 0.4 }}>|</span>
+                <span style={{ color: '#3b82f6', fontWeight: '600' }}>UPI: {getCurrency()}{formatAmt(upiIncome)} ({upiIncomePct}%)</span>
+              </div>
+            </div>
+
+            {/* 2. INCOME BY CATEGORY - RIGHT CARD (16px internal padding) */}
+            <div
+              className="chart-wrapper"
+              style={{
+                width: '100%',
+                background: 'var(--bg-card-subtle)',
+                border: '1px solid var(--card-border)',
+                borderRadius: '14px',
+                padding: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                minHeight: '290px'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', minHeight: '26px', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.02rem', fontWeight: 600 }}>
+                  Income by Category
+                </h4>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                  {/* Wallet Filter Toggle: Both | UPI | Cash (No emojis) */}
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    background: 'var(--card-bg)',
+                    border: '1px solid var(--card-border)',
+                    borderRadius: '20px',
+                    padding: '2px',
+                    gap: '2px'
+                  }}>
+                    <button
+                      type="button"
+                      onClick={() => setIncomeCategoryWalletFilter('all')}
+                      style={{
+                        border: 'none',
+                        outline: 'none',
+                        cursor: 'pointer',
+                        padding: '2px 8px',
+                        borderRadius: '16px',
+                        fontSize: '0.72rem',
+                        fontWeight: incomeCategoryWalletFilter === 'all' ? 700 : 500,
+                        background: incomeCategoryWalletFilter === 'all' ? 'var(--text-primary)' : 'transparent',
+                        color: incomeCategoryWalletFilter === 'all' ? 'var(--bg-main, #fff)' : 'var(--text-secondary)',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      Both
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIncomeCategoryWalletFilter('UPI')}
+                      style={{
+                        border: 'none',
+                        outline: 'none',
+                        cursor: 'pointer',
+                        padding: '2px 8px',
+                        borderRadius: '16px',
+                        fontSize: '0.72rem',
+                        fontWeight: incomeCategoryWalletFilter === 'UPI' ? 700 : 500,
+                        background: incomeCategoryWalletFilter === 'UPI' ? 'var(--accent-primary, #3b82f6)' : 'transparent',
+                        color: incomeCategoryWalletFilter === 'UPI' ? '#fff' : 'var(--text-secondary)',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      UPI
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIncomeCategoryWalletFilter('Cash')}
+                      style={{
+                        border: 'none',
+                        outline: 'none',
+                        cursor: 'pointer',
+                        padding: '2px 8px',
+                        borderRadius: '16px',
+                        fontSize: '0.72rem',
+                        fontWeight: incomeCategoryWalletFilter === 'Cash' ? 700 : 500,
+                        background: incomeCategoryWalletFilter === 'Cash' ? '#10b981' : 'transparent',
+                        color: incomeCategoryWalletFilter === 'Cash' ? '#fff' : 'var(--text-secondary)',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      Cash
+                    </button>
+                  </div>
+
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    background: 'var(--empty-state-bg)',
+                    border: '1px solid var(--card-border)',
+                    color: 'var(--text-muted)'
+                  }}>
+                    {incomeCategoryData.length}
+                  </span>
+                </div>
+              </div>
+
+              {/* Side-by-side Donut & Category List Container */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, minHeight: '220px' }}>
+                {/* Donut Chart */}
+                <div style={{ position: 'relative', width: '135px', height: '135px', flexShrink: 0, margin: '0 auto' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart style={{ outline: 'none' }}>
+                      <Pie
+                        data={incomeCategoryData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={38}
+                        outerRadius={56}
+                        paddingAngle={3}
+                        minAngle={4}
+                        dataKey="value"
+                        tabIndex={-1}
+                        style={{ outline: 'none' }}
+                        onMouseEnter={(_, index) => {
+                          const cat = incomeCategoryData[index];
+                          if (cat) {
+                            setHoveredIncomeCategory(cat);
+                            const el = document.getElementById(`income-cat-row-${index}`);
+                            if (el) {
+                              el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                            }
+                          }
+                        }}
+                        onMouseLeave={() => setHoveredIncomeCategory(null)}
+                      >
+                        {incomeCategoryData.map((entry, index) => {
+                          const isHovered = hoveredIncomeCategory && hoveredIncomeCategory.name === entry.name;
+                          return (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={getCategoryColor(entry.name, index)}
+                              stroke="var(--card-bg)"
+                              strokeWidth={isHovered ? 2.5 : 1.5}
+                              tabIndex={-1}
+                              style={{ cursor: 'pointer', transition: 'all 0.15s ease', outline: 'none' }}
+                              onMouseEnter={() => {
+                                setHoveredIncomeCategory(entry);
+                                const el = document.getElementById(`income-cat-row-${index}`);
+                                if (el) {
+                                  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                }
+                              }}
+                              onMouseLeave={() => setHoveredIncomeCategory(null)}
+                            />
+                          );
+                        })}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                  {/* Center Hub: Clean TOTAL INCOME */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      textAlign: 'center',
+                      pointerEvents: 'none',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '70px'
+                    }}
+                  >
+                    <span style={{ fontSize: '0.52rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      {incomeCategoryWalletFilter === 'UPI' ? 'UPI' : incomeCategoryWalletFilter === 'Cash' ? 'CASH' : 'TOTAL'}
+                    </span>
+                    <span style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-primary)', margin: '1px 0', lineHeight: 1.1, whiteSpace: 'nowrap' }}>
+                      {getCurrency()}{formatCompactAmt(totalIncomeCategory)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Category Breakdown Ranking List */}
+                <div
+                  className="custom-scrollbar"
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    height: '220px',
+                    overflowY: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.35rem',
+                    paddingRight: '4px'
+                  }}
+                >
+                  {incomeCategoryData.length === 0 ? (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      height: '100%',
+                      color: 'var(--text-muted)',
+                      fontSize: '0.82rem',
+                      textAlign: 'center',
+                      padding: '1rem'
+                    }}>
+                      No {incomeCategoryWalletFilter === 'all' ? '' : `${incomeCategoryWalletFilter} `}income in this period
+                    </div>
+                  ) : (
+                    incomeCategoryData.map((cat, idx) => {
+                      const pct = totalIncomeCategory > 0 ? ((cat.value / totalIncomeCategory) * 100).toFixed(0) : '0';
+                      const catColor = getCategoryColor(cat.name, idx);
+                      const isHovered = hoveredIncomeCategory && hoveredIncomeCategory.name === cat.name;
+                      return (
+                        <div
+                          id={`income-cat-row-${idx}`}
+                          key={cat.name || idx}
+                          onMouseEnter={() => setHoveredIncomeCategory(cat)}
+                          onMouseLeave={() => setHoveredIncomeCategory(null)}
+                          style={{
+                            background: isHovered ? 'var(--hover-bg)' : 'var(--card-bg)',
+                            border: isHovered ? `1.5px solid ${catColor}` : '1px solid var(--card-border)',
+                            borderRadius: '8px',
+                            padding: '0.4rem 0.65rem',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '3px',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                            transform: isHovered ? 'scale(1.01)' : 'scale(1)'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0, flex: 1 }}>
+                              <span
+                                style={{
+                                  width: '8px',
+                                  height: '8px',
+                                  borderRadius: '50%',
+                                  backgroundColor: catColor,
+                                  boxShadow: `0 0 0 1.5px var(--card-bg), 0 0 4px ${catColor}66`,
+                                  flexShrink: 0
+                                }}
+                              />
+                              <span
+                                style={{
+                                  fontWeight: isHovered ? 700 : 600,
+                                  fontSize: '0.78rem',
+                                  color: isHovered ? catColor : 'var(--text-primary)',
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis'
+                                }}
+                              >
+                                {cat.name}
+                              </span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
+                              <span
+                                style={{
+                                  fontSize: '0.7rem',
+                                  fontWeight: 700,
+                                  color: 'var(--text-secondary)'
+                                }}
+                              >
+                                {pct}%
+                              </span>
+                              <span
+                                style={{
+                                  fontWeight: 700,
+                                  fontSize: '0.8rem',
+                                  color: 'var(--text-primary)',
+                                  whiteSpace: 'nowrap'
+                                }}
+                              >
+                                {getCurrency()}{formatAmt(cat.value)}
+                              </span>
+                            </div>
+                          </div>
+                          <div style={{ width: '100%', height: '3px', background: 'var(--card-border)', borderRadius: '9999px', overflow: 'hidden' }}>
+                            <div
+                              style={{
+                                width: `${Math.max(3.5, Math.min(100, Number(pct)))}%`,
+                                height: '100%',
+                                backgroundColor: catColor,
+                                borderRadius: '9999px'
+                              }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
               </div>
             </div>
           </div>
