@@ -242,7 +242,12 @@ router.get("/summary", protect, async (req, res) => {
       if (t.type === 'debit') {
         walletSpendMap[t.wallet] = (walletSpendMap[t.wallet] || 0) + t.amount;
         if (t.category) {
-          categorySpendMap[t.category] = (categorySpendMap[t.category] || 0) + t.amount;
+          if (!categorySpendMap[t.category]) {
+            categorySpendMap[t.category] = { total: 0, cash: 0, upi: 0 };
+          }
+          categorySpendMap[t.category].total += t.amount;
+          if (t.wallet === 'Cash') categorySpendMap[t.category].cash += t.amount;
+          else if (t.wallet === 'UPI') categorySpendMap[t.category].upi += t.amount;
         }
         dailyMap[dayKey] = (dailyMap[dayKey] || 0) + t.amount;
       } else if (isCredit) {
@@ -273,7 +278,12 @@ router.get("/summary", protect, async (req, res) => {
     const formattedWalletSpending = Object.keys(walletSpendMap).map(w => ({ _id: w, total: walletSpendMap[w] }));
     const formattedWalletIncome = Object.keys(walletIncomeMap).map(w => ({ _id: w, total: walletIncomeMap[w] }));
     const formattedCategorySpending = Object.keys(categorySpendMap)
-      .map(c => ({ _id: c, total: categorySpendMap[c] }))
+      .map(c => ({
+        _id: c,
+        total: categorySpendMap[c].total,
+        cash: categorySpendMap[c].cash,
+        upi: categorySpendMap[c].upi
+      }))
       .sort((a, b) => b.total - a.total);
 
     const formattedDailySpending = Object.keys(dailyMap).sort().map(key => ({ _id: key, total: dailyMap[key] }));

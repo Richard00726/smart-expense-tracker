@@ -185,6 +185,7 @@ const AnalysisView = ({ refreshTrigger }) => {
   const [flowFilterType, setFlowFilterType] = useState('all');
   const [flowFilterValue, setFlowFilterValue] = useState('');
   const [flowWalletFilter, setFlowWalletFilter] = useState('all'); // 'all' (Combined - Default), 'Cash', 'UPI'
+  const [categoryWalletFilter, setCategoryWalletFilter] = useState('all'); // 'all' (Both), 'UPI', 'Cash'
   const [hoveredCategory, setHoveredCategory] = useState(null);
 
   const [userChangedSpendingMonth, setUserChangedSpendingMonth] = useState(false);
@@ -337,11 +338,68 @@ const AnalysisView = ({ refreshTrigger }) => {
   useEffect(() => { loadIncome(); }, [incomeFilterType, incomeFilterValue, refreshTrigger]);
   useEffect(() => { loadFlow(); }, [flowFilterType, flowFilterValue, refreshTrigger]);
 
-  // Format data for Recharts
-  const categoryData = spendingSummary?.categorySpending ? spendingSummary.categorySpending.map(item => ({
-    name: item._id,
-    value: item.total
-  })) : [];
+  // Calculate Cash vs UPI breakdown for categories from transactions if not present in summary payload
+  const categoryWalletBreakdownFromTx = useMemo(() => {
+    if (!Array.isArray(allTx) || allTx.length === 0) return new Map();
+    const filterObj = getFilterObj(spendingFilterType, spendingFilterValue);
+    const start = filterObj.startDate ? new Date(filterObj.startDate).getTime() : null;
+    const end = filterObj.endDate ? new Date(filterObj.endDate).getTime() : null;
+
+    const map = new Map();
+    allTx.forEach(t => {
+      if (t.type !== 'debit') return;
+      const d = t.date || t.txnDate;
+      if (d) {
+        const time = new Date(d).getTime();
+        if (start && time < start) return;
+        if (end && time > end) return;
+      }
+      const cat = t.category || 'Uncategorized';
+      if (!map.has(cat)) {
+        map.set(cat, { cash: 0, upi: 0 });
+      }
+      const entry = map.get(cat);
+      const amt = Number(t.amount || 0);
+      if (t.wallet === 'Cash') entry.cash += amt;
+      else if (t.wallet === 'UPI') entry.upi += amt;
+    });
+    return map;
+  }, [allTx, spendingFilterType, spendingFilterValue]);
+
+  // Format data for Recharts filtered by selected wallet mode (Both / UPI / Cash)
+  const categoryData = useMemo(() => {
+    const rawCategories = spendingSummary?.categorySpending || [];
+    const enriched = rawCategories.map(item => {
+      const fromTx = categoryWalletBreakdownFromTx.get(item._id);
+      const cash = item.cash !== undefined ? Number(item.cash) : (fromTx?.cash || 0);
+      const upi = item.upi !== undefined ? Number(item.upi) : (fromTx?.upi || 0);
+      const total = Number(item.total) || 0;
+      return {
+        name: item._id,
+        total,
+        cash,
+        upi
+      };
+    });
+
+    if (categoryWalletFilter === 'UPI') {
+      return enriched
+        .filter(c => c.upi > 0)
+        .map(c => ({ name: c.name, value: c.upi }))
+        .sort((a, b) => b.value - a.value);
+    }
+    if (categoryWalletFilter === 'Cash') {
+      return enriched
+        .filter(c => c.cash > 0)
+        .map(c => ({ name: c.name, value: c.cash }))
+        .sort((a, b) => b.value - a.value);
+    }
+    // 'all' -> Both (combined)
+    return enriched
+      .filter(c => c.total > 0)
+      .map(c => ({ name: c.name, value: c.total }))
+      .sort((a, b) => b.value - a.value);
+  }, [spendingSummary?.categorySpending, categoryWalletFilter, categoryWalletBreakdownFromTx]);
 
   const rawWalletSpending = spendingSummary?.walletSpending || [];
   const rawCashSpend = rawWalletSpending.find(w => w._id === 'Cash')?.total || 0;
@@ -702,21 +760,89 @@ const AnalysisView = ({ refreshTrigger }) => {
                   minHeight: '290px'
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', minHeight: '26px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', minHeight: '26px', flexWrap: 'wrap', gap: '0.5rem' }}>
                   <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.02rem', fontWeight: 600 }}>
                     Spend by Category
                   </h4>
-                  <span style={{
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    padding: '2px 8px',
-                    borderRadius: '12px',
-                    background: 'var(--empty-state-bg)',
-                    border: '1px solid var(--card-border)',
-                    color: 'var(--text-muted)'
-                  }}>
-                    {categoryData.length}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                    {/* Wallet Filter Toggle: Both | UPI | Cash (No emojis) */}
+                    <div style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      background: 'var(--card-bg)',
+                      border: '1px solid var(--card-border)',
+                      borderRadius: '20px',
+                      padding: '2px',
+                      gap: '2px'
+                    }}>
+                      <button
+                        type="button"
+                        onClick={() => setCategoryWalletFilter('all')}
+                        style={{
+                          border: 'none',
+                          outline: 'none',
+                          cursor: 'pointer',
+                          padding: '2px 8px',
+                          borderRadius: '16px',
+                          fontSize: '0.72rem',
+                          fontWeight: categoryWalletFilter === 'all' ? 700 : 500,
+                          background: categoryWalletFilter === 'all' ? 'var(--text-primary)' : 'transparent',
+                          color: categoryWalletFilter === 'all' ? 'var(--bg-main, #fff)' : 'var(--text-secondary)',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        Both
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCategoryWalletFilter('UPI')}
+                        style={{
+                          border: 'none',
+                          outline: 'none',
+                          cursor: 'pointer',
+                          padding: '2px 8px',
+                          borderRadius: '16px',
+                          fontSize: '0.72rem',
+                          fontWeight: categoryWalletFilter === 'UPI' ? 700 : 500,
+                          background: categoryWalletFilter === 'UPI' ? 'var(--accent-primary, #3b82f6)' : 'transparent',
+                          color: categoryWalletFilter === 'UPI' ? '#fff' : 'var(--text-secondary)',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        UPI
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCategoryWalletFilter('Cash')}
+                        style={{
+                          border: 'none',
+                          outline: 'none',
+                          cursor: 'pointer',
+                          padding: '2px 8px',
+                          borderRadius: '16px',
+                          fontSize: '0.72rem',
+                          fontWeight: categoryWalletFilter === 'Cash' ? 700 : 500,
+                          background: categoryWalletFilter === 'Cash' ? '#f59e0b' : 'transparent',
+                          color: categoryWalletFilter === 'Cash' ? '#fff' : 'var(--text-secondary)',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        Cash
+                      </button>
+                    </div>
+
+                    <span style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      background: 'var(--empty-state-bg)',
+                      border: '1px solid var(--card-border)',
+                      color: 'var(--text-muted)'
+                    }}>
+                      {categoryData.length}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Side-by-side Donut & Category List Container */}
@@ -789,7 +915,7 @@ const AnalysisView = ({ refreshTrigger }) => {
                       }}
                     >
                       <span style={{ fontSize: '0.52rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                        TOTAL
+                        {categoryWalletFilter === 'UPI' ? 'UPI' : categoryWalletFilter === 'Cash' ? 'CASH' : 'TOTAL'}
                       </span>
                       <span style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-primary)', margin: '1px 0', lineHeight: 1.1, whiteSpace: 'nowrap' }}>
                         {getCurrency()}{formatCompactAmt(totalCategorySpend)}
@@ -811,89 +937,104 @@ const AnalysisView = ({ refreshTrigger }) => {
                       paddingRight: '4px'
                     }}
                   >
-                    {categoryData.map((cat, idx) => {
-                      const pct = totalCategorySpend > 0 ? ((cat.value / totalCategorySpend) * 100).toFixed(0) : '0';
-                      const catColor = getCategoryColor(cat.name, idx);
-                      const isHovered = hoveredCategory && hoveredCategory.name === cat.name;
-                      return (
-                        <div
-                          id={`cat-row-${idx}`}
-                          key={cat.name || idx}
-                          onMouseEnter={() => setHoveredCategory(cat)}
-                          onMouseLeave={() => setHoveredCategory(null)}
-                          style={{
-                            background: isHovered ? 'var(--hover-bg)' : 'var(--card-bg)',
-                            border: isHovered ? `1.5px solid ${catColor}` : '1px solid var(--card-border)',
-                            borderRadius: '8px',
-                            padding: '0.4rem 0.65rem',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '3px',
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease',
-                            transform: isHovered ? 'scale(1.01)' : 'scale(1)'
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0, flex: 1 }}>
-                              <span
+                    {categoryData.length === 0 ? (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        height: '100%',
+                        color: 'var(--text-muted)',
+                        fontSize: '0.82rem',
+                        textAlign: 'center',
+                        padding: '1rem'
+                      }}>
+                        No {categoryWalletFilter === 'all' ? '' : `${categoryWalletFilter} `}expenses in this period
+                      </div>
+                    ) : (
+                      categoryData.map((cat, idx) => {
+                        const pct = totalCategorySpend > 0 ? ((cat.value / totalCategorySpend) * 100).toFixed(0) : '0';
+                        const catColor = getCategoryColor(cat.name, idx);
+                        const isHovered = hoveredCategory && hoveredCategory.name === cat.name;
+                        return (
+                          <div
+                            id={`cat-row-${idx}`}
+                            key={cat.name || idx}
+                            onMouseEnter={() => setHoveredCategory(cat)}
+                            onMouseLeave={() => setHoveredCategory(null)}
+                            style={{
+                              background: isHovered ? 'var(--hover-bg)' : 'var(--card-bg)',
+                              border: isHovered ? `1.5px solid ${catColor}` : '1px solid var(--card-border)',
+                              borderRadius: '8px',
+                              padding: '0.4rem 0.65rem',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '3px',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease',
+                              transform: isHovered ? 'scale(1.01)' : 'scale(1)'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0, flex: 1 }}>
+                                <span
+                                  style={{
+                                    width: '8px',
+                                    height: '8px',
+                                    borderRadius: '50%',
+                                    backgroundColor: catColor,
+                                    boxShadow: `0 0 0 1.5px var(--card-bg), 0 0 4px ${catColor}66`,
+                                    flexShrink: 0
+                                  }}
+                                />
+                                <span
+                                  style={{
+                                    fontWeight: isHovered ? 700 : 600,
+                                    fontSize: '0.78rem',
+                                    color: isHovered ? catColor : 'var(--text-primary)',
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis'
+                                  }}
+                                >
+                                  {cat.name}
+                                </span>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
+                                <span
+                                  style={{
+                                    fontSize: '0.7rem',
+                                    fontWeight: 700,
+                                    color: 'var(--text-secondary)'
+                                  }}
+                                >
+                                  {pct}%
+                                </span>
+                                <span
+                                  style={{
+                                    fontWeight: 700,
+                                    fontSize: '0.8rem',
+                                    color: 'var(--text-primary)',
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  {getCurrency()}{formatAmt(cat.value)}
+                                </span>
+                              </div>
+                            </div>
+                            <div style={{ width: '100%', height: '3px', background: 'var(--card-border)', borderRadius: '9999px', overflow: 'hidden' }}>
+                              <div
                                 style={{
-                                  width: '8px',
-                                  height: '8px',
-                                  borderRadius: '50%',
+                                  width: `${Math.max(3.5, Math.min(100, Number(pct)))}%`,
+                                  height: '100%',
                                   backgroundColor: catColor,
-                                  boxShadow: `0 0 0 1.5px var(--card-bg), 0 0 4px ${catColor}66`,
-                                  flexShrink: 0
+                                  borderRadius: '9999px'
                                 }}
                               />
-                              <span
-                                style={{
-                                  fontWeight: isHovered ? 700 : 600,
-                                  fontSize: '0.78rem',
-                                  color: isHovered ? catColor : 'var(--text-primary)',
-                                  whiteSpace: 'nowrap',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis'
-                                }}
-                              >
-                                {cat.name}
-                              </span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
-                              <span
-                                style={{
-                                  fontSize: '0.7rem',
-                                  fontWeight: 700,
-                                  color: 'var(--text-secondary)'
-                                }}
-                              >
-                                {pct}%
-                              </span>
-                              <span
-                                style={{
-                                  fontWeight: 700,
-                                  fontSize: '0.8rem',
-                                  color: 'var(--text-primary)',
-                                  whiteSpace: 'nowrap'
-                                }}
-                              >
-                                {getCurrency()}{formatAmt(cat.value)}
-                              </span>
                             </div>
                           </div>
-                          <div style={{ width: '100%', height: '3px', background: 'var(--card-border)', borderRadius: '9999px', overflow: 'hidden' }}>
-                            <div
-                              style={{
-                                width: `${Math.max(3.5, Math.min(100, Number(pct)))}%`,
-                                height: '100%',
-                                backgroundColor: catColor,
-                                borderRadius: '9999px'
-                              }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })
+                    )}
                   </div>
                 </div>
               </div>
