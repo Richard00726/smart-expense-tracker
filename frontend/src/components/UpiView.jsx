@@ -448,6 +448,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
         if (data.hasGoogleAuth && !tokenExpired && data.hasPassword && shouldAutoSync) {
           sessionStorage.setItem('last_auto_sync_session', String(nowMs));
           const isInitialFullSync = !data.lastBankSyncAt;
+          setSyncingGmail(true);
           syncGmailNow({ fullSync: isInitialFullSync })
             .then(syncRes => {
               if ((syncRes.data?.statementsProcessed || 0) > 0 || (syncRes.data?.addedCount || 0) > 0) {
@@ -486,6 +487,9 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                   localStorage.setItem(`bank_sync_settings_cache_${userCacheKey}`, JSON.stringify(currentCache));
                 } catch {}
               }
+            })
+            .finally(() => {
+              setSyncingGmail(false);
             });
         }
       } else {
