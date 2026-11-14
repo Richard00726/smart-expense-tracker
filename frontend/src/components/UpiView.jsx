@@ -194,7 +194,9 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
     }
     return false;
   });
-  const [syncingGmail, setSyncingGmail] = useState(false);
+  const [syncingGmail, setSyncingGmail] = useState(() => {
+    return sessionStorage.getItem('is_syncing_gmail') === 'true';
+  });
   const [uploadingPdf, setUploadingPdf] = useState(false);
   const [savingSetup, setSavingSetup] = useState(false);
   const [showDropzone, setShowDropzone] = useState(false);
@@ -570,8 +572,15 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
     const handleSyncUpdated = () => {
       fetchSettings();
     };
+    const handleSyncStatus = () => {
+      setSyncingGmail(sessionStorage.getItem('is_syncing_gmail') === 'true');
+    };
     window.addEventListener('bank_sync_updated', handleSyncUpdated);
-    return () => window.removeEventListener('bank_sync_updated', handleSyncUpdated);
+    window.addEventListener('bank_sync_status_changed', handleSyncStatus);
+    return () => {
+      window.removeEventListener('bank_sync_updated', handleSyncUpdated);
+      window.removeEventListener('bank_sync_status_changed', handleSyncStatus);
+    };
   }, []);
 
   // Step 2: Open Secure Consent Modal before connecting

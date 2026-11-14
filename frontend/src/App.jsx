@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getWallets, getTransactions, getSummary, deleteTransaction, getCurrency } from './services/api';
+import { getWallets, getTransactions, getSummary, deleteTransaction, getCurrency, getBankSyncSettings, syncGmailNow } from './services/api';
 import Dashboard from './components/Dashboard';
 import TransactionForm from './components/TransactionForm';
 import TransactionsTable from './components/TransactionsTable';
@@ -271,6 +271,56 @@ function App() {
     }, 600);
     return () => clearTimeout(timer);
   }, [isAuthenticated, transactions.length]);
+
+  // Automatic background bank sync on app login if user has bank sync active
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const lastSessionSync = sessionStorage.getItem('last_auto_sync_session');
+    const nowMs = Date.now();
+    const shouldAutoSync = !lastSessionSync || (nowMs - Number(lastSessionSync) > 15 * 60 * 1000);
+    if (!shouldAutoSync) return;
+
+    const checkAndSync = async () => {
+      try {
+        let isConfigured = false;
+        try {
+          const cached = localStorage.getItem('bank_sync_settings_cache');
+          if (cached) {
+            const d = JSON.parse(cached);
+            isConfigured = Boolean(d.hasGoogleAuth && !d.googleTokenExpired && d.hasPassword);
+          }
+        } catch {}
+
+        if (!isConfigured) {
+          const res = await getBankSyncSettings();
+          const d = res.data;
+          isConfigured = Boolean(d.hasGoogleAuth && !d.googleTokenExpired && d.hasPassword);
+        }
+
+        if (isConfigured) {
+          sessionStorage.setItem('last_auto_sync_session', String(nowMs));
+          sessionStorage.setItem('is_syncing_gmail', 'true');
+          window.dispatchEvent(new Event('bank_sync_status_changed'));
+
+          syncGmailNow()
+            .then(res => {
+              if ((res.data?.statementsProcessed || 0) > 0 || (res.data?.addedCount || 0) > 0) {
+                loadWallets();
+                loadTransactions();
+                window.dispatchEvent(new Event('bank_sync_updated'));
+              }
+            })
+            .catch(() => {})
+            .finally(() => {
+              sessionStorage.removeItem('is_syncing_gmail');
+              window.dispatchEvent(new Event('bank_sync_status_changed'));
+            });
+        }
+      } catch {}
+    };
+
+    checkAndSync();
+  }, [isAuthenticated, currentUser?.email, currentUser?._id, currentUser?.id]);
 
   if (!isAuthenticated) {
     return (
