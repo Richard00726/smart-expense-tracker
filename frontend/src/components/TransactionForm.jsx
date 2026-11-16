@@ -16,7 +16,7 @@ const TransactionForm = ({ onTransactionComplete, type, onTypeChange, hideToggle
   const isSubmittingRef = React.useRef(false);
 
   const incomeCategories = [
-    'UPI Transfer',
+    'UPI Received',
     'Salary',
     'Bank Transfer',
     'Refund & Cashback',

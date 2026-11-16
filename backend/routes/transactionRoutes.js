@@ -141,10 +141,10 @@ router.get("/transactions", protect, async (req, res) => {
       ]
     });
 
-    // Auto-heal any legacy credit transactions mistakenly marked as Daily Expense
+    // Auto-heal any legacy credit transactions mistakenly marked as Daily Expense or UPI Transfer
     const { categorizeTransaction } = require('../services/statementParser');
     const mappedTransactions = transactions.map(t => {
-      if (t.type === 'credit' && (!t.category || t.category === 'Daily Expense')) {
+      if (t.type === 'credit' && (!t.category || t.category === 'Daily Expense' || t.category === 'UPI Transfer')) {
         const fixedCat = categorizeTransaction(t.note || '', 'credit', t.counterparty || '');
         prisma.transaction.update({
           where: { id: t.id },
@@ -265,7 +265,7 @@ router.get("/summary", protect, async (req, res) => {
       } else if (isCredit) {
         walletIncomeMap[t.wallet] = (walletIncomeMap[t.wallet] || 0) + t.amount;
         let cat = t.category;
-        if (!cat || cat === 'Daily Expense') {
+        if (!cat || cat === 'Daily Expense' || cat === 'UPI Transfer') {
           const { categorizeTransaction } = require('../services/statementParser');
           cat = categorizeTransaction(t.note || '', 'credit', t.counterparty || '');
         }

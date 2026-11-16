@@ -245,7 +245,7 @@ function categorizeTransaction(narration, type, counterparty) {
 
     // 7. UPI Inward Transfer (P2P payments received, e.g. from friends/family like INFANT RICHART)
     if (text.includes('upi') || text.includes('/upi') || text.includes('upi/')) {
-      return 'UPI Transfer';
+      return 'UPI Received';
     }
 
     // 8. General Credit fallback (NEVER Daily Expense!)

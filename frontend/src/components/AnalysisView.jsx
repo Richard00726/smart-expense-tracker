@@ -444,7 +444,7 @@ const AnalysisView = ({ refreshTrigger }) => {
         if (end && time > end) return;
       }
       let cat = t.category || 'Income';
-      if (cat === 'Daily Expense') cat = 'UPI Transfer';
+      if (cat === 'Daily Expense' || cat === 'UPI Transfer') cat = 'UPI Received';
       if (!map.has(cat)) {
         map.set(cat, { cash: 0, upi: 0 });
       }
