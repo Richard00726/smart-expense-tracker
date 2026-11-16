@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { getWallets, getTransactions, getSummary, deleteTransaction, getCurrency, getBankSyncSettings, syncGmailNow } from './services/api';
 import Dashboard from './components/Dashboard';
 import TransactionForm from './components/TransactionForm';
