@@ -148,9 +148,17 @@ router.get("/transactions", protect, async (req, res) => {
       let updatedCp = t.counterparty;
       let needsDbUpdate = false;
 
-      if (t.type === 'credit' && (!t.category || t.category === 'Daily Expense' || t.category === 'UPI Transfer' || t.category === 'Credit Card Bill')) {
-        updatedCat = categorizeTransaction(t.note || '', 'credit', t.counterparty || '');
-        needsDbUpdate = true;
+      if (t.type === 'credit') {
+        const rawCredit = (t.note || '') + ' ' + (t.counterparty || '');
+        if (/cr\s*crd\s*bill/i.test(rawCredit) || /credit\s*card/i.test(rawCredit)) {
+          if (updatedCat !== 'Credit Card Bill Amount') {
+            updatedCat = 'Credit Card Bill Amount';
+            needsDbUpdate = true;
+          }
+        } else if (!t.category || t.category === 'Daily Expense' || t.category === 'UPI Transfer' || t.category === 'Credit Card Bill') {
+          updatedCat = categorizeTransaction(t.note || '', 'credit', t.counterparty || '');
+          needsDbUpdate = true;
+        }
       } else if (t.type === 'debit') {
         const rawNote = (t.note || '') + ' ' + (t.counterparty || '');
         if (/billpay/i.test(rawNote) || /recharge/i.test(rawNote) || /airtel/i.test(rawNote) || /jio/i.test(rawNote) || /power distri/i.test(rawNote)) {
@@ -163,9 +171,11 @@ router.get("/transactions", protect, async (req, res) => {
             updatedCat = 'Loan & EMI';
             needsDbUpdate = true;
           }
-        } else if (t.category === 'Credit Card Bill') {
-          updatedCat = 'Credit Card Bill Amount';
-          needsDbUpdate = true;
+        } else if (/cr\s*crd\s*bill/i.test(rawNote) || /credit\s*card/i.test(rawNote) || t.category === 'Credit Card Bill Amount') {
+          if (updatedCat !== 'Credit Card Bill') {
+            updatedCat = 'Credit Card Bill';
+            needsDbUpdate = true;
+          }
         } else if (t.category === 'Daily Expense' || !t.category || t.category === 'Uncategorized') {
           const reCat = categorizeTransaction(t.note || '', 'debit', t.counterparty || '');
           if (reCat !== 'Daily Expense') {
@@ -299,8 +309,8 @@ router.get("/summary", protect, async (req, res) => {
           cat = 'Bills & Recharge';
         } else if (t.note && /loan\s*coll/i.test(t.note)) {
           cat = 'Loan & EMI';
-        } else if (cat === 'Credit Card Bill') {
-          cat = 'Credit Card Bill Amount';
+        } else if (cat === 'Credit Card Bill Amount' || (t.note && /cr\s*crd\s*bill/i.test(t.note))) {
+          cat = 'Credit Card Bill';
         } else if ((cat === 'Daily Expense' || !cat || cat === 'Uncategorized') && t.note && (/loan/i.test(t.note) || /thanga/i.test(t.note))) {
           const { categorizeTransaction } = require('../services/statementParser');
           cat = categorizeTransaction(t.note, 'debit', t.counterparty || '');
@@ -317,7 +327,10 @@ router.get("/summary", protect, async (req, res) => {
       } else if (isCredit) {
         walletIncomeMap[t.wallet] = (walletIncomeMap[t.wallet] || 0) + t.amount;
         let cat = t.category;
-        if (!cat || cat === 'Daily Expense' || cat === 'UPI Transfer') {
+        const rawCredit = (t.note || '') + ' ' + (t.counterparty || '');
+        if (/cr\s*crd\s*bill/i.test(rawCredit) || /credit\s*card/i.test(rawCredit)) {
+          cat = 'Credit Card Bill Amount';
+        } else if (!cat || cat === 'Daily Expense' || cat === 'UPI Transfer') {
           const { categorizeTransaction } = require('../services/statementParser');
           cat = categorizeTransaction(t.note || '', 'credit', t.counterparty || '');
         }

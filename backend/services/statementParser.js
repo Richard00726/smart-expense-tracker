@@ -283,18 +283,23 @@ function categorizeTransaction(narration, type, counterparty) {
 
   // Handle CREDIT (Deposit / Inward Money) specifically
   if (type === 'credit') {
-    // 1. Salary / Payroll / Stipend
+    // 1. Credit Card Bill Amount (Credit/Deposit)
+    if (text.includes('cr crd bill') || text.includes('credit card')) {
+      return 'Credit Card Bill Amount';
+    }
+
+    // 2. Salary / Payroll / Stipend
     if (text.includes('salary') || text.includes('payroll') || text.includes('stipend')) {
       return 'Salary';
     }
 
-    // 2. Bank Interest / Dividend / Int. Paid
+    // 3. Bank Interest / Dividend / Int. Paid
     if (text.includes('interest') || text.includes('int.pd') || text.includes('dividend') || text.includes('int credit') || text.includes('int:')) {
       return 'Interest & Investments';
     }
 
-    // 3. Refunds, Reversals & Cashback
-    if (text.includes('refund') || text.includes('cashback') || text.includes('reversal') || text.includes('reward') || text.includes('rev/') || text.includes('cr crd bill') || text.includes('credit card bill')) {
+    // 4. Refunds, Reversals & Cashback
+    if (text.includes('refund') || text.includes('cashback') || text.includes('reversal') || text.includes('reward') || text.includes('rev/')) {
       return 'Refund & Cashback';
     }
 
@@ -335,7 +340,7 @@ function categorizeTransaction(narration, type, counterparty) {
 
   // 3. Credit Card Bill Payment
   if (text.includes('cr crd bill') || text.includes('credit card') || text.includes('cc bill') || text.includes('sbi card') || text.includes('hdfc card') || text.includes('icici card') || text.includes('onecard') || text.includes('cred ') || text.includes(' cred')) {
-    return 'Credit Card Bill Amount';
+    return 'Credit Card Bill';
   }
 
   // 4. Rent & Housing
