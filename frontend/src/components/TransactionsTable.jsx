@@ -12,10 +12,9 @@ const cleanPayeeString = (str) => {
   if (/loan\s*coll/i.test(s) || /loan\s*recovery/i.test(s) || /loan\s*emi/i.test(s) || /loan\s*repay/i.test(s)) {
     const acMatch = s.match(/-?(\d{8,16})/);
     if (acMatch) {
-      const acLast4 = acMatch[1].slice(-4);
-      return `Loan EMI Repayment (A/c •••${acLast4})`;
+      return `Loan Collection (A/c ${acMatch[1]})`;
     }
-    return 'Loan EMI Repayment';
+    return 'Loan Collection';
   }
 
   // 2. TMB M-Bank BillPay (Mobile Recharge, Electricity, etc.)

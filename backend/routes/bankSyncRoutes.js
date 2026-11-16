@@ -284,6 +284,20 @@ router.post('/upload-statement', upload.single('statementPdf'), async (req, res)
       addedCount++;
     }
 
+    // Store daily statement summary and sync UPI Wallet balance
+    if (parseResult.metadata) {
+      const { updateDailySummary } = require('../services/bankOverviewStore');
+      await updateDailySummary(req.user.id, parseResult.metadata, parseResult.transactions);
+    }
+    if (parseResult.closingBalance !== null && !isNaN(parseResult.closingBalance)) {
+      await prisma.wallet.upsert({
+        where: { userId_type: { userId: req.user.id, type: 'UPI' } },
+        update: { balance: parseResult.closingBalance },
+        create: { userId: req.user.id, type: 'UPI', balance: parseResult.closingBalance }
+      });
+    }
+    invalidateSummaryCache(req.user.id);
+
     // Update user's bank sync status
     await prisma.user.update({
       where: { id: req.user.id },

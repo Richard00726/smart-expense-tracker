@@ -251,7 +251,40 @@ function App() {
 
   useEffect(() => {
     if (isAuthenticated) loadWallets();
-  }, [isAuthenticated, currentUser?.email, currentUser?._id, currentUser?.id]);
+  }, [isAuthenticated, activeTab, currentUser?.email, currentUser?._id, currentUser?.id]);
+
+  useEffect(() => {
+    const handleSyncUpdated = () => {
+      loadWallets();
+      loadTransactions();
+    };
+    window.addEventListener('bank_sync_updated', handleSyncUpdated);
+    window.addEventListener('focus', loadWallets);
+    return () => {
+      window.removeEventListener('bank_sync_updated', handleSyncUpdated);
+      window.removeEventListener('focus', loadWallets);
+    };
+  }, []);
+
+  const effectiveUpiBalance = useMemo(() => {
+    if (Array.isArray(transactions) && transactions.length > 0) {
+      const latestBankTx = transactions.find(t => t.wallet === 'UPI' && t.balance !== null && t.balance !== undefined && !isNaN(t.balance));
+      if (latestBankTx) {
+        return Number(latestBankTx.balance);
+      }
+    }
+    return Number(balances.upi || 0);
+  }, [transactions, balances.upi]);
+
+  const effectiveBalances = useMemo(() => {
+    const cash = Number(balances.cash || 0);
+    const upi = effectiveUpiBalance;
+    return {
+      cash,
+      upi,
+      total: cash + upi
+    };
+  }, [balances.cash, effectiveUpiBalance]);
 
   useEffect(() => {
     if (isAuthenticated) loadTransactions();
@@ -482,20 +515,20 @@ function App() {
         <main>
           {activeTab === 'home' && (
             <>
-              <Dashboard balances={balances} onOpenSetupGuide={() => setActiveTab('upi')} />
+              <Dashboard balances={effectiveBalances} onOpenSetupGuide={() => setActiveTab('upi')} />
 
               <div className="main-content" style={{ marginTop: '2rem' }}>
                 <div className="action-cards" style={{ gridColumn: '1 / -1' }}>
                   <TransactionsTable
-                    title={txFilterType === 'all' ? 'Recent Transactions' : getDashboardFeedTitle()}
-                    badge="Showing 5 latest"
-                    transactions={transactions.slice(0, 5)}
+                    title={txFilterType === 'all' ? 'All Transactions' : getDashboardFeedTitle()}
+                    badge={`Showing ${transactions.length} transaction${transactions.length === 1 ? '' : 's'}`}
+                    transactions={transactions}
                     loading={txLoading}
                     onDelete={handleDeleteTransaction}
                     onEditComplete={refreshAllData}
                     hideCategory={false}
                     hideActions={true}
-                    hideWallet={true}
+                    hideWallet={false}
                   />
                 </div>
               </div>

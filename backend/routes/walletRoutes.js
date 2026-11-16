@@ -18,6 +18,29 @@ router.get("/", protect, async (req, res) => {
       if (wallet.type === "UPI") upiBalance = wallet.balance;
     });
 
+    // Ensure UPI balance is synchronized to the latest bank statement closing balance
+    const latestBankTxn = await prisma.transaction.findFirst({
+      where: { 
+        userId: req.user.id, 
+        wallet: 'UPI', 
+        balance: { not: null } 
+      },
+      orderBy: [
+        { date: 'desc' }, 
+        { createdAt: 'desc' }
+      ],
+      select: { balance: true }
+    });
+
+    if (latestBankTxn && latestBankTxn.balance !== null && !isNaN(latestBankTxn.balance)) {
+      upiBalance = Number(latestBankTxn.balance);
+      await prisma.wallet.upsert({
+        where: { userId_type: { userId: req.user.id, type: 'UPI' } },
+        update: { balance: upiBalance },
+        create: { userId: req.user.id, type: 'UPI', balance: upiBalance }
+      });
+    }
+
     res.json({
       cash: cashBalance,
       upi: upiBalance,

@@ -152,7 +152,18 @@ router.get("/transactions", protect, async (req, res) => {
         updatedCat = categorizeTransaction(t.note || '', 'credit', t.counterparty || '');
         needsDbUpdate = true;
       } else if (t.type === 'debit') {
-        if (t.category === 'Credit Card Bill') {
+        const rawNote = (t.note || '') + ' ' + (t.counterparty || '');
+        if (/billpay/i.test(rawNote) || /recharge/i.test(rawNote) || /airtel/i.test(rawNote) || /jio/i.test(rawNote) || /power distri/i.test(rawNote)) {
+          if (updatedCat !== 'Bills & Recharge') {
+            updatedCat = 'Bills & Recharge';
+            needsDbUpdate = true;
+          }
+        } else if (/loan\s*coll/i.test(rawNote) || /loan/i.test(rawNote)) {
+          if (updatedCat !== 'Loan & EMI') {
+            updatedCat = 'Loan & EMI';
+            needsDbUpdate = true;
+          }
+        } else if (t.category === 'Credit Card Bill') {
           updatedCat = 'Credit Card Bill Amount';
           needsDbUpdate = true;
         } else if (t.category === 'Daily Expense' || !t.category || t.category === 'Uncategorized') {
@@ -284,8 +295,13 @@ router.get("/summary", protect, async (req, res) => {
       if (t.type === 'debit') {
         walletSpendMap[t.wallet] = (walletSpendMap[t.wallet] || 0) + t.amount;
         let cat = t.category;
-        if (cat === 'Credit Card Bill') cat = 'Credit Card Bill Amount';
-        if ((cat === 'Daily Expense' || !cat || cat === 'Uncategorized') && t.note && (/loan/i.test(t.note) || /thanga/i.test(t.note) || /billpay/i.test(t.note))) {
+        if (t.note && (/billpay/i.test(t.note) || /recharge/i.test(t.note) || /airtel/i.test(t.note) || /jio/i.test(t.note) || /power distri/i.test(t.note))) {
+          cat = 'Bills & Recharge';
+        } else if (t.note && /loan\s*coll/i.test(t.note)) {
+          cat = 'Loan & EMI';
+        } else if (cat === 'Credit Card Bill') {
+          cat = 'Credit Card Bill Amount';
+        } else if ((cat === 'Daily Expense' || !cat || cat === 'Uncategorized') && t.note && (/loan/i.test(t.note) || /thanga/i.test(t.note))) {
           const { categorizeTransaction } = require('../services/statementParser');
           cat = categorizeTransaction(t.note, 'debit', t.counterparty || '');
         }
