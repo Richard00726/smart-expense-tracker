@@ -141,11 +141,19 @@ router.get("/transactions", protect, async (req, res) => {
       ]
     });
 
-    // Auto-heal any legacy credit transactions mistakenly marked as Daily Expense or UPI Transfer
+    // Auto-heal any legacy credit transactions mistakenly marked as Daily Expense or UPI Transfer, and rename Credit Card Bill
     const { categorizeTransaction } = require('../services/statementParser');
     const mappedTransactions = transactions.map(t => {
       if (t.type === 'credit' && (!t.category || t.category === 'Daily Expense' || t.category === 'UPI Transfer')) {
         const fixedCat = categorizeTransaction(t.note || '', 'credit', t.counterparty || '');
+        prisma.transaction.update({
+          where: { id: t.id },
+          data: { category: fixedCat }
+        }).catch(() => {});
+        return { ...t, _id: t.id, category: fixedCat };
+      }
+      if (t.category === 'Credit Card Bill') {
+        const fixedCat = 'Credit Card Bill Amount';
         prisma.transaction.update({
           where: { id: t.id },
           data: { category: fixedCat }
@@ -253,13 +261,15 @@ router.get("/summary", protect, async (req, res) => {
 
       if (t.type === 'debit') {
         walletSpendMap[t.wallet] = (walletSpendMap[t.wallet] || 0) + t.amount;
-        if (t.category) {
-          if (!categorySpendMap[t.category]) {
-            categorySpendMap[t.category] = { total: 0, cash: 0, upi: 0 };
+        let cat = t.category;
+        if (cat === 'Credit Card Bill') cat = 'Credit Card Bill Amount';
+        if (cat) {
+          if (!categorySpendMap[cat]) {
+            categorySpendMap[cat] = { total: 0, cash: 0, upi: 0 };
           }
-          categorySpendMap[t.category].total += t.amount;
-          if (t.wallet === 'Cash') categorySpendMap[t.category].cash += t.amount;
-          else if (t.wallet === 'UPI') categorySpendMap[t.category].upi += t.amount;
+          categorySpendMap[cat].total += t.amount;
+          if (t.wallet === 'Cash') categorySpendMap[cat].cash += t.amount;
+          else if (t.wallet === 'UPI') categorySpendMap[cat].upi += t.amount;
         }
         dailyMap[dayKey] = (dailyMap[dayKey] || 0) + t.amount;
       } else if (isCredit) {

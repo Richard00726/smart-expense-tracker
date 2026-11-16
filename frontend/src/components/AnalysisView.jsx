@@ -360,7 +360,8 @@ const AnalysisView = ({ refreshTrigger }) => {
         if (start && time < start) return;
         if (end && time > end) return;
       }
-      const cat = t.category || 'Uncategorized';
+      let cat = t.category || 'Uncategorized';
+      if (cat === 'Credit Card Bill') cat = 'Credit Card Bill Amount';
       if (!map.has(cat)) {
         map.set(cat, { cash: 0, upi: 0 });
       }
@@ -374,7 +375,10 @@ const AnalysisView = ({ refreshTrigger }) => {
 
   // Format data for Recharts filtered by selected wallet mode (Both / UPI / Cash)
   const categoryData = useMemo(() => {
-    const rawCategories = spendingSummary?.categorySpending || [];
+    const rawCategories = (spendingSummary?.categorySpending || []).map(item => ({
+      ...item,
+      _id: item._id === 'Credit Card Bill' ? 'Credit Card Bill Amount' : item._id
+    }));
     const enriched = rawCategories.map(item => {
       const fromTx = categoryWalletBreakdownFromTx.get(item._id);
       const cash = item.cash !== undefined ? Number(item.cash) : (fromTx?.cash || 0);

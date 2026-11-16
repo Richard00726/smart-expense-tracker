@@ -33,7 +33,7 @@ const TransactionForm = ({ onTransactionComplete, type, onTypeChange, hideToggle
     'Bills & Recharge',
     'Shopping and orders',
     'Fuel & Vehicle',
-    'Credit Card Bill',
+    'Credit Card Bill Amount',
     'Investments & SIP',
     'Subscriptions & OTT',
     'Education & Learning',

@@ -265,7 +265,7 @@ function categorizeTransaction(narration, type, counterparty) {
 
   // 3. Credit Card Bill Payment
   if (text.includes('cr crd bill') || text.includes('credit card') || text.includes('cc bill') || text.includes('sbi card') || text.includes('hdfc card') || text.includes('icici card') || text.includes('onecard') || text.includes('billpay') || text.includes('cred ') || text.includes(' cred')) {
-    return 'Credit Card Bill';
+    return 'Credit Card Bill Amount';
   }
 
   // 4. Rent & Housing
