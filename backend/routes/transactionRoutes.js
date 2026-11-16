@@ -150,12 +150,12 @@ router.get("/transactions", protect, async (req, res) => {
 
       if (t.type === 'credit') {
         const rawCredit = (t.note || '') + ' ' + (t.counterparty || '');
-        if (/cr\s*crd\s*bill/i.test(rawCredit) || /credit\s*card/i.test(rawCredit)) {
-          if (updatedCat !== 'Credit Card Bill Amount') {
-            updatedCat = 'Credit Card Bill Amount';
+        if (/cr\s*crd\s*bill/i.test(rawCredit) || /credit\s*card/i.test(rawCredit) || t.category === 'Credit Card Bill Amount') {
+          if (updatedCat !== 'Credit Card Bill') {
+            updatedCat = 'Credit Card Bill';
             needsDbUpdate = true;
           }
-        } else if (!t.category || t.category === 'Daily Expense' || t.category === 'UPI Transfer' || t.category === 'Credit Card Bill') {
+        } else if (!t.category || t.category === 'Daily Expense' || t.category === 'UPI Transfer') {
           updatedCat = categorizeTransaction(t.note || '', 'credit', t.counterparty || '');
           needsDbUpdate = true;
         }
@@ -328,8 +328,8 @@ router.get("/summary", protect, async (req, res) => {
         walletIncomeMap[t.wallet] = (walletIncomeMap[t.wallet] || 0) + t.amount;
         let cat = t.category;
         const rawCredit = (t.note || '') + ' ' + (t.counterparty || '');
-        if (/cr\s*crd\s*bill/i.test(rawCredit) || /credit\s*card/i.test(rawCredit)) {
-          cat = 'Credit Card Bill Amount';
+        if (/cr\s*crd\s*bill/i.test(rawCredit) || /credit\s*card/i.test(rawCredit) || cat === 'Credit Card Bill Amount') {
+          cat = 'Credit Card Bill';
         } else if (!cat || cat === 'Daily Expense' || cat === 'UPI Transfer') {
           const { categorizeTransaction } = require('../services/statementParser');
           cat = categorizeTransaction(t.note || '', 'credit', t.counterparty || '');

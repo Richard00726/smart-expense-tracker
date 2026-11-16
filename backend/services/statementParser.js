@@ -283,9 +283,9 @@ function categorizeTransaction(narration, type, counterparty) {
 
   // Handle CREDIT (Deposit / Inward Money) specifically
   if (type === 'credit') {
-    // 1. Credit Card Bill Amount (Credit/Deposit)
+    // 1. Credit Card Bill (Credit/Deposit)
     if (text.includes('cr crd bill') || text.includes('credit card')) {
-      return 'Credit Card Bill Amount';
+      return 'Credit Card Bill';
     }
 
     // 2. Salary / Payroll / Stipend

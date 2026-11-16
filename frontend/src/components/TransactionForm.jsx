@@ -19,7 +19,7 @@ const TransactionForm = ({ onTransactionComplete, type, onTypeChange, hideToggle
     'UPI Received',
     'Salary',
     'Bank Transfer',
-    'Credit Card Bill Amount',
+    'Credit Card Bill',
     'Refund & Cashback',
     'Interest & Investments',
     'Reimbursement',
