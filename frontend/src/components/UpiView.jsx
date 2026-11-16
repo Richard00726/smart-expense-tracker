@@ -1816,20 +1816,6 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                   >
                     <FileText size={14} />
                     <span>Daily Statement Ledger</span>
-                    {bankOverview?.dailySummaries?.length > 0 && (
-                      <span
-                        style={{
-                          background: bankViewMode === 'ledger' ? 'rgba(255, 255, 255, 0.25)' : 'var(--border, rgba(255, 255, 255, 0.1))',
-                          color: bankViewMode === 'ledger' ? '#ffffff' : 'var(--text-muted)',
-                          fontSize: '0.72rem',
-                          padding: '1px 6px',
-                          borderRadius: '10px',
-                          fontWeight: 700
-                        }}
-                      >
-                        {displayedDailySummaries.length}
-                      </span>
-                    )}
                   </button>
 
                   <button
@@ -1852,18 +1838,6 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                   >
                     <Receipt size={14} />
                     <span>Auto-Tracked Transactions</span>
-                    <span
-                      style={{
-                        background: bankViewMode === 'transactions' ? 'rgba(255, 255, 255, 0.25)' : 'var(--border, rgba(255, 255, 255, 0.1))',
-                        color: bankViewMode === 'transactions' ? '#ffffff' : 'var(--text-muted)',
-                        fontSize: '0.72rem',
-                        padding: '1px 6px',
-                        borderRadius: '10px',
-                        fontWeight: 700
-                      }}
-                    >
-                      {displayedAutoTransactions.length}
-                    </span>
                   </button>
                 </div>
               </div>
