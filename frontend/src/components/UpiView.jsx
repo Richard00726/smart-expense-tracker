@@ -91,7 +91,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
   const [subTab, setSubTab] = useState('add');
   const [bankViewMode, setBankViewMode] = useState('ledger');
   const [ledgerPage, setLedgerPage] = useState(1);
-  const [ledgerRowsPerPage, setLedgerRowsPerPage] = useState(10);
+  const [ledgerRowsPerPage, setLedgerRowsPerPage] = useState(8);
 
   // Wizard state: 1 = Bank Selection, 2 = Credentials & Password
   const [wizardStep, setWizardStep] = useState(() => {
@@ -1708,67 +1708,164 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                 )}
               </div>
 
-              {/* Row 2: Action Buttons */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-                {syncingGmail && (
-                  <span
-                    style={{
-                      fontSize: '0.78rem',
-                      background: 'rgba(16, 185, 129, 0.1)',
-                      color: '#10b981',
-                      padding: '0.25rem 0.65rem',
-                      borderRadius: '20px',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                      fontWeight: 500
-                    }}
-                    title="Automatically syncing daily bank statements in background"
-                  >
-                    <RefreshCw size={11} style={{ animation: 'spin 1s linear infinite' }} />
-                    Auto-syncing...
-                  </span>
-                )}
+              {/* Row 2: Action Buttons & Swift Bar Switcher (Option B) */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.75rem',
+                  flexWrap: 'wrap',
+                  marginTop: '0.25rem'
+                }}
+              >
+                {/* Left: Action Buttons */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                  {syncingGmail && (
+                    <span
+                      style={{
+                        fontSize: '0.78rem',
+                        background: 'rgba(16, 185, 129, 0.1)',
+                        color: '#10b981',
+                        padding: '0.25rem 0.65rem',
+                        borderRadius: '20px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        fontWeight: 500
+                      }}
+                      title="Automatically syncing daily bank statements in background"
+                    >
+                      <RefreshCw size={11} style={{ animation: 'spin 1s linear infinite' }} />
+                      Auto-syncing...
+                    </span>
+                  )}
 
-                {bankOverview?.customerDetails && (
+                  {bankOverview?.customerDetails && (
+                    <button
+                      onClick={() => setShowBankDetails(b => !b)}
+                      className="btn"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        background: showBankDetails ? 'var(--accent-primary)' : 'var(--empty-state-bg)',
+                        border: '1px solid var(--card-border)',
+                        color: showBankDetails ? '#fff' : 'var(--text-primary)',
+                        padding: '0.45rem 0.85rem',
+                        borderRadius: '8px',
+                        fontSize: '0.82rem'
+                      }}
+                    >
+                      <Building2 size={13} />
+                      {showBankDetails ? 'Hide Bank Details ▴' : 'Bank & Branch Details ▾'}
+                    </button>
+                  )}
+
                   <button
-                    onClick={() => setShowBankDetails(b => !b)}
+                    onClick={() => setShowDropzone(d => !d)}
                     className="btn"
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '0.4rem',
-                      background: showBankDetails ? 'var(--accent-primary)' : 'var(--empty-state-bg)',
+                      background: showDropzone ? 'var(--accent-primary)' : 'var(--empty-state-bg)',
                       border: '1px solid var(--card-border)',
-                      color: showBankDetails ? '#fff' : 'var(--text-primary)',
+                      color: showDropzone ? '#fff' : 'var(--text-primary)',
                       padding: '0.45rem 0.85rem',
                       borderRadius: '8px',
                       fontSize: '0.82rem'
                     }}
                   >
-                    <Building2 size={13} />
-                    {showBankDetails ? 'Hide Bank Details ▴' : 'Bank & Branch Details ▾'}
+                    <UploadCloud size={13} />
+                    {showDropzone ? 'Close PDF Drop' : 'Drop Statement'}
                   </button>
-                )}
+                </div>
 
-                <button
-                  onClick={() => setShowDropzone(d => !d)}
-                  className="btn"
+                {/* Right: Swift Bar Toggle (Option B: Switch between Daily Statement Ledger and Auto-Tracked Transactions) */}
+                <div
+                  className="swift-bar-container"
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '0.4rem',
-                    background: showDropzone ? 'var(--accent-primary)' : 'var(--empty-state-bg)',
-                    border: '1px solid var(--card-border)',
-                    color: showDropzone ? '#fff' : 'var(--text-primary)',
-                    padding: '0.45rem 0.85rem',
-                    borderRadius: '8px',
-                    fontSize: '0.82rem'
+                    gap: '0.25rem',
+                    background: 'var(--empty-state-bg, rgba(255, 255, 255, 0.05))',
+                    padding: '3px',
+                    borderRadius: '10px',
+                    border: '1px solid var(--card-border, rgba(255, 255, 255, 0.1))',
+                    flexShrink: 0
                   }}
                 >
-                  <UploadCloud size={13} />
-                  {showDropzone ? 'Close PDF Drop' : 'Drop Statement'}
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setBankViewMode('ledger')}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.45rem',
+                      padding: '0.4rem 0.85rem',
+                      borderRadius: '7px',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      border: 'none',
+                      transition: 'all 0.2s ease',
+                      background: bankViewMode === 'ledger' ? 'var(--primary, #2563eb)' : 'transparent',
+                      color: bankViewMode === 'ledger' ? '#ffffff' : 'var(--text-secondary)'
+                    }}
+                  >
+                    <FileText size={14} />
+                    <span>Daily Statement Ledger</span>
+                    {bankOverview?.dailySummaries?.length > 0 && (
+                      <span
+                        style={{
+                          background: bankViewMode === 'ledger' ? 'rgba(255, 255, 255, 0.25)' : 'var(--border, rgba(255, 255, 255, 0.1))',
+                          color: bankViewMode === 'ledger' ? '#ffffff' : 'var(--text-muted)',
+                          fontSize: '0.72rem',
+                          padding: '1px 6px',
+                          borderRadius: '10px',
+                          fontWeight: 700
+                        }}
+                      >
+                        {displayedDailySummaries.length}
+                      </span>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setBankViewMode('transactions')}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.45rem',
+                      padding: '0.4rem 0.85rem',
+                      borderRadius: '7px',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      border: 'none',
+                      transition: 'all 0.2s ease',
+                      background: bankViewMode === 'transactions' ? 'var(--primary, #2563eb)' : 'transparent',
+                      color: bankViewMode === 'transactions' ? '#ffffff' : 'var(--text-secondary)'
+                    }}
+                  >
+                    <Receipt size={14} />
+                    <span>Auto-Tracked Transactions</span>
+                    <span
+                      style={{
+                        background: bankViewMode === 'transactions' ? 'rgba(255, 255, 255, 0.25)' : 'var(--border, rgba(255, 255, 255, 0.1))',
+                        color: bankViewMode === 'transactions' ? '#ffffff' : 'var(--text-muted)',
+                        fontSize: '0.72rem',
+                        padding: '1px 6px',
+                        borderRadius: '10px',
+                        fontWeight: 700
+                      }}
+                    >
+                      {displayedAutoTransactions.length}
+                    </span>
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -2663,93 +2760,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                 </div>
               )}
 
-              {/* 2. SWIFT BAR: Switch between Daily Statement Ledger and Auto-Tracked Transactions */}
-              <div
-                className="swift-bar-container animate-fade-in"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  background: 'var(--card-bg, rgba(255, 255, 255, 0.04))',
-                  padding: '4px',
-                  borderRadius: '12px',
-                  border: '1px solid var(--card-border, rgba(255, 255, 255, 0.1))',
-                  width: 'fit-content',
-                  margin: '1.25rem 0 1rem 0'
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={() => setBankViewMode('ledger')}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.5rem 1.15rem',
-                    borderRadius: '8px',
-                    fontSize: '0.86rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    border: 'none',
-                    transition: 'all 0.2s ease',
-                    background: bankViewMode === 'ledger' ? 'var(--primary, #2563eb)' : 'transparent',
-                    color: bankViewMode === 'ledger' ? '#ffffff' : 'var(--text-secondary)'
-                  }}
-                >
-                  <FileText size={16} />
-                  <span>Daily Statement Ledger</span>
-                  {bankOverview?.dailySummaries?.length > 0 && (
-                    <span
-                      style={{
-                        background: bankViewMode === 'ledger' ? 'rgba(255, 255, 255, 0.25)' : 'var(--border, rgba(255, 255, 255, 0.1))',
-                        color: bankViewMode === 'ledger' ? '#ffffff' : 'var(--text-muted)',
-                        fontSize: '0.72rem',
-                        padding: '1px 6px',
-                        borderRadius: '10px',
-                        fontWeight: 700
-                      }}
-                    >
-                      {displayedDailySummaries.length}
-                    </span>
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setBankViewMode('transactions')}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.5rem 1.15rem',
-                    borderRadius: '8px',
-                    fontSize: '0.86rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    border: 'none',
-                    transition: 'all 0.2s ease',
-                    background: bankViewMode === 'transactions' ? 'var(--primary, #2563eb)' : 'transparent',
-                    color: bankViewMode === 'transactions' ? '#ffffff' : 'var(--text-secondary)'
-                  }}
-                >
-                  <Receipt size={16} />
-                  <span>Auto-Tracked Transactions</span>
-                  <span
-                    style={{
-                      background: bankViewMode === 'transactions' ? 'rgba(255, 255, 255, 0.25)' : 'var(--border, rgba(255, 255, 255, 0.1))',
-                      color: bankViewMode === 'transactions' ? '#ffffff' : 'var(--text-muted)',
-                      fontSize: '0.72rem',
-                      padding: '1px 6px',
-                      borderRadius: '10px',
-                      fontWeight: 700
-                    }}
-                  >
-                    {displayedAutoTransactions.length}
-                  </span>
-                </button>
-              </div>
-
-              {/* 3. DAILY STATEMENT RECONCILIATION TABLE (Shown when Ledger mode active) */}
+              {/* 2. DAILY STATEMENT RECONCILIATION TABLE (Shown when Ledger mode active) */}
               {bankViewMode === 'ledger' && bankOverview?.dailySummaries && bankOverview.dailySummaries.length > 0 && (
                 <div
                   className="data-card glass animate-fade-in"
@@ -2873,6 +2884,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                               outline: 'none'
                             }}
                           >
+                            <option value={8}>8</option>
                             <option value={10}>10</option>
                             <option value={25}>25</option>
                             <option value={50}>50</option>

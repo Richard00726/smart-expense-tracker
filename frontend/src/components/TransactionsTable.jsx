@@ -330,7 +330,7 @@ const TransactionsTable = ({
   const [editingTx, setEditingTx] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(8);
   const isDeletingRef = useRef(false);
 
   const sortedTransactions = useMemo(() => {
@@ -654,6 +654,7 @@ const TransactionsTable = ({
                     outline: 'none'
                   }}
                 >
+                  <option value={8}>8</option>
                   <option value={10}>10</option>
                   <option value={25}>25</option>
                   <option value={50}>50</option>
