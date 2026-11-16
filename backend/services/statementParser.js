@@ -211,6 +211,43 @@ function extractCounterparty(narration) {
 function categorizeTransaction(narration, type, counterparty) {
   const text = ((narration || '') + ' ' + (counterparty || '')).toLowerCase();
 
+  // Handle CREDIT (Deposit / Inward Money) specifically
+  if (type === 'credit') {
+    // 1. Salary / Payroll / Stipend
+    if (text.includes('salary') || text.includes('payroll') || text.includes('stipend')) {
+      return 'Salary';
+    }
+
+    // 2. Bank Interest / Dividend / Int. Paid
+    if (text.includes('interest') || text.includes('int.pd') || text.includes('dividend') || text.includes('int credit') || text.includes('int:')) {
+      return 'Interest & Investments';
+    }
+
+    // 3. Refunds, Reversals & Cashback
+    if (text.includes('refund') || text.includes('cashback') || text.includes('reversal') || text.includes('reward') || text.includes('rev/')) {
+      return 'Refund & Cashback';
+    }
+
+    // 4. Reimbursement
+    if (text.includes('reim') || text.includes('reimbursement') || text.includes('claim')) {
+      return 'Reimbursement';
+    }
+
+    // 5. Self / Bank Transfer (NEFT, IMPS, RTGS, M-Bank self, Bank Transfer)
+    if (text.includes('mbank') || text.includes('self/by') || text.includes('self transfer') || text.includes('bank transfer') || text.includes('self') || text.includes('neft') || text.includes('rtgs') || text.includes('imps')) {
+      return 'Bank Transfer';
+    }
+
+    // 6. UPI Inward Transfer (P2P payments received, e.g. from friends/family like INFANT RICHART)
+    if (text.includes('upi') || text.includes('/upi') || text.includes('upi/')) {
+      return 'UPI Transfer';
+    }
+
+    // 7. General Credit fallback (NEVER Daily Expense!)
+    return 'Other Income';
+  }
+
+  // Handle DEBIT (Withdrawal / Outward Money)
   // 1. Salary / Income
   if (text.includes('salary') || text.includes('payroll') || text.includes('stipend')) {
     return 'Salary';

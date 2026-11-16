@@ -141,8 +141,19 @@ router.get("/transactions", protect, async (req, res) => {
       ]
     });
 
-    // Map id to _id for frontend compatibility
-    const mappedTransactions = transactions.map(t => ({ ...t, _id: t.id }));
+    // Auto-heal any legacy credit transactions mistakenly marked as Daily Expense
+    const { categorizeTransaction } = require('../services/statementParser');
+    const mappedTransactions = transactions.map(t => {
+      if (t.type === 'credit' && (!t.category || t.category === 'Daily Expense')) {
+        const fixedCat = categorizeTransaction(t.note || '', 'credit', t.counterparty || '');
+        prisma.transaction.update({
+          where: { id: t.id },
+          data: { category: fixedCat }
+        }).catch(() => {});
+        return { ...t, _id: t.id, category: fixedCat };
+      }
+      return { ...t, _id: t.id };
+    });
     txCache.set(cacheKey, { data: mappedTransactions, timestamp: Date.now() });
     res.json(mappedTransactions);
   } catch (error) {
@@ -253,13 +264,18 @@ router.get("/summary", protect, async (req, res) => {
         dailyMap[dayKey] = (dailyMap[dayKey] || 0) + t.amount;
       } else if (isCredit) {
         walletIncomeMap[t.wallet] = (walletIncomeMap[t.wallet] || 0) + t.amount;
-        if (t.category) {
-          if (!categoryIncomeMap[t.category]) {
-            categoryIncomeMap[t.category] = { total: 0, cash: 0, upi: 0 };
+        let cat = t.category;
+        if (!cat || cat === 'Daily Expense') {
+          const { categorizeTransaction } = require('../services/statementParser');
+          cat = categorizeTransaction(t.note || '', 'credit', t.counterparty || '');
+        }
+        if (cat) {
+          if (!categoryIncomeMap[cat]) {
+            categoryIncomeMap[cat] = { total: 0, cash: 0, upi: 0 };
           }
-          categoryIncomeMap[t.category].total += t.amount;
-          if (t.wallet === 'Cash') categoryIncomeMap[t.category].cash += t.amount;
-          else if (t.wallet === 'UPI') categoryIncomeMap[t.category].upi += t.amount;
+          categoryIncomeMap[cat].total += t.amount;
+          if (t.wallet === 'Cash') categoryIncomeMap[cat].cash += t.amount;
+          else if (t.wallet === 'UPI') categoryIncomeMap[cat].upi += t.amount;
         }
       }
 

@@ -341,9 +341,9 @@ const TransactionsTable = ({
                   </td>
                   <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
                     {tx.type === 'credit' ? (
-                      <span className="type-pill type-deposit">DEPOSIT</span>
+                      <span className="type-pill type-credit">CREDIT</span>
                     ) : (
-                      <span className="type-pill type-withdrawal">WITHDRAWAL</span>
+                      <span className="type-pill type-debit">DEBIT</span>
                     )}
                   </td>
                   <td 
@@ -439,12 +439,12 @@ const TransactionsTable = ({
                     )}
                     <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
                       {tx.type === 'credit' ? (
-                        <span className="type-pill type-deposit">
-                          {isBankTx ? 'DEPOSIT' : 'CREDIT'}
+                        <span className="type-pill type-credit">
+                          CREDIT
                         </span>
                       ) : (
-                        <span className="type-pill type-withdrawal">
-                          {isBankTx ? 'WITHDRAWAL' : 'DEBIT'}
+                        <span className="type-pill type-debit">
+                          DEBIT
                         </span>
                       )}
                     </td>

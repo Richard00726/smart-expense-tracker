@@ -424,13 +424,15 @@ tr:hover td {
   white-space: nowrap !important;
 }
 
-.type-deposit {
+.type-deposit,
+.type-credit {
   background: var(--success-bg);
   color: var(--success);
   border: 1px solid var(--success-border);
 }
 
-.type-withdrawal {
+.type-withdrawal,
+.type-debit {
   background: var(--danger-bg);
   color: var(--danger);
   border: 1px solid var(--danger-border);
