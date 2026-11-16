@@ -141,26 +141,48 @@ router.get("/transactions", protect, async (req, res) => {
       ]
     });
 
-    // Auto-heal any legacy credit transactions mistakenly marked as Daily Expense or UPI Transfer, and rename Credit Card Bill
-    const { categorizeTransaction } = require('../services/statementParser');
+    // Auto-heal any legacy transactions (both credit and debit) and counterparty
+    const { categorizeTransaction, extractCounterparty } = require('../services/statementParser');
     const mappedTransactions = transactions.map(t => {
-      if (t.type === 'credit' && (!t.category || t.category === 'Daily Expense' || t.category === 'UPI Transfer')) {
-        const fixedCat = categorizeTransaction(t.note || '', 'credit', t.counterparty || '');
+      let updatedCat = t.category;
+      let updatedCp = t.counterparty;
+      let needsDbUpdate = false;
+
+      if (t.type === 'credit' && (!t.category || t.category === 'Daily Expense' || t.category === 'UPI Transfer' || t.category === 'Credit Card Bill')) {
+        updatedCat = categorizeTransaction(t.note || '', 'credit', t.counterparty || '');
+        needsDbUpdate = true;
+      } else if (t.type === 'debit') {
+        if (t.category === 'Credit Card Bill') {
+          updatedCat = 'Credit Card Bill Amount';
+          needsDbUpdate = true;
+        } else if (t.category === 'Daily Expense' || !t.category || t.category === 'Uncategorized') {
+          const reCat = categorizeTransaction(t.note || '', 'debit', t.counterparty || '');
+          if (reCat !== 'Daily Expense') {
+            updatedCat = reCat;
+            needsDbUpdate = true;
+          }
+        }
+      }
+
+      if (t.note || t.counterparty) {
+        const raw = t.note || t.counterparty || '';
+        if (/loan\s*coll/i.test(raw) || /mbank\//i.test(raw) || /^ta\s*bill/i.test(raw) || /^annualhealth/i.test(raw) || /^cr\s*crd\s*bill/i.test(raw) || /thangamaligai/i.test(raw)) {
+          const cleanCp = extractCounterparty(raw);
+          if (cleanCp && cleanCp !== t.counterparty) {
+            updatedCp = cleanCp;
+            needsDbUpdate = true;
+          }
+        }
+      }
+
+      if (needsDbUpdate) {
         prisma.transaction.update({
           where: { id: t.id },
-          data: { category: fixedCat }
+          data: { category: updatedCat, counterparty: updatedCp }
         }).catch(() => {});
-        return { ...t, _id: t.id, category: fixedCat };
       }
-      if (t.category === 'Credit Card Bill') {
-        const fixedCat = 'Credit Card Bill Amount';
-        prisma.transaction.update({
-          where: { id: t.id },
-          data: { category: fixedCat }
-        }).catch(() => {});
-        return { ...t, _id: t.id, category: fixedCat };
-      }
-      return { ...t, _id: t.id };
+
+      return { ...t, _id: t.id, category: updatedCat, counterparty: updatedCp };
     });
     txCache.set(cacheKey, { data: mappedTransactions, timestamp: Date.now() });
     res.json(mappedTransactions);
@@ -263,6 +285,10 @@ router.get("/summary", protect, async (req, res) => {
         walletSpendMap[t.wallet] = (walletSpendMap[t.wallet] || 0) + t.amount;
         let cat = t.category;
         if (cat === 'Credit Card Bill') cat = 'Credit Card Bill Amount';
+        if ((cat === 'Daily Expense' || !cat || cat === 'Uncategorized') && t.note && (/loan/i.test(t.note) || /thanga/i.test(t.note) || /billpay/i.test(t.note))) {
+          const { categorizeTransaction } = require('../services/statementParser');
+          cat = categorizeTransaction(t.note, 'debit', t.counterparty || '');
+        }
         if (cat) {
           if (!categorySpendMap[cat]) {
             categorySpendMap[cat] = { total: 0, cash: 0, upi: 0 };

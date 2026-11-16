@@ -43,6 +43,7 @@ const TransactionForm = ({ onTransactionComplete, type, onTypeChange, hideToggle
     'Travel',
     'Healthcare',
     'Entertainment',
+    'Loan & EMI',
     'ATM',
     'Daily Expense',
     'Bank Transfer',

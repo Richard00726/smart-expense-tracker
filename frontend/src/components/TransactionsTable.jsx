@@ -4,37 +4,126 @@ import { ListFilter, Trash2, FileX, Edit2 } from 'lucide-react';
 import TransactionForm from './TransactionForm';
 import { getCurrency } from '../services/api';
 
-const getCleanPayee = (tx) => {
-  if (tx.counterparty) return tx.counterparty;
-  if (!tx.note) return tx.wallet === 'Cash' ? 'Cash Transaction' : 'Bank Transaction';
-  
-  // Format: UPI/000000652067/Indian Railways/SBIN/Pay
-  const upiMatch = tx.note.match(/UPI\/\d+\/([^/]+)/i);
-  if (upiMatch && upiMatch[1]) return upiMatch[1].trim();
+const cleanPayeeString = (str) => {
+  if (!str) return '';
+  let s = str.trim();
 
-  // Format: MBank/627806381285/Tr To SELVI T/Rent or MBank/629812953800/Self/by LOURDURAJ M
-  const mbankMatch = tx.note.match(/MBank\/\d+\/(?:Tr To\s+|To\s+|Self\/by\s+|by\s+)?([^/]+)/i);
-  if (mbankMatch && mbankMatch[1]) {
-    const rawTarget = mbankMatch[1].trim();
-    if (rawTarget.toLowerCase().startsWith('self')) return 'Self Transfer';
-    if (rawTarget.length > 2) return `Transfer to ${rawTarget}`;
+  // 1. Loan Collection / EMI Repayment
+  if (/loan\s*coll/i.test(s) || /loan\s*recovery/i.test(s) || /loan\s*emi/i.test(s) || /loan\s*repay/i.test(s)) {
+    const acMatch = s.match(/-?(\d{8,16})/);
+    if (acMatch) {
+      const acLast4 = acMatch[1].slice(-4);
+      return `Loan EMI Repayment (A/c •••${acLast4})`;
+    }
+    return 'Loan EMI Repayment';
+  }
+
+  // 2. TMB M-Bank BillPay (Mobile Recharge, Electricity, etc.)
+  if (/billpay/i.test(s)) {
+    if (/airtel/i.test(s)) return 'Airtel Mobile Recharge';
+    if (/jio/i.test(s)) return 'Jio Mobile Recharge';
+    if (/vi\b|vodafone/i.test(s)) return 'Vi Mobile Recharge';
+    if (/tamil\s*nadu\s*power|tneb|electricity/i.test(s)) return 'TNEB Electricity Bill';
+    const bpMatch = s.match(/BillPay\/([^/]+)/i);
+    if (bpMatch && bpMatch[1]) return bpMatch[1].trim();
+    return 'Bill Payment';
+  }
+
+  // 3. TMB M-Bank Transfers
+  if (/mbank/i.test(s)) {
+    if (/self/i.test(s)) {
+      const byMatch = s.match(/(?:by|to)\s+([A-Za-z\s]+?)(?:\/|\.|\s+Self|$)/i);
+      const name = byMatch ? byMatch[1].trim() : '';
+      return name ? `Self Transfer (${name})` : 'Self Transfer';
+    }
+    const toMatch = s.match(/(?:Tr To|To|IMPSP2A To)\s+([A-Za-z\s\.]+?)(?:\/|\d{10,}|$)/i);
+    if (toMatch && toMatch[1]) {
+      const cleanName = toMatch[1].replace(/s\/o/i, '').trim();
+      if (cleanName.length > 2) return `Transfer to ${cleanName}`;
+    }
+    const fromMatch = s.match(/Tr by\s+([A-Za-z\s\.]+?)(?:\/|\.|$)/i);
+    if (fromMatch && fromMatch[1]) {
+      return `Transfer from ${fromMatch[1].trim()}`;
+    }
     return 'Bank Transfer';
   }
 
-  // Format: ATM/CASH/571563/629813571563
-  if (/^ATM\/CASH/i.test(tx.note)) return 'ATM Cash Withdrawal';
+  // 4. Bank Savings Interest Credit
+  if (/int\.pd|interest\s*credit|sb\s*int/i.test(s)) {
+    const datesMatch = s.match(/Int\.Pd[:\s]*([\d-]+(?:\s+to\s+[\d-]+)?)/i);
+    return datesMatch ? `Bank Interest (${datesMatch[1].trim()})` : 'Bank Savings Interest';
+  }
 
-  // Format: Cr Crd bill SEP2026...
-  if (/^Cr\s*Crd\s*bill/i.test(tx.note)) return 'Credit Card Bill Payment';
-  
-  // Format: REIM FOR THE DATE...
-  if (/^REIM\s+FOR/i.test(tx.note)) return 'Bank Reimbursement';
-  
-  return tx.note;
+  // 5. Monthly Salary
+  if (/salary\s*for/i.test(s) || /payroll/i.test(s)) {
+    const monthMatch = s.match(/MONTH\s+OF\s+([A-Za-z0-9]+)/i);
+    return monthMatch ? `Salary Credit (${monthMatch[1].toUpperCase()})` : 'Monthly Salary Credit';
+  }
+
+  // 6. Reimbursements & Travel Claims
+  if (/^reim\s+for/i.test(s)) {
+    const dateMatch = s.match(/DATE\s+OF\s+(\d{4})(\d{2})(\d{2})/i);
+    if (dateMatch) {
+      return `Bank Reimbursement (${dateMatch[3]}/${dateMatch[2]}/${dateMatch[1]})`;
+    }
+    return 'Bank Reimbursement';
+  }
+  if (/ta\s*bill/i.test(s)) return 'Travel Allowance (TA) Claim';
+  if (/health\s*checkup/i.test(s)) return 'Annual Health Checkup';
+
+  // 7. Credit Card Bill
+  if (/^Cr\s*Crd\s*bill/i.test(s) || /credit\s*card\s*bill/i.test(s)) {
+    const monthMatch = s.match(/bill\s+([A-Za-z0-9]+)/i);
+    return monthMatch ? `Credit Card Bill (${monthMatch[1].replace(/[^A-Za-z0-9]/g, '')})` : 'Credit Card Bill Payment';
+  }
+
+  // 8. ATM Cash Withdrawal
+  if (/^ATM\/CASH/i.test(s) || /cash\s*wdl/i.test(s)) return 'ATM Cash Withdrawal';
+
+  // 9. Jewellery Shops
+  if (/lalithaa\s*jewel/i.test(s)) return 'Lalithaa Jewellery';
+  if (/g\s*r\s*thanga|grt\s*jewel/i.test(s)) return 'GRT Thangamaligai';
+  if (/tanishq/i.test(s)) return 'Tanishq Jewellery';
+  if (/malabar/i.test(s)) return 'Malabar Gold & Diamonds';
+  if (/kalyan/i.test(s)) return 'Kalyan Jewellers';
+
+  // 10. Clean UPI Payees
+  if (s.toUpperCase().startsWith('UPI/') || s.toUpperCase().startsWith('UPI-')) {
+    const parts = s.split(/[/\\-]/).map(p => p.trim()).filter(Boolean);
+    for (let i = 1; i < parts.length; i++) {
+      const part = parts[i];
+      if (
+        part &&
+        !/^\d+$/.test(part) &&
+        part.length > 2 &&
+        !['UPI', 'CR', 'DR', 'YESB', 'HDFC', 'ICIC', 'SBIN', 'PYTM', 'OKAXIS', 'OKICICI', 'OKSBI', 'UTIB', 'IDIB', 'TMBL', 'IPOS', 'PAY', 'SENDING MONEY', 'SENDING MONE', 'PAYMENT'].includes(part.toUpperCase())
+      ) {
+        return part;
+      }
+    }
+  }
+
+  return s;
+};
+
+const getCleanPayee = (tx) => {
+  if (tx.counterparty && !tx.counterparty.startsWith('Loan Coll.') && !tx.counterparty.startsWith('MBank/')) {
+    return cleanPayeeString(tx.counterparty);
+  }
+  if (tx.note) return cleanPayeeString(tx.note);
+  if (tx.counterparty) return cleanPayeeString(tx.counterparty);
+  return tx.wallet === 'Cash' ? 'Cash Transaction' : 'Bank Transaction';
 };
 
 const getCategoryStyle = (category) => {
   const cat = (category || '').toLowerCase();
+  if (cat.includes('loan') || cat.includes('emi')) {
+    return {
+      background: 'rgba(225, 29, 72, 0.12)',
+      color: '#e11d48',
+      border: '1px solid rgba(225, 29, 72, 0.25)'
+    };
+  }
   if (cat === 'salary' || cat === 'income') {
     return {
       background: 'var(--success-bg)',
