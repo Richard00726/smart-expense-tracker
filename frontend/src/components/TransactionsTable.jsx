@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { ListFilter, Trash2, FileX, Edit2 } from 'lucide-react';
+import { ListFilter, Trash2, FileX, Edit2, ChevronLeft, ChevronRight } from 'lucide-react';
 import TransactionForm from './TransactionForm';
 import { getCurrency } from '../services/api';
 
@@ -329,6 +329,8 @@ const TransactionsTable = ({
   const [deletingId, setDeletingId] = useState(null);
   const [editingTx, setEditingTx] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const isDeletingRef = useRef(false);
 
   const sortedTransactions = useMemo(() => {
@@ -342,6 +344,15 @@ const TransactionsTable = ({
       return createdB - createdA;
     });
   }, [transactions]);
+
+  const totalEntries = sortedTransactions.length;
+  const totalPages = Math.max(1, Math.ceil(totalEntries / rowsPerPage));
+  const validPage = Math.min(Math.max(1, currentPage), totalPages);
+  const startIndex = (validPage - 1) * rowsPerPage;
+  const endIndex = Math.min(startIndex + rowsPerPage, totalEntries);
+  const paginatedTransactions = useMemo(() => {
+    return sortedTransactions.slice(startIndex, endIndex);
+  }, [sortedTransactions, startIndex, endIndex]);
 
   const hasAnyRef = sortedTransactions.some(tx => Boolean(getRefNo(tx)));
   const shouldHideRef = hideRef || !hasAnyRef;
@@ -407,7 +418,9 @@ const TransactionsTable = ({
           <h3>No Transactions Found</h3>
           <p>Add some money or record an expense to get started.</p>
         </div>
-      ) : isBankSyncTable ? (
+      ) : (
+        <>
+          {isBankSyncTable ? (
         /* Read-Only Bank Statement Table Layout (Official Bank Records) */
         <div className="table-container transaction-table-container">
           <table style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
@@ -422,7 +435,7 @@ const TransactionsTable = ({
               </tr>
             </thead>
             <tbody>
-              {sortedTransactions.map((tx) => (
+              {paginatedTransactions.map((tx) => (
                 <tr key={tx._id || tx.id} className="animate-fade-in">
                   <td style={{ whiteSpace: 'nowrap', fontWeight: '600' }}>
                     {new Date(tx.date || tx.txnDate).toLocaleDateString([], { 
@@ -492,7 +505,7 @@ const TransactionsTable = ({
               </tr>
             </thead>
             <tbody>
-              {sortedTransactions.map((tx) => {
+              {paginatedTransactions.map((tx) => {
                 const payee = getCleanPayee(tx);
                 const ref = getRefNo(tx);
                 const isBankTx = isBankSyncTable || tx.entryMode === 'bank_sync' || Boolean(tx.bank);
@@ -600,6 +613,108 @@ const TransactionsTable = ({
           </table>
         </div>
       )}
+
+      {totalEntries > 0 && (
+          <div
+            className="pagination-bar"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0.75rem 1rem',
+              borderTop: '1px solid var(--border)',
+              fontSize: '0.82rem',
+              color: 'var(--text-secondary)',
+              flexWrap: 'wrap',
+              gap: '0.75rem',
+              background: 'var(--card-bg-subtle, transparent)'
+            }}
+          >
+            <div style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>
+              {startIndex + 1}–{endIndex} of {totalEntries} entries
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span>Rows</span>
+                <select
+                  value={rowsPerPage}
+                  onChange={(e) => {
+                    setRowsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  style={{
+                    background: 'var(--card-bg, #1e293b)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '6px',
+                    padding: '3px 8px',
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                    outline: 'none'
+                  }}
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={validPage <= 1}
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid var(--border)',
+                    borderRadius: '6px',
+                    width: '28px',
+                    height: '28px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: validPage <= 1 ? 'not-allowed' : 'pointer',
+                    opacity: validPage <= 1 ? 0.35 : 1,
+                    color: 'var(--text-primary)'
+                  }}
+                  title="Previous Page"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+
+                <span style={{ fontWeight: 600, color: 'var(--text-primary)', minWidth: '40px', textAlign: 'center' }}>
+                  {validPage} / {totalPages}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={validPage >= totalPages}
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid var(--border)',
+                    borderRadius: '6px',
+                    width: '28px',
+                    height: '28px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: validPage >= totalPages ? 'not-allowed' : 'pointer',
+                    opacity: validPage >= totalPages ? 0.35 : 1,
+                    color: 'var(--text-primary)'
+                  }}
+                  title="Next Page"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    )}
 
       {confirmDeleteId && createPortal(
         <div className="modal-overlay">

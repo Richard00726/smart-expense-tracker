@@ -6,7 +6,8 @@ import {
   Smartphone, FileText, UploadCloud, CheckCircle2, AlertCircle,
   RefreshCw, Eye, EyeOff, ShieldCheck, Mail, Key, HelpCircle,
   ChevronDown, ChevronUp, LogOut, Check, ArrowRight, ArrowLeft,
-  ExternalLink, Building2, Lock, Sparkles, Clock, Settings, Copy, Download, Trash2
+  ExternalLink, Building2, Lock, Sparkles, Clock, Settings, Copy, Download, Trash2,
+  Receipt, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import {
   getBankSyncSettings,
@@ -88,6 +89,9 @@ const SUPPORTED_BANKS = [
 const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransaction, currentUser, balances }) => {
   const [mainTab, setMainTab] = useState('auto');
   const [subTab, setSubTab] = useState('add');
+  const [bankViewMode, setBankViewMode] = useState('ledger');
+  const [ledgerPage, setLedgerPage] = useState(1);
+  const [ledgerRowsPerPage, setLedgerRowsPerPage] = useState(10);
 
   // Wizard state: 1 = Bank Selection, 2 = Credentials & Password
   const [wizardStep, setWizardStep] = useState(() => {
@@ -1298,6 +1302,15 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
 
     return list;
   }, [effectiveDailySummaries, ledgerFilterType, ledgerFilterValue, effectiveLedgerMonth, todayLocalDateStr]);
+
+  const totalLedgerEntries = displayedDailySummaries.length;
+  const totalLedgerPages = Math.max(1, Math.ceil(totalLedgerEntries / ledgerRowsPerPage));
+  const validLedgerPage = Math.min(Math.max(1, ledgerPage), totalLedgerPages);
+  const startLedgerIdx = (validLedgerPage - 1) * ledgerRowsPerPage;
+  const endLedgerIdx = Math.min(startLedgerIdx + ledgerRowsPerPage, totalLedgerEntries);
+  const paginatedDailySummaries = useMemo(() => {
+    return displayedDailySummaries.slice(startLedgerIdx, endLedgerIdx);
+  }, [displayedDailySummaries, startLedgerIdx, endLedgerIdx]);
 
   const renderLedgerFilterControls = () => (
     <DateHierarchyFilter
@@ -2650,8 +2663,94 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                 </div>
               )}
 
-              {/* 2. DAILY STATEMENT RECONCILIATION TABLE (Row-by-Row Bank Ledger) */}
-              {bankOverview?.dailySummaries && bankOverview.dailySummaries.length > 0 && (
+              {/* 2. SWIFT BAR: Switch between Daily Statement Ledger and Auto-Tracked Transactions */}
+              <div
+                className="swift-bar-container animate-fade-in"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  background: 'var(--card-bg, rgba(255, 255, 255, 0.04))',
+                  padding: '4px',
+                  borderRadius: '12px',
+                  border: '1px solid var(--card-border, rgba(255, 255, 255, 0.1))',
+                  width: 'fit-content',
+                  margin: '1.25rem 0 1rem 0'
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setBankViewMode('ledger')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.5rem 1.15rem',
+                    borderRadius: '8px',
+                    fontSize: '0.86rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    border: 'none',
+                    transition: 'all 0.2s ease',
+                    background: bankViewMode === 'ledger' ? 'var(--primary, #2563eb)' : 'transparent',
+                    color: bankViewMode === 'ledger' ? '#ffffff' : 'var(--text-secondary)'
+                  }}
+                >
+                  <FileText size={16} />
+                  <span>Daily Statement Ledger</span>
+                  {bankOverview?.dailySummaries?.length > 0 && (
+                    <span
+                      style={{
+                        background: bankViewMode === 'ledger' ? 'rgba(255, 255, 255, 0.25)' : 'var(--border, rgba(255, 255, 255, 0.1))',
+                        color: bankViewMode === 'ledger' ? '#ffffff' : 'var(--text-muted)',
+                        fontSize: '0.72rem',
+                        padding: '1px 6px',
+                        borderRadius: '10px',
+                        fontWeight: 700
+                      }}
+                    >
+                      {displayedDailySummaries.length}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setBankViewMode('transactions')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.5rem 1.15rem',
+                    borderRadius: '8px',
+                    fontSize: '0.86rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    border: 'none',
+                    transition: 'all 0.2s ease',
+                    background: bankViewMode === 'transactions' ? 'var(--primary, #2563eb)' : 'transparent',
+                    color: bankViewMode === 'transactions' ? '#ffffff' : 'var(--text-secondary)'
+                  }}
+                >
+                  <Receipt size={16} />
+                  <span>Auto-Tracked Transactions</span>
+                  <span
+                    style={{
+                      background: bankViewMode === 'transactions' ? 'rgba(255, 255, 255, 0.25)' : 'var(--border, rgba(255, 255, 255, 0.1))',
+                      color: bankViewMode === 'transactions' ? '#ffffff' : 'var(--text-muted)',
+                      fontSize: '0.72rem',
+                      padding: '1px 6px',
+                      borderRadius: '10px',
+                      fontWeight: 700
+                    }}
+                  >
+                    {displayedAutoTransactions.length}
+                  </span>
+                </button>
+              </div>
+
+              {/* 3. DAILY STATEMENT RECONCILIATION TABLE (Shown when Ledger mode active) */}
+              {bankViewMode === 'ledger' && bankOverview?.dailySummaries && bankOverview.dailySummaries.length > 0 && (
                 <div
                   className="data-card glass animate-fade-in"
                   style={{
@@ -2688,7 +2787,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                         </tr>
                       </thead>
                       <tbody>
-                        {displayedDailySummaries.map((summary, idx) => (
+                        {paginatedDailySummaries.map((summary, idx) => (
                           <tr key={summary.period || idx}>
                             <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
                               {summary.statementDate || summary.period}
@@ -2731,20 +2830,124 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                       </tbody>
                     </table>
                   </div>
+
+                  {/* Daily Statement Ledger Pagination */}
+                  {totalLedgerEntries > 0 && (
+                    <div
+                      className="pagination-bar"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '0.75rem 1rem',
+                        borderTop: '1px solid var(--border)',
+                        fontSize: '0.82rem',
+                        color: 'var(--text-secondary)',
+                        flexWrap: 'wrap',
+                        gap: '0.75rem',
+                        background: 'var(--card-bg-subtle, transparent)',
+                        marginTop: '0.5rem'
+                      }}
+                    >
+                      <div style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>
+                        {startLedgerIdx + 1}–{endLedgerIdx} of {totalLedgerEntries} entries
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span>Rows</span>
+                          <select
+                            value={ledgerRowsPerPage}
+                            onChange={(e) => {
+                              setLedgerRowsPerPage(Number(e.target.value));
+                              setLedgerPage(1);
+                            }}
+                            style={{
+                              background: 'var(--card-bg, #1e293b)',
+                              color: 'var(--text-primary)',
+                              border: '1px solid var(--border)',
+                              borderRadius: '6px',
+                              padding: '3px 8px',
+                              fontSize: '0.82rem',
+                              cursor: 'pointer',
+                              outline: 'none'
+                            }}
+                          >
+                            <option value={10}>10</option>
+                            <option value={25}>25</option>
+                            <option value={50}>50</option>
+                            <option value={100}>100</option>
+                          </select>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <button
+                            type="button"
+                            onClick={() => setLedgerPage(p => Math.max(1, p - 1))}
+                            disabled={validLedgerPage <= 1}
+                            style={{
+                              background: 'transparent',
+                              border: '1px solid var(--border)',
+                              borderRadius: '6px',
+                              width: '28px',
+                              height: '28px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: validLedgerPage <= 1 ? 'not-allowed' : 'pointer',
+                              opacity: validLedgerPage <= 1 ? 0.35 : 1,
+                              color: 'var(--text-primary)'
+                            }}
+                            title="Previous Page"
+                          >
+                            <ChevronLeft size={16} />
+                          </button>
+
+                          <span style={{ fontWeight: 600, color: 'var(--text-primary)', minWidth: '40px', textAlign: 'center' }}>
+                            {validLedgerPage} / {totalLedgerPages}
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={() => setLedgerPage(p => Math.min(totalLedgerPages, p + 1))}
+                            disabled={validLedgerPage >= totalLedgerPages}
+                            style={{
+                              background: 'transparent',
+                              border: '1px solid var(--border)',
+                              borderRadius: '6px',
+                              width: '28px',
+                              height: '28px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: validLedgerPage >= totalLedgerPages ? 'not-allowed' : 'pointer',
+                              opacity: validLedgerPage >= totalLedgerPages ? 0.35 : 1,
+                              color: 'var(--text-primary)'
+                            }}
+                            title="Next Page"
+                          >
+                            <ChevronRight size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* 3. STATEMENT TRANSACTIONS TABLE (Clean Read-Only Bank Records) */}
-              <TransactionsTable
-                title="Auto-Tracked Bank & UPI Transactions"
-                badge={`Showing ${displayedAutoTransactions.length} transaction(s)`}
-                transactions={displayedAutoTransactions}
-                loading={txLoading}
-                onDelete={handleDeleteTransaction}
-                onEditComplete={refreshAllData}
-                filterElement={renderTxFilterControls()}
-                isBankSyncTable={true}
-              />
+              {/* 4. STATEMENT TRANSACTIONS TABLE (Shown when Auto-Tracked mode active) */}
+              {bankViewMode === 'transactions' && (
+                <TransactionsTable
+                  title="Auto-Tracked Bank & UPI Transactions"
+                  badge={`Showing ${displayedAutoTransactions.length} transaction(s)`}
+                  transactions={displayedAutoTransactions}
+                  loading={txLoading}
+                  onDelete={handleDeleteTransaction}
+                  onEditComplete={refreshAllData}
+                  filterElement={renderTxFilterControls()}
+                  isBankSyncTable={true}
+                />
+              )}
             </div>
           )}
 
