@@ -161,6 +161,34 @@ const getCategoryStyle = (category) => {
       border: '1px solid rgba(14, 116, 144, 0.25)'
     };
   }
+  if (cat.includes('refund') || cat.includes('cashback')) {
+    return {
+      background: 'rgba(16, 185, 129, 0.12)',
+      color: '#10b981',
+      border: '1px solid rgba(16, 185, 129, 0.25)'
+    };
+  }
+  if (cat.includes('interest')) {
+    return {
+      background: 'rgba(6, 182, 212, 0.12)',
+      color: '#06b6d4',
+      border: '1px solid rgba(6, 182, 212, 0.25)'
+    };
+  }
+  if (cat.includes('rental') || cat.includes('business')) {
+    return {
+      background: 'rgba(147, 51, 234, 0.12)',
+      color: '#9333ea',
+      border: '1px solid rgba(147, 51, 234, 0.25)'
+    };
+  }
+  if (cat.includes('other income')) {
+    return {
+      background: 'rgba(100, 116, 139, 0.12)',
+      color: '#64748b',
+      border: '1px solid rgba(100, 116, 139, 0.25)'
+    };
+  }
   if (cat.includes('daily expense')) {
     return {
       background: 'rgba(37, 99, 235, 0.12)',

@@ -233,17 +233,22 @@ function categorizeTransaction(narration, type, counterparty) {
       return 'Reimbursement';
     }
 
-    // 5. Self / Bank Transfer (NEFT, IMPS, RTGS, M-Bank self, Bank Transfer)
+    // 5. Rental / Business Income
+    if (text.includes('rent received') || text.includes('rent credit') || text.includes('rental income') || text.includes('invoice') || text.includes('freelance') || text.includes('consulting') || text.includes('client payment')) {
+      return 'Rental / Business Income';
+    }
+
+    // 6. Self / Bank Transfer (NEFT, IMPS, RTGS, M-Bank self, Bank Transfer)
     if (text.includes('mbank') || text.includes('self/by') || text.includes('self transfer') || text.includes('bank transfer') || text.includes('self') || text.includes('neft') || text.includes('rtgs') || text.includes('imps')) {
       return 'Bank Transfer';
     }
 
-    // 6. UPI Inward Transfer (P2P payments received, e.g. from friends/family like INFANT RICHART)
+    // 7. UPI Inward Transfer (P2P payments received, e.g. from friends/family like INFANT RICHART)
     if (text.includes('upi') || text.includes('/upi') || text.includes('upi/')) {
       return 'UPI Transfer';
     }
 
-    // 7. General Credit fallback (NEVER Daily Expense!)
+    // 8. General Credit fallback (NEVER Daily Expense!)
     return 'Other Income';
   }
 

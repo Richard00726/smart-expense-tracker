@@ -15,7 +15,19 @@ const TransactionForm = ({ onTransactionComplete, type, onTypeChange, hideToggle
   const [toast, setToast] = useState(null);
   const isSubmittingRef = React.useRef(false);
 
-  const categories = [
+  const incomeCategories = [
+    'UPI Transfer',
+    'Salary',
+    'Bank Transfer',
+    'Refund & Cashback',
+    'Interest & Investments',
+    'Reimbursement',
+    'Rental / Business Income',
+    'Other Income',
+    'Other'
+  ];
+
+  const expenseCategories = [
     'Food & Groceries',
     'Rent & Housing',
     'Bills & Recharge',
@@ -35,9 +47,12 @@ const TransactionForm = ({ onTransactionComplete, type, onTypeChange, hideToggle
     'Daily Expense',
     'Bank Transfer',
     'UPI Transfer',
-    'Salary',
-    'Reimbursement',
     'Other'
+  ];
+
+  const categories = type === 'credit' ? incomeCategories : expenseCategories;
+  const allKnownCategories = [
+    ...new Set([...incomeCategories, ...expenseCategories])
   ];
 
   useEffect(() => {
@@ -46,7 +61,7 @@ const TransactionForm = ({ onTransactionComplete, type, onTypeChange, hideToggle
       setAmount(editData.amount || '');
       
       if (editData.category) {
-        if (categories.includes(editData.category)) {
+        if (allKnownCategories.includes(editData.category)) {
           setCategory(editData.category);
           setCustomCategory('');
         } else {
