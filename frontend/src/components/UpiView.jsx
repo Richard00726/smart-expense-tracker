@@ -217,6 +217,31 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
 
   const fileInputRef = useRef(null);
   const hasAutoSyncedRef = useRef(false);
+  const upperRowRef = useRef(null);
+  const [upperRowWidth, setUpperRowWidth] = useState(null);
+
+  useEffect(() => {
+    const measure = () => {
+      if (upperRowRef.current) {
+        const w = upperRowRef.current.scrollWidth || upperRowRef.current.offsetWidth;
+        if (w > 200) setUpperRowWidth(w);
+      }
+    };
+    measure();
+    const timer = setTimeout(measure, 100);
+    window.addEventListener('resize', measure);
+    let ro = null;
+    if (typeof ResizeObserver !== 'undefined' && upperRowRef.current) {
+      ro = new ResizeObserver(measure);
+      ro.observe(upperRowRef.current);
+    }
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', measure);
+      if (ro) ro.disconnect();
+    };
+  }, [bankOverview, lastSyncTime, googleTokenExpired, hasGoogleAuth, syncingGmail]);
+
   const [copiedKey, setCopiedKey] = useState(null);
 
   const handleCopy = (text, key) => {
@@ -1479,372 +1504,390 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
               width: '100%',
               textAlign: 'center'
             }}>
-              {/* Row 1: Status Badges (Totally Centered) */}
+              {/* Centered Synchronized Block: Top row sets width, Bottom row matches left and right edges with space-between */}
               <div
                 style={{
                   display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.45rem',
-                  width: '100%',
-                  flexWrap: 'wrap'
+                  flexDirection: 'column',
+                  gap: '0.75rem',
+                  width: 'fit-content',
+                  maxWidth: '100%',
+                  margin: '0 auto'
                 }}
               >
-                {/* 1. Main Bank Sync Status Indicator */}
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                  <span
-                    className={(!googleTokenExpired && hasGoogleAuth) ? "pulse-dot-green" : "pulse-dot-orange"}
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      background: (!googleTokenExpired && hasGoogleAuth) ? '#10b981' : '#f59e0b',
-                      flexShrink: 0
-                    }}
-                  />
-                  <strong style={{ fontSize: '0.88rem', color: 'var(--text-primary)' }}>
-                    {googleTokenExpired
-                      ? 'Gmail Session Expired'
-                      : hasGoogleAuth
-                        ? 'TMB Bank Auto-Sync Active'
-                        : hasGoogleCredentials
-                          ? 'Google Credentials Saved'
-                          : 'TMB Bank Statement Active'}
-                  </strong>
-                </div>
-
-                {/* 2. Connection Health Indicator Badge */}
-                {googleTokenExpired ? (
-                  <button
-                    onClick={handleConnectGmail}
-                    className="btn"
-                    style={{
-                      fontSize: '0.74rem',
-                      background: 'linear-gradient(135deg, #ef4444, #dc2626)',
-                      color: '#fff',
-                      padding: '0.2rem 0.65rem',
-                      borderRadius: '20px',
-                      border: 'none',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.3rem',
-                      fontWeight: 600,
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0,
-                      boxShadow: '0 2px 8px rgba(239,68,68,0.3)'
-                    }}
-                    title="Google refresh token expired after 7-day limit in test mode. Click to re-authorize and resume sync."
-                  >
-                    <AlertCircle size={11} />
-                    Session Expired – Re-link Gmail →
-                  </button>
-                ) : (hasGoogleAuth && !googleTokenExpired) ? (
-                  <span
-                    style={{
-                      fontSize: '0.74rem',
-                      background: 'rgba(16, 185, 129, 0.12)',
-                      color: '#10b981',
-                      border: '1px solid rgba(16, 185, 129, 0.25)',
-                      padding: '0.16rem 0.5rem',
-                      borderRadius: '20px',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.3rem',
-                      fontWeight: 600,
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0
-                    }}
-                    title="Google Cloud OAuth authorization is active and verified"
-                  >
-                    <CheckCircle2 size={11} />
-                    Gmail Linked
-                  </span>
-                ) : hasGoogleCredentials ? (
-                  <button
-                    onClick={handleConnectGmail}
-                    className="btn"
-                    style={{
-                      fontSize: '0.74rem',
-                      background: 'linear-gradient(135deg, #4285f4, #2563eb)',
-                      color: '#fff',
-                      padding: '0.2rem 0.65rem',
-                      borderRadius: '20px',
-                      border: 'none',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.3rem',
-                      fontWeight: 600,
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0,
-                      boxShadow: '0 2px 8px rgba(66,133,244,0.3)'
-                    }}
-                    title="Click to authorize with Google so statements can be read from Gmail"
-                  >
-                    <ExternalLink size={11} />
-                    Click to Authorize Gmail →
-                  </button>
-                ) : null}
-
-                {/* 3. Connected Bank Email Badge */}
-                {(googleEmail || targetBankEmail) && (
-                  <span
-                    style={{
-                      fontSize: '0.74rem',
-                      background: 'rgba(59,130,246,0.1)',
-                      color: '#3b82f6',
-                      padding: '0.16rem 0.5rem',
-                      borderRadius: '20px',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.3rem',
-                      whiteSpace: 'nowrap',
-                      maxWidth: '150px',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      flexShrink: 1
-                    }}
-                    title={`Bank registered email: ${googleEmail || targetBankEmail}`}
-                  >
-                    <Mail size={11} style={{ flexShrink: 0 }} />
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {googleEmail || targetBankEmail}
-                    </span>
-                  </span>
-                )}
-
-                {/* 4. Masked Bank Account Number */}
-                {bankOverview?.accountNo && (
-                  <span
-                    style={{
-                      fontSize: '0.74rem',
-                      background: 'rgba(99, 102, 241, 0.1)',
-                      color: '#818cf8',
-                      border: '1px solid rgba(99, 102, 241, 0.25)',
-                      padding: '0.16rem 0.5rem',
-                      borderRadius: '20px',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.3rem',
-                      fontWeight: 600,
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0
-                    }}
-                    title="Masked TMB Savings Account Number"
-                  >
-                    <Building2 size={11} />
-                    A/C •••• {bankOverview.accountNo.replace(/^X+/, '') || bankOverview.accountNo.slice(-5)}
-                  </span>
-                )}
-
-                {/* 5. Live Statement Closing Balance */}
-                <span
+                {/* Row 1: Status Badges (Strict single row: left edge aligns with bottom left, right edge aligns with bottom right) */}
+                <div
+                  ref={upperRowRef}
                   style={{
-                    fontSize: '0.76rem',
-                    background: 'rgba(56, 189, 248, 0.12)',
-                    color: '#38bdf8',
-                    border: '1px solid rgba(56, 189, 248, 0.25)',
-                    padding: '0.16rem 0.55rem',
-                    borderRadius: '20px',
-                    display: 'inline-flex',
+                    display: 'flex',
                     alignItems: 'center',
-                    gap: '0.3rem',
-                    fontWeight: 700,
-                    whiteSpace: 'nowrap',
-                    flexShrink: 0
+                    gap: '0.45rem',
+                    flexWrap: 'nowrap',
+                    overflowX: 'auto',
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
+                    WebkitOverflowScrolling: 'touch',
+                    paddingBottom: '2px',
+                    width: 'fit-content',
+                    maxWidth: '100%'
                   }}
-                  title="Live statement Closing Balance synchronized with wallet"
                 >
-                  💰 Balance: ₹{effectiveLiveBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </span>
+                  {/* 1. Main Bank Sync Status Indicator */}
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                    <span
+                      className={(!googleTokenExpired && hasGoogleAuth) ? "pulse-dot-green" : "pulse-dot-orange"}
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        background: (!googleTokenExpired && hasGoogleAuth) ? '#10b981' : '#f59e0b',
+                        flexShrink: 0
+                      }}
+                    />
+                    <strong style={{ fontSize: '0.88rem', color: 'var(--text-primary)' }}>
+                      {googleTokenExpired
+                        ? 'Gmail Session Expired'
+                        : hasGoogleAuth
+                          ? 'TMB Bank Auto-Sync Active'
+                          : hasGoogleCredentials
+                            ? 'Google Credentials Saved'
+                            : 'TMB Bank Statement Active'}
+                    </strong>
+                  </div>
 
-                {/* 6. Timestamp strictly locked next to balance */}
-                {lastSyncTime && (
+                  {/* 2. Connection Health Indicator Badge */}
+                  {googleTokenExpired ? (
+                    <button
+                      onClick={handleConnectGmail}
+                      className="btn"
+                      style={{
+                        fontSize: '0.74rem',
+                        background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                        color: '#fff',
+                        padding: '0.2rem 0.65rem',
+                        borderRadius: '20px',
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                        fontWeight: 600,
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0,
+                        boxShadow: '0 2px 8px rgba(239,68,68,0.3)'
+                      }}
+                      title="Google refresh token expired after 7-day limit in test mode. Click to re-authorize and resume sync."
+                    >
+                      <AlertCircle size={11} />
+                      Session Expired – Re-link Gmail →
+                    </button>
+                  ) : (hasGoogleAuth && !googleTokenExpired) ? (
+                    <span
+                      style={{
+                        fontSize: '0.74rem',
+                        background: 'rgba(16, 185, 129, 0.12)',
+                        color: '#10b981',
+                        border: '1px solid rgba(16, 185, 129, 0.25)',
+                        padding: '0.16rem 0.5rem',
+                        borderRadius: '20px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                        fontWeight: 600,
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0
+                      }}
+                      title="Google Cloud OAuth authorization is active and verified"
+                    >
+                      <CheckCircle2 size={11} />
+                      Gmail Linked
+                    </span>
+                  ) : hasGoogleCredentials ? (
+                    <button
+                      onClick={handleConnectGmail}
+                      className="btn"
+                      style={{
+                        fontSize: '0.74rem',
+                        background: 'linear-gradient(135deg, #4285f4, #2563eb)',
+                        color: '#fff',
+                        padding: '0.2rem 0.65rem',
+                        borderRadius: '20px',
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                        fontWeight: 600,
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0,
+                        boxShadow: '0 2px 8px rgba(66,133,244,0.3)'
+                      }}
+                      title="Click to authorize with Google so statements can be read from Gmail"
+                    >
+                      <ExternalLink size={11} />
+                      Click to Authorize Gmail →
+                    </button>
+                  ) : null}
+
+                  {/* 3. Connected Bank Email Badge */}
+                  {(googleEmail || targetBankEmail) && (
+                    <span
+                      style={{
+                        fontSize: '0.74rem',
+                        background: 'rgba(59,130,246,0.1)',
+                        color: '#3b82f6',
+                        padding: '0.16rem 0.5rem',
+                        borderRadius: '20px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                        whiteSpace: 'nowrap',
+                        maxWidth: '150px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        flexShrink: 1
+                      }}
+                      title={`Bank registered email: ${googleEmail || targetBankEmail}`}
+                    >
+                      <Mail size={11} style={{ flexShrink: 0 }} />
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {googleEmail || targetBankEmail}
+                      </span>
+                    </span>
+                  )}
+
+                  {/* 4. Masked Bank Account Number */}
+                  {bankOverview?.accountNo && (
+                    <span
+                      style={{
+                        fontSize: '0.74rem',
+                        background: 'rgba(99, 102, 241, 0.1)',
+                        color: '#818cf8',
+                        border: '1px solid rgba(99, 102, 241, 0.25)',
+                        padding: '0.16rem 0.5rem',
+                        borderRadius: '20px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                        fontWeight: 600,
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0
+                      }}
+                      title="Masked TMB Savings Account Number"
+                    >
+                      <Building2 size={11} />
+                      A/C •••• {bankOverview.accountNo.replace(/^X+/, '') || bankOverview.accountNo.slice(-5)}
+                    </span>
+                  )}
+
+                  {/* 5. Live Statement Closing Balance */}
                   <span
                     style={{
-                      fontSize: '0.74rem',
-                      background: 'rgba(16, 185, 129, 0.08)',
-                      border: '1px solid rgba(16, 185, 129, 0.22)',
-                      color: 'var(--text-secondary)',
+                      fontSize: '0.76rem',
+                      background: 'rgba(56, 189, 248, 0.12)',
+                      color: '#38bdf8',
+                      border: '1px solid rgba(56, 189, 248, 0.25)',
                       padding: '0.16rem 0.55rem',
                       borderRadius: '20px',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '0.35rem',
+                      gap: '0.3rem',
+                      fontWeight: 700,
                       whiteSpace: 'nowrap',
                       flexShrink: 0
                     }}
-                    title="Last time bank statements were checked"
+                    title="Live statement Closing Balance synchronized with wallet"
                   >
-                    <Clock size={11} style={{ color: '#10b981', flexShrink: 0 }} />
-                    <span>
-                      Last sync: {lastSyncTime.toLocaleDateString() === new Date().toLocaleDateString() ? 'Today' : lastSyncTime.toLocaleDateString()} at {lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                    <button
-                      onClick={() => {
-                        if (googleTokenExpired || !hasGoogleAuth) {
-                          handleConnectGmail();
-                        } else {
-                          handleSyncGmailNow({ fullSync: false });
-                        }
-                      }}
-                      disabled={syncingGmail}
-                      style={{
-                        background: (googleTokenExpired || !hasGoogleAuth) ? 'rgba(239, 68, 68, 0.15)' : 'rgba(56, 189, 248, 0.12)',
-                        border: 'none',
-                        color: (googleTokenExpired || !hasGoogleAuth) ? '#ef4444' : '#38bdf8',
-                        cursor: syncingGmail ? 'not-allowed' : 'pointer',
-                        padding: '2px 4px',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: '4px',
-                        transition: 'all 0.2s ease',
-                        marginLeft: '0.15rem'
-                      }}
-                      title={googleTokenExpired ? "Gmail authorization expired. Click to re-link." : "Check Gmail for new statements now"}
-                    >
-                      <RefreshCw size={11} style={{ animation: syncingGmail ? 'spin 1s linear infinite' : 'none' }} />
-                    </button>
+                    💰 Balance: ₹{effectiveLiveBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
-                )}
-              </div>
 
-              {/* Row 2: Action Buttons & Swift Bar Switcher (Totally Centered) */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '1rem',
-                  width: '100%',
-                  flexWrap: 'wrap',
-                  marginTop: '0.25rem'
-                }}
-              >
-                {/* Action Buttons */}
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-                  {syncingGmail && (
+                  {/* 6. Timestamp strictly locked next to balance */}
+                  {lastSyncTime && (
                     <span
                       style={{
-                        fontSize: '0.78rem',
-                        background: 'rgba(16, 185, 129, 0.1)',
-                        color: '#10b981',
-                        padding: '0.25rem 0.65rem',
+                        fontSize: '0.74rem',
+                        background: 'rgba(16, 185, 129, 0.08)',
+                        border: '1px solid rgba(16, 185, 129, 0.22)',
+                        color: 'var(--text-secondary)',
+                        padding: '0.16rem 0.55rem',
                         borderRadius: '20px',
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '0.35rem',
-                        fontWeight: 500
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0
                       }}
-                      title="Automatically syncing daily bank statements in background"
+                      title="Last time bank statements were checked"
                     >
-                      <RefreshCw size={11} style={{ animation: 'spin 1s linear infinite' }} />
-                      Auto-syncing...
+                      <Clock size={11} style={{ color: '#10b981', flexShrink: 0 }} />
+                      <span>
+                        Last sync: {lastSyncTime.toLocaleDateString() === new Date().toLocaleDateString() ? 'Today' : lastSyncTime.toLocaleDateString()} at {lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      <button
+                        onClick={() => {
+                          if (googleTokenExpired || !hasGoogleAuth) {
+                            handleConnectGmail();
+                          } else {
+                            handleSyncGmailNow({ fullSync: false });
+                          }
+                        }}
+                        disabled={syncingGmail}
+                        style={{
+                          background: (googleTokenExpired || !hasGoogleAuth) ? 'rgba(239, 68, 68, 0.15)' : 'rgba(56, 189, 248, 0.12)',
+                          border: 'none',
+                          color: (googleTokenExpired || !hasGoogleAuth) ? '#ef4444' : '#38bdf8',
+                          cursor: syncingGmail ? 'not-allowed' : 'pointer',
+                          padding: '2px 4px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: '4px',
+                          transition: 'all 0.2s ease',
+                          marginLeft: '0.15rem'
+                        }}
+                        title={googleTokenExpired ? "Gmail authorization expired. Click to re-link." : "Check Gmail for new statements now"}
+                      >
+                        <RefreshCw size={11} style={{ animation: syncingGmail ? 'spin 1s linear infinite' : 'none' }} />
+                      </button>
                     </span>
                   )}
+                </div>
 
-                  {bankOverview?.customerDetails && (
+                {/* Row 2: Action Buttons & Swift Bar Switcher (space-between: left matches top-left, right matches top-right) */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '1rem',
+                    width: upperRowWidth ? `${upperRowWidth}px` : '100%',
+                    maxWidth: '100%',
+                    marginTop: '0.25rem'
+                  }}
+                >
+                  {/* Left: Action Buttons */}
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                    {syncingGmail && (
+                      <span
+                        style={{
+                          fontSize: '0.78rem',
+                          background: 'rgba(16, 185, 129, 0.1)',
+                          color: '#10b981',
+                          padding: '0.25rem 0.65rem',
+                          borderRadius: '20px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          fontWeight: 500
+                        }}
+                        title="Automatically syncing daily bank statements in background"
+                      >
+                        <RefreshCw size={11} style={{ animation: 'spin 1s linear infinite' }} />
+                        Auto-syncing...
+                      </span>
+                    )}
+
+                    {bankOverview?.customerDetails && (
+                      <button
+                        onClick={() => setShowBankDetails(b => !b)}
+                        className="btn"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          background: showBankDetails ? 'var(--accent-primary)' : 'var(--empty-state-bg)',
+                          border: '1px solid var(--card-border)',
+                          color: showBankDetails ? '#fff' : 'var(--text-primary)',
+                          padding: '0.45rem 0.85rem',
+                          borderRadius: '8px',
+                          fontSize: '0.82rem'
+                        }}
+                      >
+                        <Building2 size={13} />
+                        {showBankDetails ? 'Hide Bank Details ▴' : 'Bank & Branch Details ▾'}
+                      </button>
+                    )}
+
                     <button
-                      onClick={() => setShowBankDetails(b => !b)}
+                      onClick={() => setShowDropzone(d => !d)}
                       className="btn"
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '0.4rem',
-                        background: showBankDetails ? 'var(--accent-primary)' : 'var(--empty-state-bg)',
+                        background: showDropzone ? 'var(--accent-primary)' : 'var(--empty-state-bg)',
                         border: '1px solid var(--card-border)',
-                        color: showBankDetails ? '#fff' : 'var(--text-primary)',
+                        color: showDropzone ? '#fff' : 'var(--text-primary)',
                         padding: '0.45rem 0.85rem',
                         borderRadius: '8px',
                         fontSize: '0.82rem'
                       }}
                     >
-                      <Building2 size={13} />
-                      {showBankDetails ? 'Hide Bank Details ▴' : 'Bank & Branch Details ▾'}
+                      <UploadCloud size={13} />
+                      {showDropzone ? 'Close PDF Drop' : 'Drop Statement'}
                     </button>
-                  )}
+                  </div>
 
-                  <button
-                    onClick={() => setShowDropzone(d => !d)}
-                    className="btn"
+                  {/* Right: Swift Bar Toggle (Option B: Switch between Daily Statement Ledger and Auto-Tracked Transactions) */}
+                  <div
+                    className="swift-bar-container"
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '0.4rem',
-                      background: showDropzone ? 'var(--accent-primary)' : 'var(--empty-state-bg)',
-                      border: '1px solid var(--card-border)',
-                      color: showDropzone ? '#fff' : 'var(--text-primary)',
-                      padding: '0.45rem 0.85rem',
-                      borderRadius: '8px',
-                      fontSize: '0.82rem'
+                      gap: '0.25rem',
+                      background: 'var(--empty-state-bg, rgba(255, 255, 255, 0.05))',
+                      padding: '3px',
+                      borderRadius: '10px',
+                      border: '1px solid var(--card-border, rgba(255, 255, 255, 0.1))',
+                      flexShrink: 0
                     }}
                   >
-                    <UploadCloud size={13} />
-                    {showDropzone ? 'Close PDF Drop' : 'Drop Statement'}
-                  </button>
-                </div>
+                    <button
+                      type="button"
+                      onClick={() => setBankViewMode('ledger')}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        textAlign: 'center',
+                        padding: '0.45rem 1rem',
+                        borderRadius: '7px',
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        border: 'none',
+                        transition: 'all 0.2s ease',
+                        background: bankViewMode === 'ledger' ? 'var(--primary, #2563eb)' : 'transparent',
+                        color: bankViewMode === 'ledger' ? '#ffffff' : 'var(--text-secondary)',
+                        boxShadow: bankViewMode === 'ledger' ? '0 1px 4px rgba(37, 99, 235, 0.25)' : 'none'
+                      }}
+                    >
+                      <span>Daily Statement Ledger</span>
+                    </button>
 
-                {/* Swift Bar Toggle (Option B: Switch between Daily Statement Ledger and Auto-Tracked Transactions) */}
-                <div
-                  className="swift-bar-container"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.25rem',
-                    background: 'var(--empty-state-bg, rgba(255, 255, 255, 0.05))',
-                    padding: '3px',
-                    borderRadius: '10px',
-                    border: '1px solid var(--card-border, rgba(255, 255, 255, 0.1))',
-                    flexShrink: 0
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setBankViewMode('ledger')}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      textAlign: 'center',
-                      padding: '0.45rem 1rem',
-                      borderRadius: '7px',
-                      fontSize: '0.82rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      border: 'none',
-                      transition: 'all 0.2s ease',
-                      background: bankViewMode === 'ledger' ? 'var(--primary, #2563eb)' : 'transparent',
-                      color: bankViewMode === 'ledger' ? '#ffffff' : 'var(--text-secondary)',
-                      boxShadow: bankViewMode === 'ledger' ? '0 1px 4px rgba(37, 99, 235, 0.25)' : 'none'
-                    }}
-                  >
-                    <span>Daily Statement Ledger</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setBankViewMode('transactions')}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      textAlign: 'center',
-                      padding: '0.45rem 1rem',
-                      borderRadius: '7px',
-                      fontSize: '0.82rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      border: 'none',
-                      transition: 'all 0.2s ease',
-                      background: bankViewMode === 'transactions' ? 'var(--primary, #2563eb)' : 'transparent',
-                      color: bankViewMode === 'transactions' ? '#ffffff' : 'var(--text-secondary)',
-                      boxShadow: bankViewMode === 'transactions' ? '0 1px 4px rgba(37, 99, 235, 0.25)' : 'none'
-                    }}
-                  >
-                    <span>Auto-Tracked Transactions</span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setBankViewMode('transactions')}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        textAlign: 'center',
+                        padding: '0.45rem 1rem',
+                        borderRadius: '7px',
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        border: 'none',
+                        transition: 'all 0.2s ease',
+                        background: bankViewMode === 'transactions' ? 'var(--primary, #2563eb)' : 'transparent',
+                        color: bankViewMode === 'transactions' ? '#ffffff' : 'var(--text-secondary)',
+                        boxShadow: bankViewMode === 'transactions' ? '0 1px 4px rgba(37, 99, 235, 0.25)' : 'none'
+                      }}
+                    >
+                      <span>Auto-Tracked Transactions</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
