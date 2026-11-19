@@ -208,6 +208,19 @@ async function syncUserBankStatements(user, options = {}) {
             continue;
           }
 
+          // Compute transaction timestamp:
+          // Statement date gives the transaction day; Gmail email arrival time gives the exact time
+          const emailTime = (att.emailDateObj instanceof Date && !isNaN(att.emailDateObj))
+            ? att.emailDateObj
+            : (att.emailDate ? new Date(att.emailDate) : new Date());
+
+          const dFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' });
+          const [year, month, day] = dFormatter.format(item.txnDate || emailTime).split('-').map(Number);
+          const tFormatter = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+          const [hour, minute, second] = tFormatter.format(emailTime).split(':').map(Number);
+          const pad = n => String(n).padStart(2, '0');
+          const finalDate = new Date(`${year}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}:${pad(second)}+05:30`);
+
           await prisma.transaction.create({
             data: {
               userId: user.id,
@@ -223,8 +236,8 @@ async function syncUserBankStatements(user, options = {}) {
               bank: item.bank || 'TMB Bank',
               accountNo: item.accountNo || result.metadata?.accountNo || null,
               entryMode: 'auto',
-              txnDate: item.txnDate || new Date(),
-              date: item.txnDate || new Date()
+              txnDate: finalDate,
+              date: finalDate
             }
           });
 

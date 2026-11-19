@@ -312,6 +312,29 @@ const getRefNo = (tx) => {
   return match ? match[1] : null;
 };
 
+const getDisplayTime = (tx) => {
+  if (!tx || !tx.date) return null;
+  const d = new Date(tx.date || tx.txnDate);
+  if (isNaN(d.getTime())) return null;
+
+  // If date in UTC is strictly 00:00:00 or 18:30:00 (dummy midnight placeholder),
+  // use createdAt (the actual time when fetched into the application) so we never show fake 05:30 am
+  const isDummyTime = (d.getUTCHours() === 0 && d.getUTCMinutes() === 0 && d.getUTCSeconds() === 0) ||
+                      (d.getUTCHours() === 18 && d.getUTCMinutes() === 30 && d.getUTCSeconds() === 0);
+
+  if (isDummyTime) {
+    if (tx.createdAt) {
+      const cDate = new Date(tx.createdAt);
+      if (!isNaN(cDate.getTime())) {
+        return cDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+    }
+    return null;
+  }
+
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
 const TransactionsTable = ({ 
   transactions, 
   loading, 
@@ -438,11 +461,18 @@ const TransactionsTable = ({
               {paginatedTransactions.map((tx) => (
                 <tr key={tx._id || tx.id} className="animate-fade-in">
                   <td style={{ whiteSpace: 'nowrap', fontWeight: '600' }}>
-                    {new Date(tx.date || tx.txnDate).toLocaleDateString([], { 
-                      year: 'numeric', 
-                      month: 'short', 
-                      day: 'numeric'
-                    })}
+                    <div>
+                      {new Date(tx.date || tx.txnDate).toLocaleDateString([], { 
+                        year: 'numeric', 
+                        month: 'short', 
+                        day: 'numeric'
+                      })}
+                    </div>
+                    {getDisplayTime(tx) && (
+                      <div className="payee-subtitle" style={{ marginTop: '2px' }}>
+                        {getDisplayTime(tx)}
+                      </div>
+                    )}
                   </td>
                   <td>
                     <span className="payee-title">
@@ -509,7 +539,7 @@ const TransactionsTable = ({
                 const payee = getCleanPayee(tx);
                 const ref = getRefNo(tx);
                 const isBankTx = isBankSyncTable || tx.entryMode === 'bank_sync' || Boolean(tx.bank);
-                const hasSpecificTime = tx.wallet !== 'Cash' && tx.date && (new Date(tx.date).getHours() !== 0 || new Date(tx.date).getMinutes() !== 0);
+                const displayTime = getDisplayTime(tx);
 
                 return (
                   <tr key={tx._id || tx.id} className="animate-fade-in">
@@ -521,9 +551,9 @@ const TransactionsTable = ({
                           day: 'numeric'
                         })}
                       </div>
-                      {hasSpecificTime && (
+                      {displayTime && (
                         <div className="payee-subtitle" style={{ marginTop: '2px' }}>
-                          {new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {displayTime}
                         </div>
                       )}
                     </td>

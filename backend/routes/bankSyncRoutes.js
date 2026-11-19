@@ -258,6 +258,15 @@ router.post('/upload-statement', upload.single('statementPdf'), async (req, res)
         continue;
       }
 
+      // Combine transaction date from statement with current upload/fetch time
+      const uploadTime = new Date();
+      const dFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' });
+      const [year, month, day] = dFormatter.format(item.txnDate || uploadTime).split('-').map(Number);
+      const tFormatter = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      const [hour, minute, second] = tFormatter.format(uploadTime).split(':').map(Number);
+      const pad = n => String(n).padStart(2, '0');
+      const finalDate = new Date(`${year}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}:${pad(second)}+05:30`);
+
       // Insert new transaction
       const created = await prisma.transaction.create({
         data: {
@@ -274,8 +283,8 @@ router.post('/upload-statement', upload.single('statementPdf'), async (req, res)
           bank: item.bank || 'TMB Bank',
           accountNo: item.accountNo || parseResult.metadata?.accountNo || null,
           entryMode: 'auto',
-          txnDate: item.txnDate || new Date(),
-          date: item.txnDate || new Date()
+          txnDate: finalDate,
+          date: finalDate
         }
       });
 
