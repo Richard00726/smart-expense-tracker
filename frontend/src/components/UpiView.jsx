@@ -217,6 +217,40 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
 
   const fileInputRef = useRef(null);
   const hasAutoSyncedRef = useRef(false);
+  const upperRowRef = useRef(null);
+  const [upperRowWidth, setUpperRowWidth] = useState(null);
+
+  useEffect(() => {
+    const measureUpperRow = () => {
+      if (upperRowRef.current) {
+        const lastChild = upperRowRef.current.lastElementChild;
+        if (lastChild) {
+          const rowRect = upperRowRef.current.getBoundingClientRect();
+          const lastRect = lastChild.getBoundingClientRect();
+          const calculatedWidth = Math.round(lastRect.right - rowRect.left);
+          if (calculatedWidth > 200) {
+            setUpperRowWidth(calculatedWidth);
+          }
+        }
+      }
+    };
+
+    measureUpperRow();
+    // Re-check after layout/fonts stabilize
+    const timer = setTimeout(measureUpperRow, 150);
+    window.addEventListener('resize', measureUpperRow);
+    let observer = null;
+    if (typeof ResizeObserver !== 'undefined' && upperRowRef.current) {
+      observer = new ResizeObserver(measureUpperRow);
+      observer.observe(upperRowRef.current);
+    }
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', measureUpperRow);
+      if (observer) observer.disconnect();
+    };
+  }, [bankOverview, lastSyncTime, googleTokenExpired, hasGoogleAuth, syncingGmail]);
+
   const [copiedKey, setCopiedKey] = useState(null);
 
   const handleCopy = (text, key) => {
@@ -1476,17 +1510,22 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
               boxShadow: '0 4px 20px rgba(0,0,0,0.05)'
             }}>
               {/* Row 1: Status Badges (Strict single row: Last Sync locked next to Balance, never wraps down) */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.45rem',
-                flexWrap: 'nowrap',
-                overflowX: 'auto',
-                scrollbarWidth: 'none',
-                msOverflowStyle: 'none',
-                WebkitOverflowScrolling: 'touch',
-                paddingBottom: '2px'
-              }}>
+              <div
+                ref={upperRowRef}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  flexWrap: 'nowrap',
+                  overflowX: 'auto',
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none',
+                  WebkitOverflowScrolling: 'touch',
+                  paddingBottom: '2px',
+                  width: 'fit-content',
+                  maxWidth: '100%'
+                }}
+              >
                 {/* 1. Main Bank Sync Status Indicator */}
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
                   <span
@@ -1716,7 +1755,9 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                   justifyContent: 'space-between',
                   gap: '0.75rem',
                   flexWrap: 'wrap',
-                  marginTop: '0.25rem'
+                  marginTop: '0.25rem',
+                  width: upperRowWidth ? `${upperRowWidth}px` : 'fit-content',
+                  maxWidth: '100%'
                 }}
               >
                 {/* Left: Action Buttons */}
@@ -1793,8 +1834,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                     padding: '3px',
                     borderRadius: '10px',
                     border: '1px solid var(--card-border, rgba(255, 255, 255, 0.1))',
-                    flexShrink: 0,
-                    marginRight: '2rem'
+                    flexShrink: 0
                   }}
                 >
                   <button
