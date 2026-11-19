@@ -1793,7 +1793,8 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                     padding: '3px',
                     borderRadius: '10px',
                     border: '1px solid var(--card-border, rgba(255, 255, 255, 0.1))',
-                    flexShrink: 0
+                    flexShrink: 0,
+                    marginRight: '2rem'
                   }}
                 >
                   <button
@@ -1802,8 +1803,8 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '0.45rem',
-                      padding: '0.4rem 0.85rem',
+                      justifyContent: 'center',
+                      padding: '0.42rem 0.95rem',
                       borderRadius: '7px',
                       fontSize: '0.82rem',
                       fontWeight: 600,
@@ -1814,7 +1815,6 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                       color: bankViewMode === 'ledger' ? '#ffffff' : 'var(--text-secondary)'
                     }}
                   >
-                    <FileText size={14} />
                     <span>Daily Statement Ledger</span>
                   </button>
 
@@ -1824,8 +1824,8 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '0.45rem',
-                      padding: '0.4rem 0.85rem',
+                      justifyContent: 'center',
+                      padding: '0.42rem 0.95rem',
                       borderRadius: '7px',
                       fontSize: '0.82rem',
                       fontWeight: 600,
@@ -1836,7 +1836,6 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                       color: bankViewMode === 'transactions' ? '#ffffff' : 'var(--text-secondary)'
                     }}
                   >
-                    <Receipt size={14} />
                     <span>Auto-Tracked Transactions</span>
                   </button>
                 </div>
