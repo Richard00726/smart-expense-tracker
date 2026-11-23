@@ -219,12 +219,17 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
   const hasAutoSyncedRef = useRef(false);
   const upperRowRef = useRef(null);
   const [upperRowWidth, setUpperRowWidth] = useState(null);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
 
   useEffect(() => {
     const measure = () => {
-      if (upperRowRef.current) {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      if (upperRowRef.current && !mobile) {
         const w = upperRowRef.current.scrollWidth || upperRowRef.current.offsetWidth;
         if (w > 200) setUpperRowWidth(w);
+      } else {
+        setUpperRowWidth(null);
       }
     };
     measure();
@@ -1504,13 +1509,13 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
               width: '100%',
               textAlign: 'center'
             }}>
-              {/* Centered Synchronized Block: Top row sets width, Bottom row matches left and right edges with space-between */}
+              {/* Centered Synchronized Block: Top row sets width on desktop; stacks responsive on mobile */}
               <div
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '0.75rem',
-                  width: 'fit-content',
+                  width: isMobile ? '100%' : 'fit-content',
                   maxWidth: '100%',
                   margin: '0 auto'
                 }}
@@ -1528,7 +1533,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                     msOverflowStyle: 'none',
                     WebkitOverflowScrolling: 'touch',
                     paddingBottom: '2px',
-                    width: 'fit-content',
+                    width: isMobile ? '100%' : 'fit-content',
                     maxWidth: '100%'
                   }}
                 >
@@ -1753,20 +1758,28 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                   )}
                 </div>
 
-                {/* Row 2: Action Buttons & Swift Bar Switcher (space-between: left matches top-left, right matches top-right) */}
+                {/* Row 2: Action Buttons & Swift Bar Switcher (Responsive: space-between on desktop, stacked on mobile) */}
                 <div
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '1rem',
-                    width: upperRowWidth ? `${upperRowWidth}px` : '100%',
+                    justifyContent: isMobile ? 'center' : 'space-between',
+                    flexDirection: isMobile ? 'column' : 'row',
+                    gap: isMobile ? '0.65rem' : '1rem',
+                    width: (!isMobile && upperRowWidth) ? `${upperRowWidth}px` : '100%',
                     maxWidth: '100%',
                     marginTop: '0.25rem'
                   }}
                 >
                   {/* Left: Action Buttons */}
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: isMobile ? 'center' : 'flex-start',
+                    gap: '0.65rem',
+                    flexWrap: 'wrap',
+                    width: isMobile ? '100%' : 'auto'
+                  }}>
                     {syncingGmail && (
                       <span
                         style={{

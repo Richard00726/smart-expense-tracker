@@ -978,6 +978,16 @@ path:focus-visible {
   .header-title {
     font-size: 1.5rem;
   }
+
+  .swift-bar-container {
+    width: 100%;
+    justify-content: center;
+  }
+  .swift-bar-container button {
+    flex: 1;
+    padding: 0.42rem 0.65rem !important;
+    font-size: 0.78rem !important;
+  }
 }
 
 /* Live Sync Badges & Animations */

@@ -12,6 +12,7 @@ import BudgetView from './components/BudgetView';
 import ErrorBoundary from './components/ErrorBoundary';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import SystemStatusOverlay from './components/SystemStatusOverlay';
+import IntroSplash from './components/IntroSplash';
 import { Wallet as WalletIcon, Home, PieChart, Activity, Sun, Moon, LogOut, User, Target, Smartphone, Coins, CreditCard } from 'lucide-react';
 import './index.css';
 import './App.css';
@@ -19,6 +20,13 @@ import './App.css';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
   const [currentUser, setCurrentUser] = useState(() => JSON.parse(localStorage.getItem('user') || '{}'));
+  const [showSplash, setShowSplash] = useState(() => {
+    try {
+      return sessionStorage.getItem('skip_splash') !== 'true';
+    } catch {
+      return true;
+    }
+  });
   const [hasSessionSplashShown, setHasSessionSplashShown] = useState(() => {
     try {
       return sessionStorage.getItem('skip_splash') === 'true';
@@ -354,6 +362,20 @@ function App() {
 
     checkAndSync();
   }, [isAuthenticated, currentUser?.email, currentUser?._id, currentUser?.id]);
+
+  if (showSplash) {
+    return (
+      <IntroSplash 
+        onFinish={() => {
+          setShowSplash(false);
+          setHasSessionSplashShown(true);
+          try {
+            sessionStorage.setItem('skip_splash', 'true');
+          } catch {}
+        }} 
+      />
+    );
+  }
 
   if (!isAuthenticated) {
     return (
