@@ -9,11 +9,12 @@ export default function SystemStatusOverlay() {
   const [status, setStatus] = useState(null);
   const [checking, setChecking] = useState(false);
   const [dismissedUpdate, setDismissedUpdate] = useState(false);
+  const [downloadStarted, setDownloadStarted] = useState(false);
 
   const checkStatus = async () => {
     try {
       setChecking(true);
-      const res = await axios.get(`${API_URL}/system/status?version=${CURRENT_APP_VERSION}`);
+      const res = await axios.get(`${API_URL}/system/status?version=${CURRENT_APP_VERSION}&_t=${Date.now()}`);
       if (res.data) {
         setStatus(res.data);
       }
@@ -198,6 +199,7 @@ export default function SystemStatusOverlay() {
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => {
+              setDownloadStarted(true);
               const targetUrl = status.downloadUrl || 'https://github.com/Richard00726/smart-expense-tracker/releases/download/v1.1.0/Smart-Expense-Tracker.apk';
               if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
                 e.preventDefault();
@@ -222,7 +224,7 @@ export default function SystemStatusOverlay() {
             }}
           >
             <Download size={16} />
-            Update Now
+            {downloadStarted ? 'Downloading...' : 'Update Now'}
           </a>
           {!isMandatory && (
             <button
@@ -242,6 +244,21 @@ export default function SystemStatusOverlay() {
             </button>
           )}
         </div>
+
+        {downloadStarted && (
+          <div style={{
+            marginTop: '12px',
+            padding: '8px 12px',
+            borderRadius: '8px',
+            background: 'rgba(16, 185, 129, 0.15)',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
+            fontSize: '12px',
+            color: '#6ee7b7',
+            lineHeight: '1.4'
+          }}>
+            📥 Downloading update... When complete, swipe down your notifications or open Downloads to tap and install the APK.
+          </div>
+        )}
       </div>
     );
   }

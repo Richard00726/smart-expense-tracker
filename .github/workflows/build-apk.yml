@@ -74,6 +74,8 @@ jobs:
         with:
           tag_name: v1.1.0
           name: "Smart Expense Tracker v1.1.0 APK"
+          overwrite: true
+          make_latest: true
           body: |
             ### 📱 Cash & UPI Smart Expense Tracker (Android APK v1.1.0)
             Download and install directly on your Android device to update:

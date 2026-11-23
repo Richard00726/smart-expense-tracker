@@ -17,12 +17,12 @@ let systemConfig = {
  * Public status endpoint checked by the APK and web app on launch
  */
 router.get('/status', (req, res) => {
-  const clientVersion = req.query.version;
-  let updateAvailable = false;
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  const clientVersion = (req.query.version || '').trim();
 
-  if (!clientVersion || clientVersion !== systemConfig.appVersion) {
-    updateAvailable = true;
-  }
+  // Versions considered up to date: 1.1, 1.1.0, 1.1.1, or matching latest appVersion
+  const isUpToDate = clientVersion === '1.1.0' || clientVersion === '1.1' || clientVersion === systemConfig.appVersion;
+  const updateAvailable = clientVersion ? !isUpToDate : false;
 
   res.json({
     ...systemConfig,
