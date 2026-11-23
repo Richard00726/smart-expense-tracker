@@ -5,11 +5,11 @@ const router = express.Router();
 let systemConfig = {
   maintenance: process.env.MAINTENANCE_MODE === 'true',
   maintenanceMessage: process.env.MAINTENANCE_MESSAGE || "Cash & UPI Tracker is undergoing scheduled server updates. We'll be back online shortly!",
-  appVersion: '1.0.0',
+  appVersion: '1.1.0',
   minSupportedVersion: '1.0.0',
-  updateAvailable: false,
-  changelog: 'TMB Bank automatic statement sync, UPI balance tracking, and improved performance.',
-  downloadUrl: 'https://github.com/Richard00726/smart-expense-tracker/releases/latest'
+  updateAvailable: true,
+  changelog: '✨ Starting Brand Animation (Smart Expense Tracker), TMB Bank Auto-Sync Swift Bar, real Gmail fetch timestamps, and mobile responsiveness.',
+  downloadUrl: 'https://github.com/Richard00726/smart-expense-tracker/releases/download/v1.1.0/Smart-Expense-Tracker.apk'
 };
 
 /**
@@ -20,8 +20,8 @@ router.get('/status', (req, res) => {
   const clientVersion = req.query.version;
   let updateAvailable = false;
 
-  if (clientVersion && systemConfig.appVersion) {
-    updateAvailable = clientVersion !== systemConfig.appVersion;
+  if (!clientVersion || clientVersion !== systemConfig.appVersion) {
+    updateAvailable = true;
   }
 
   res.json({

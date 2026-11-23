@@ -3,7 +3,7 @@ import { Wrench, Sparkles, RefreshCw, Download, X } from 'lucide-react';
 import axios from 'axios';
 import { API_URL } from '../services/api';
 
-const CURRENT_APP_VERSION = '1.0.0';
+const CURRENT_APP_VERSION = '1.1.0';
 
 export default function SystemStatusOverlay() {
   const [status, setStatus] = useState(null);
@@ -194,9 +194,16 @@ export default function SystemStatusOverlay() {
 
         <div style={{ display: 'flex', gap: '10px' }}>
           <a
-            href={status.downloadUrl || 'https://github.com/Richard00726/smart-expense-tracker/releases/latest'}
+            href={status.downloadUrl || 'https://github.com/Richard00726/smart-expense-tracker/releases/download/v1.1.0/Smart-Expense-Tracker.apk'}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={(e) => {
+              const targetUrl = status.downloadUrl || 'https://github.com/Richard00726/smart-expense-tracker/releases/download/v1.1.0/Smart-Expense-Tracker.apk';
+              if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
+                e.preventDefault();
+                window.open(targetUrl, '_system');
+              }
+            }}
             style={{
               flex: 1,
               display: 'inline-flex',
@@ -210,7 +217,8 @@ export default function SystemStatusOverlay() {
               fontWeight: 600,
               fontSize: '14px',
               textDecoration: 'none',
-              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)'
+              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
+              cursor: 'pointer'
             }}
           >
             <Download size={16} />
