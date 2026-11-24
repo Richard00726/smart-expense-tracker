@@ -1161,6 +1161,14 @@ path:focus-visible {
   .app-container {
     padding: 0.85rem;
     padding-bottom: calc(1rem + 80px); /* Space for bottom nav */
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  html, body, #root {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
   }
 
   /* Header on Mobile */
@@ -1392,13 +1400,17 @@ path:focus-visible {
   }
 
   .swift-bar-container {
-    width: 100%;
-    justify-content: center;
+    width: 100% !important;
+    display: flex !important;
+    box-sizing: border-box !important;
+    justify-content: stretch !important;
   }
   .swift-bar-container button {
-    flex: 1;
-    padding: 0.42rem 0.65rem !important;
+    flex: 1 1 50% !important;
+    min-width: 0 !important;
+    padding: 0.48rem 0.35rem !important;
     font-size: 0.78rem !important;
+    text-align: center !important;
   }
 }
 

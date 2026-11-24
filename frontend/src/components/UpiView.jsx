@@ -1394,7 +1394,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
         </div>
       )}
       {/* Main Mode Switcher */}
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '0.75rem' }}>
+      <div style={{ display: 'flex', gap: isMobile ? '0.5rem' : '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '0.75rem', width: '100%', boxSizing: 'border-box' }}>
         <button
           className="btn"
           style={{
@@ -1402,20 +1402,24 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '0.6rem',
+            gap: '0.45rem',
             background: mainTab === 'auto' ? 'var(--accent-primary, #6366f1)' : 'var(--empty-state-bg)',
             color: mainTab === 'auto' ? '#fff' : 'var(--text-primary)',
-            fontWeight: 600
+            fontWeight: 600,
+            fontSize: isMobile ? '0.82rem' : '0.9rem',
+            padding: isMobile ? '0.55rem 0.5rem' : '0.65rem 1.25rem',
+            whiteSpace: 'nowrap',
+            borderRadius: '10px'
           }}
           onClick={() => setMainTab('auto')}
         >
-          <Building2 size={17} />
-          Auto-Tracker-UPI (Bank Sync)
+          <Building2 size={16} />
+          <span>{isMobile ? '⚡ Bank Auto-Sync' : 'Auto-Tracker-UPI (Bank Sync)'}</span>
           {isConfigured && (
             <span
               style={{
-                width: 8,
-                height: 8,
+                width: 7,
+                height: 7,
                 borderRadius: '50%',
                 background: googleTokenExpired ? '#f59e0b' : '#10b981',
                 boxShadow: googleTokenExpired ? '0 0 8px #f59e0b' : '0 0 8px #10b981',
@@ -1428,14 +1432,18 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
         <button
           className="btn"
           style={{
-            flex: 1,
+            flex: isMobile ? '0 0 auto' : 1,
             background: mainTab === 'manual' ? 'var(--accent-primary, #6366f1)' : 'var(--empty-state-bg)',
             color: mainTab === 'manual' ? '#fff' : 'var(--text-primary)',
-            fontWeight: 600
+            fontWeight: 600,
+            fontSize: isMobile ? '0.82rem' : '0.9rem',
+            padding: isMobile ? '0.55rem 0.85rem' : '0.65rem 1.25rem',
+            whiteSpace: 'nowrap',
+            borderRadius: '10px'
           }}
           onClick={() => setMainTab('manual')}
         >
-          Manual Entry
+          <span>{isMobile ? '✏️ Manual Entry' : 'Manual Entry'}</span>
         </button>
       </div>
 
@@ -1527,8 +1535,9 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.45rem',
-                    flexWrap: 'nowrap',
-                    overflowX: 'auto',
+                    flexWrap: isMobile ? 'wrap' : 'nowrap',
+                    justifyContent: isMobile ? 'center' : 'flex-start',
+                    overflowX: isMobile ? 'visible' : 'auto',
                     scrollbarWidth: 'none',
                     msOverflowStyle: 'none',
                     WebkitOverflowScrolling: 'touch',
@@ -1845,60 +1854,65 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                   <div
                     className="swift-bar-container"
                     style={{
-                      display: 'inline-flex',
+                      display: 'flex',
                       alignItems: 'center',
                       gap: '0.25rem',
                       background: 'var(--empty-state-bg, rgba(255, 255, 255, 0.05))',
                       padding: '3px',
                       borderRadius: '10px',
                       border: '1px solid var(--card-border, rgba(255, 255, 255, 0.1))',
-                      flexShrink: 0
+                      width: isMobile ? '100%' : 'auto',
+                      boxSizing: 'border-box'
                     }}
                   >
                     <button
                       type="button"
                       onClick={() => setBankViewMode('ledger')}
                       style={{
+                        flex: isMobile ? 1 : 'none',
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         textAlign: 'center',
-                        padding: '0.45rem 1rem',
+                        padding: isMobile ? '0.48rem 0.5rem' : '0.45rem 1rem',
                         borderRadius: '7px',
-                        fontSize: '0.82rem',
+                        fontSize: isMobile ? '0.78rem' : '0.82rem',
                         fontWeight: 600,
                         cursor: 'pointer',
                         border: 'none',
                         transition: 'all 0.2s ease',
                         background: bankViewMode === 'ledger' ? 'var(--primary, #2563eb)' : 'transparent',
                         color: bankViewMode === 'ledger' ? '#ffffff' : 'var(--text-secondary)',
-                        boxShadow: bankViewMode === 'ledger' ? '0 1px 4px rgba(37, 99, 235, 0.25)' : 'none'
+                        boxShadow: bankViewMode === 'ledger' ? '0 1px 4px rgba(37, 99, 235, 0.25)' : 'none',
+                        whiteSpace: 'nowrap'
                       }}
                     >
-                      <span>Daily Statement Ledger</span>
+                      <span>{isMobile ? 'Daily Ledger' : 'Daily Statement Ledger'}</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setBankViewMode('transactions')}
                       style={{
+                        flex: isMobile ? 1 : 'none',
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         textAlign: 'center',
-                        padding: '0.45rem 1rem',
+                        padding: isMobile ? '0.48rem 0.5rem' : '0.45rem 1rem',
                         borderRadius: '7px',
-                        fontSize: '0.82rem',
+                        fontSize: isMobile ? '0.78rem' : '0.82rem',
                         fontWeight: 600,
                         cursor: 'pointer',
                         border: 'none',
                         transition: 'all 0.2s ease',
                         background: bankViewMode === 'transactions' ? 'var(--primary, #2563eb)' : 'transparent',
                         color: bankViewMode === 'transactions' ? '#ffffff' : 'var(--text-secondary)',
-                        boxShadow: bankViewMode === 'transactions' ? '0 1px 4px rgba(37, 99, 235, 0.25)' : 'none'
+                        boxShadow: bankViewMode === 'transactions' ? '0 1px 4px rgba(37, 99, 235, 0.25)' : 'none',
+                        whiteSpace: 'nowrap'
                       }}
                     >
-                      <span>Auto-Tracked Transactions</span>
+                      <span>{isMobile ? 'All Transactions' : 'Auto-Tracked Transactions'}</span>
                     </button>
                   </div>
                 </div>
@@ -2809,8 +2823,8 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                       <FileText size={18} style={{ color: '#10b981' }} />
-                      <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>
-                        Daily Statement Ledger (Day-by-Day Reconciliation)
+                      <strong style={{ fontSize: isMobile ? '0.88rem' : '0.95rem', color: 'var(--text-primary)' }}>
+                        {isMobile ? 'Daily Statement Ledger' : 'Daily Statement Ledger (Day-by-Day Reconciliation)'}
                       </strong>
                       <span style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', marginLeft: '0.5rem', background: 'var(--card-bg)', padding: '0.2rem 0.5rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
                         Showing {displayedDailySummaries.length} statement(s)
