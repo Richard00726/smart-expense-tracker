@@ -58,13 +58,13 @@ const AccountView = ({ theme, toggleTheme, onLogout, currentUser }) => {
   const handleCheckUpdateManual = async () => {
     try {
       setCheckingUpdate(true);
-      const res = await axios.get(`${API_URL}/system/status?version=1.2.0&_t=${Date.now()}`);
+      const res = await axios.get(`${API_URL}/system/status?version=2.0.0&_t=${Date.now()}`);
       if (res.data) {
         setUpdateInfo(res.data);
         if (res.data.updateAvailable) {
-          showToast(`New Version ${res.data.appVersion || '1.2.0'} available!`, 'success');
+          showToast(`New Version ${res.data.appVersion || '2.0.0'} available!`, 'success');
         } else {
-          showToast('App is running the latest version (v1.2.0)!', 'success');
+          showToast('App is running the latest version (v2.0.0)!', 'success');
         }
       }
     } catch (err) {
@@ -602,7 +602,7 @@ const AccountView = ({ theme, toggleTheme, onLogout, currentUser }) => {
                   <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '1rem' }}>Smart Expense Tracker</div>
                   <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Mobile Android Edition</div>
                 </div>
-                <span className="badge badge-upi" style={{ fontSize: '0.9rem', padding: '6px 12px', fontWeight: 700 }}>v1.2.0</span>
+                <span className="badge badge-upi" style={{ fontSize: '0.9rem', padding: '6px 12px', fontWeight: 700 }}>v2.0.0</span>
               </div>
 
               {updateInfo && (
@@ -611,7 +611,7 @@ const AccountView = ({ theme, toggleTheme, onLogout, currentUser }) => {
                     {updateInfo.updateAvailable ? '🎉 New Version Available!' : '✓ You have the latest version'}
                   </div>
                   <div style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                    {updateInfo.changelog || `Latest release: v${updateInfo.appVersion || '1.2.0'}`}
+                    {updateInfo.changelog || `Latest release: v${updateInfo.appVersion || '2.0.0'}`}
                   </div>
                 </div>
               )}
@@ -628,13 +628,13 @@ const AccountView = ({ theme, toggleTheme, onLogout, currentUser }) => {
                   {checkingUpdate ? 'Checking Server...' : 'Check for Updates'}
                 </button>
                 <a
-                  href="https://github.com/Richard00726/smart-expense-tracker/releases/download/v1.2.0/Smart-Expense-Tracker.apk"
+                  href={updateInfo?.downloadUrl || "https://github.com/Richard00726/smart-expense-tracker/releases/download/v2.0.0/Smart-Expense-Tracker.apk"}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-secondary"
                   style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', padding: '0.75rem 1.25rem', borderRadius: '10px', fontWeight: 600 }}
                 >
-                  <Download size={16} /> Download v1.2.0 APK
+                  <Download size={16} /> Download v2.0.0 APK
                 </a>
               </div>
             </div>
