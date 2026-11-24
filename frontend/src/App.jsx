@@ -459,8 +459,8 @@ function App() {
 
       {/* Main Content Area */}
       <div className="app-container">
-        <header className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-          <div className="header-title" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+        <header className="header">
+          <div className="header-brand-group">
             <div 
               className="header-mobile-brand" 
               onClick={() => setActiveTab('home')} 
@@ -477,14 +477,14 @@ function App() {
                 <span>T</span><span>R</span><span>A</span><span>C</span><span>K</span><span>E</span><span>R</span>
               </div>
             </div>
-            <span>
+            <h1 className="header-page-title">
               {activeTab === 'home' && 'Dashboard'}
               {activeTab === 'cash' && 'Cash Management'}
               {activeTab === 'upi' && 'UPI Transactions'}
               {activeTab === 'budget' && 'Budget & Savings'}
               {activeTab === 'analysis' && 'Analysis & Insights'}
               {activeTab === 'account' && 'My Account'}
-            </span>
+            </h1>
           </div>
           <div className="header-actions">
             <button 

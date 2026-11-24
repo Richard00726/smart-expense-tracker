@@ -445,7 +445,7 @@ const TransactionsTable = ({
         <>
           {isBankSyncTable ? (
         /* Read-Only Bank Statement Table Layout (Official Bank Records) */
-        <div className="table-container transaction-table-container">
+        <div className="table-container transaction-table-container desktop-table-view">
           <table style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
             <thead style={{ position: 'sticky', top: 0, zIndex: 20 }}>
               <tr>
@@ -520,7 +520,7 @@ const TransactionsTable = ({
         </div>
       ) : (
         /* Standard Activity & Manual Table Layout */
-        <div className="table-container transaction-table-container">
+        <div className="table-container transaction-table-container desktop-table-view">
           <table style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
             <thead style={{ position: 'sticky', top: 0, zIndex: 20 }}>
               <tr>
@@ -643,6 +643,85 @@ const TransactionsTable = ({
           </table>
         </div>
       )}
+
+      {/* Mobile Touch-Friendly Card Feed (Screens <= 768px) */}
+      <div className="mobile-tx-feed">
+        {paginatedTransactions.map((tx) => {
+          const payee = isBankSyncTable ? (tx.counterparty || tx.note || 'Bank Transaction') : getCleanPayee(tx);
+          const ref = isBankSyncTable ? tx.refNo : getRefNo(tx);
+          const displayTime = getDisplayTime(tx);
+          const formattedDate = new Date(tx.date || tx.txnDate).toLocaleDateString([], { 
+            month: 'short', 
+            day: 'numeric',
+            year: 'numeric'
+          });
+
+          return (
+            <div key={tx._id || tx.id} className="mobile-tx-card animate-fade-in">
+              <div className="mobile-tx-card-top">
+                <div className="mobile-tx-title-area">
+                  <span className="mobile-tx-payee">{payee}</span>
+                  {tx.note && tx.note !== payee && (
+                    <span className="mobile-tx-note">{tx.note}</span>
+                  )}
+                </div>
+                <div className={`mobile-tx-amount ${tx.type === 'credit' ? 'amount-pos' : 'amount-neg'}`}>
+                  {tx.type === 'credit' ? '+' : '-'}{getCurrency()}{Number(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+              </div>
+
+              <div className="mobile-tx-card-bottom">
+                <div className="mobile-tx-meta-pills">
+                  <span className="mobile-tx-date">{formattedDate}{displayTime ? ` • ${displayTime}` : ''}</span>
+                  {!isBankSyncTable && !shouldHideWallet && tx.wallet && (
+                    <span className={`badge ${tx.wallet === 'Cash' ? 'badge-cash' : 'badge-upi'}`}>
+                      {tx.wallet}
+                    </span>
+                  )}
+                  {!shouldHideCategory && tx.category && (
+                    <span className="badge-category" style={getCategoryStyle(tx.category)}>
+                      {tx.category}
+                    </span>
+                  )}
+                </div>
+                <div className="mobile-tx-meta-right">
+                  {!shouldHideRef && ref && (
+                    <span className="ref-code" title={`Ref: ${ref}`}>
+                      {ref.length > 10 ? `${ref.slice(0, 8)}…` : ref}
+                    </span>
+                  )}
+                  <span className={`type-pill ${tx.type === 'credit' ? 'type-credit' : 'type-debit'}`}>
+                    {tx.type ? tx.type.toUpperCase() : 'DEBIT'}
+                  </span>
+                  {!isBankSyncTable && !hideActions && (
+                    <div className="mobile-tx-action-btns">
+                      <button
+                        type="button"
+                        className="table-action-btn edit-btn"
+                        onClick={() => setEditingTx(tx)}
+                        title="Edit"
+                        style={{ padding: '3px' }}
+                      >
+                        <Edit2 size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        className="table-action-btn delete-btn"
+                        onClick={() => requestDelete(tx._id || tx.id)}
+                        disabled={deletingId === (tx._id || tx.id)}
+                        title="Delete"
+                        style={{ padding: '3px' }}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
       {totalEntries > 0 && (
           <div

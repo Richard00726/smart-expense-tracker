@@ -36,6 +36,12 @@ jobs:
         working-directory: frontend
         run: npm install --legacy-peer-deps
 
+      - name: Build Web App & Sync Capacitor Assets
+        working-directory: frontend
+        run: |
+          npm run build
+          npx cap sync android
+
       - name: Setup Android SDK Platform 36 & Licenses
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
