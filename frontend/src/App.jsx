@@ -222,6 +222,30 @@ function App() {
     };
   }, []);
 
+  // Android hardware back button — push a history entry per tab, popstate goes home
+  useEffect(() => {
+    // Push an initial entry so back doesn't instantly exit
+    if (window.history.state?.tab !== activeTab) {
+      window.history.pushState({ tab: activeTab }, '', window.location.href);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    const handlePopState = (e) => {
+      const prevTab = e.state?.tab;
+      if (activeTab !== 'home') {
+        // Navigate to home on back press instead of exiting
+        setActiveTab('home');
+        window.history.pushState({ tab: 'home' }, '', window.location.href);
+      } else {
+        // Already on home — push state back so next back can still be caught
+        window.history.pushState({ tab: 'home' }, '', window.location.href);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [activeTab]);
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');

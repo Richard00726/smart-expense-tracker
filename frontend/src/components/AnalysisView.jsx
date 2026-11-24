@@ -59,6 +59,14 @@ const AnalysisView = ({ refreshTrigger }) => {
   const currentMonthString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
   const currentYearString = today.getFullYear().toString();
 
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const availableMonths = React.useMemo(() => {
     const monthsMap = new Map();
 
@@ -741,7 +749,7 @@ const AnalysisView = ({ refreshTrigger }) => {
               className="charts-grid analysis-charts-grid"
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(320px, 1fr))',
                 gap: '24px',
                 alignItems: 'stretch',
                 margin: 0
@@ -1678,7 +1686,7 @@ const AnalysisView = ({ refreshTrigger }) => {
             <div className="cashflow-ledger-grid" style={{
               marginTop: '1.5rem',
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
               gap: '1rem'
             }}>
               {/* Card 1: Opening Balance */}

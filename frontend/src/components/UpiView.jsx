@@ -2053,7 +2053,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                   </div>
 
                   {/* Bank Cards Grid */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fit, minmax(210px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
                     {SUPPORTED_BANKS.map((b) => {
                       const isSelected = selectedBank === b.id;
                       const isHovered = hoveredBankId === b.id;
@@ -2232,7 +2232,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                   </div>
 
                   {/* Form Container */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
 
                     {/* Section 1: Statement Opening Password */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -2505,7 +2505,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                       </div>
 
                       {/* 4 Brief Step Cards (Full Width Grid) */}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
                         {/* Step 1 */}
                         <div style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '10px', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -2557,7 +2557,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                       </div>
 
                       {/* Wide Copy-Paste URLs Grid */}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' }}>
                         {/* URL 1 */}
                         <div style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '10px', padding: '0.85rem 1rem' }}>
                           <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
@@ -2685,7 +2685,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                     </button>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
                     {/* Left: Customer Details */}
                     <div style={{ background: 'var(--empty-state-bg)', padding: '1rem', borderRadius: '10px', border: '1px solid var(--card-border)' }}>
                       <div style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--accent-secondary, #7c3aed)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.75rem' }}>
@@ -2822,7 +2822,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                   </div>
 
                   <div className="transaction-table-container desktop-table-view" style={{ margin: 0 }}>
-                    <table style={{ tableLayout: 'fixed', width: '100%', minWidth: '650px', borderCollapse: 'separate', borderSpacing: 0 }}>
+                    <table style={{ tableLayout: 'fixed', width: '100%', minWidth: isMobile ? '0' : '650px', borderCollapse: 'separate', borderSpacing: 0 }}>
                       <thead style={{ position: 'sticky', top: 0, zIndex: 20 }}>
                         <tr>
                           <th style={{ width: '130px', position: 'sticky', top: 0, zIndex: 20, background: 'var(--table-header)' }}>Statement Date</th>
