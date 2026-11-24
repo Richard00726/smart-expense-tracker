@@ -646,13 +646,12 @@ const AccountView = ({ theme, toggleTheme, onLogout, currentUser }) => {
                   {checkingUpdate ? 'Checking Server...' : 'Check for Updates'}
                 </button>
                 <a
-                  href={updateInfo?.downloadUrl || "https://github.com/Richard00726/smart-expense-tracker/releases/download/v2.0.0/Smart-Expense-Tracker.apk"}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="/Smart-Expense-Tracker.apk"
+                  download="Smart-Expense-Tracker.apk"
                   className="btn btn-secondary"
                   style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', padding: '0.75rem 1.25rem', borderRadius: '10px', fontWeight: 600 }}
                 >
-                  <Download size={16} /> Download v2.0.0 APK
+                  <Download size={16} /> Download Updated v2.0.0 APK
                 </a>
               </div>
             </div>
