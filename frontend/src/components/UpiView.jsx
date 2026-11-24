@@ -1372,6 +1372,150 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
     />
   );
 
+  const renderBankDetailsCard = () => {
+    if (!bankOverview?.customerDetails) return null;
+    return (
+      <div
+        className="data-card glass animate-fade-in"
+        style={{
+          padding: '1.25rem 1.5rem',
+          border: '1px solid var(--card-border)',
+          borderRadius: '14px',
+          background: 'var(--card-bg)'
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Building2 size={16} style={{ color: 'var(--accent-primary, #6366f1)' }} />
+            <strong style={{ fontSize: '0.92rem', color: 'var(--text-primary)' }}>
+              Verified Bank Account & Branch Credentials (from E-Statement)
+            </strong>
+          </div>
+          <button
+            onClick={() => setShowBankDetails(false)}
+            style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}
+            title="Close bank details"
+          >
+            Close ✕
+          </button>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+          {/* Left: Customer Details */}
+          <div style={{ background: 'var(--empty-state-bg)', padding: '1rem', borderRadius: '10px', border: '1px solid var(--card-border)' }}>
+            <div style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--accent-secondary, #7c3aed)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.75rem' }}>
+              👤 Customer Account Details
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.82rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Customer ID:</span>
+                <strong style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>{bankOverview.customerDetails.customerId || '—'}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Account Holder:</span>
+                <strong style={{ color: 'var(--text-primary)' }}>{bankOverview.customerDetails.name || '—'}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Account No:</span>
+                <span style={{ color: 'var(--success, #10b981)', fontWeight: 700, fontFamily: 'monospace' }}>{bankOverview.accountNo || '—'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>A/c Type:</span>
+                <span style={{ color: 'var(--text-primary)' }}>{bankOverview.customerDetails.accountType || 'Saving Account'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Registered Tel:</span>
+                <span style={{ color: 'var(--text-primary)' }}>{bankOverview.customerDetails.mobile || '—'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Registered Email:</span>
+                <span style={{ color: 'var(--text-primary)' }}>{bankOverview.customerDetails.email || '—'}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Branch Details */}
+          {bankOverview.branchDetails && (
+            <div style={{ background: 'var(--empty-state-bg)', padding: '1rem', borderRadius: '10px', border: '1px solid var(--card-border)' }}>
+              <div style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--accent-primary, #2563eb)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.75rem' }}>
+                🏛️ Home Branch Information
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.82rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Branch Name:</span>
+                  <strong style={{ color: 'var(--text-primary)' }}>{bankOverview.branchDetails.branchName} (Code: {bankOverview.branchDetails.branchCode})</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>IFSC Code:</span>
+                  <span style={{ color: 'var(--accent-primary, #2563eb)', fontWeight: 700, fontFamily: 'monospace' }}>{bankOverview.branchDetails.ifsc || '—'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>MICR Code:</span>
+                  <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>{bankOverview.branchDetails.micr || '—'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Branch Address:</span>
+                  <span style={{ color: 'var(--text-primary)', textAlign: 'right', maxWidth: '200px', fontSize: '0.78rem' }}>{bankOverview.branchDetails.address || '—'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Branch Email:</span>
+                  <span style={{ color: 'var(--text-primary)' }}>{bankOverview.branchDetails.email || '—'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Customer Care:</span>
+                  <span style={{ color: 'var(--success, #10b981)', fontWeight: 700 }}>{bankOverview.branchDetails.customerCare || '+91-9842461461'}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderDropzoneDrawer = () => (
+    <div
+      className="data-card glass animate-fade-in"
+      style={{
+        padding: '1.5rem',
+        border: '2px dashed var(--accent-primary)',
+        borderRadius: '14px',
+        textAlign: 'center',
+        cursor: 'pointer',
+        background: uploadingPdf ? 'rgba(99,102,241,0.06)' : 'var(--card-bg)'
+      }}
+      onClick={() => fileInputRef.current?.click()}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={(e) => {
+        e.preventDefault();
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+          handleFileDrop(e.dataTransfer.files[0]);
+        }
+      }}
+    >
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept=".pdf,application/pdf"
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          if (e.target.files && e.target.files[0]) {
+            handleFileDrop(e.target.files[0]);
+          }
+        }}
+      />
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+        <UploadCloud size={28} style={{ color: 'var(--accent-primary)' }} />
+        <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>
+          {uploadingPdf ? 'Decrypting & Importing Bank Statement...' : 'Drop Today\'s TMB E-Statement PDF Here to Sync Instantly'}
+        </strong>
+        <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+          Auto-decrypts with your saved password and inserts transactions without waiting for tomorrow's email.
+        </span>
+      </div>
+    </div>
+  );
+
   return (
     <div style={{ marginTop: '1rem' }}>
       {/* Non-blocking subtle syncing indicator if initial profile is fetching */}
@@ -1703,6 +1847,12 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                     </div>
                   </div>
                 </div>
+
+                {/* 1. If Bank Details Open -> Show directly below Bank Card BEFORE Toggle */}
+                {showBankDetails && renderBankDetailsCard()}
+
+                {/* 2. If Dropzone Open -> Show directly below Bank Card BEFORE Toggle */}
+                {showDropzone && renderDropzoneDrawer()}
 
                 {/* 50/50 Mobile Segmented Control directly below card */}
                 <div
@@ -2181,49 +2331,9 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
             )
           )}
 
-          {/* Optional Droppable Drawer for Statement Testing */}
-          {showDropzone && (
-            <div
-              className="data-card glass animate-fade-in"
-              style={{
-                padding: '1.5rem',
-                border: '2px dashed var(--accent-primary)',
-                borderRadius: '14px',
-                textAlign: 'center',
-                cursor: 'pointer',
-                background: uploadingPdf ? 'rgba(99,102,241,0.06)' : 'var(--card-bg)'
-              }}
-              onClick={() => fileInputRef.current?.click()}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                  handleFileDrop(e.dataTransfer.files[0]);
-                }
-              }}
-            >
-              <input
-                type="file"
-                ref={fileInputRef}
-                accept=".pdf,application/pdf"
-                style={{ display: 'none' }}
-                onChange={(e) => {
-                  if (e.target.files && e.target.files[0]) {
-                    handleFileDrop(e.target.files[0]);
-                  }
-                }}
-              />
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                <UploadCloud size={28} style={{ color: 'var(--accent-primary)' }} />
-                <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>
-                  {uploadingPdf ? 'Decrypting & Importing Bank Statement...' : 'Drop Today\'s TMB E-Statement PDF Here to Sync Instantly'}
-                </strong>
-                <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                  Auto-decrypts with your saved password and inserts transactions without waiting for tomorrow's email.
-                </span>
-              </div>
-            </div>
-          )}
+          {/* Desktop Bank Details and Dropzone drawers (immediately following the top bar) */}
+          {!isMobile && showBankDetails && renderBankDetailsCard()}
+          {!isMobile && showDropzone && renderDropzoneDrawer()}
 
           {/* ══════════════════════════════════════════════════════════════
               LOADING SKELETON (While checking bank sync status)
@@ -2932,105 +3042,6 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
           ══════════════════════════════════════════════════════════════ */}
           {isConfigured && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.5rem' }} className="animate-fade-in">
-
-              {/* 1. DYNAMIC CUSTOMER & BRANCH DETAILS CARDS (From PDF Header) */}
-              {showBankDetails && bankOverview?.customerDetails && (
-                <div
-                  className="data-card glass animate-fade-in"
-                  style={{
-                    padding: '1.25rem 1.5rem',
-                    border: '1px solid var(--card-border)',
-                    borderRadius: '14px',
-                    background: 'var(--card-bg)'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '0.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Building2 size={16} style={{ color: 'var(--accent-primary, #6366f1)' }} />
-                      <strong style={{ fontSize: '0.92rem', color: 'var(--text-primary)' }}>
-                        Verified Bank Account & Branch Credentials (from E-Statement)
-                      </strong>
-                    </div>
-                    <button
-                      onClick={() => setShowBankDetails(false)}
-                      style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}
-                      title="Close bank details"
-                    >
-                      Close ✕
-                    </button>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
-                    {/* Left: Customer Details */}
-                    <div style={{ background: 'var(--empty-state-bg)', padding: '1rem', borderRadius: '10px', border: '1px solid var(--card-border)' }}>
-                      <div style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--accent-secondary, #7c3aed)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.75rem' }}>
-                        👤 Customer Account Details
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.82rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Customer ID:</span>
-                          <strong style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>{bankOverview.customerDetails.customerId || '—'}</strong>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Account Holder:</span>
-                          <strong style={{ color: 'var(--text-primary)' }}>{bankOverview.customerDetails.name || '—'}</strong>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Account No:</span>
-                          <span style={{ color: 'var(--success, #10b981)', fontWeight: 700, fontFamily: 'monospace' }}>{bankOverview.accountNo || '—'}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>A/c Type:</span>
-                          <span style={{ color: 'var(--text-primary)' }}>{bankOverview.customerDetails.accountType || 'Saving Account'}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Registered Tel:</span>
-                          <span style={{ color: 'var(--text-primary)' }}>{bankOverview.customerDetails.mobile || '—'}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Registered Email:</span>
-                          <span style={{ color: 'var(--text-primary)' }}>{bankOverview.customerDetails.email || '—'}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right: Branch Details */}
-                    {bankOverview.branchDetails && (
-                      <div style={{ background: 'var(--empty-state-bg)', padding: '1rem', borderRadius: '10px', border: '1px solid var(--card-border)' }}>
-                        <div style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--accent-primary, #2563eb)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.75rem' }}>
-                          🏛️ Home Branch Information
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.82rem' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Branch Name:</span>
-                            <strong style={{ color: 'var(--text-primary)' }}>{bankOverview.branchDetails.branchName} (Code: {bankOverview.branchDetails.branchCode})</strong>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>IFSC Code:</span>
-                            <span style={{ color: 'var(--accent-primary, #2563eb)', fontWeight: 700, fontFamily: 'monospace' }}>{bankOverview.branchDetails.ifsc || '—'}</span>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>MICR Code:</span>
-                            <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>{bankOverview.branchDetails.micr || '—'}</span>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Branch Address:</span>
-                            <span style={{ color: 'var(--text-primary)', textAlign: 'right', maxWidth: '200px', fontSize: '0.78rem' }}>{bankOverview.branchDetails.address || '—'}</span>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Branch Email:</span>
-                            <span style={{ color: 'var(--text-primary)' }}>{bankOverview.branchDetails.email || '—'}</span>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Customer Care:</span>
-                            <span style={{ color: 'var(--success, #10b981)', fontWeight: 700 }}>{bankOverview.branchDetails.customerCare || '+91-9842461461'}</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
 
               {/* Dismissible Initial Inbox Sync Notice */}
               {showInitialNotice && isConfigured && (availableMonths.length > 0 || (bankOverview?.dailySummaries && bankOverview.dailySummaries.length > 0)) && (
