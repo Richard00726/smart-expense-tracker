@@ -525,9 +525,11 @@ function App() {
               onMouseLeave={() => setShowProfileTooltip(false)}
             >
               <div 
-                className="profile-avatar"
+                className={`profile-avatar ${activeTab === 'account' ? 'active' : ''}`}
                 onClick={() => setActiveTab('account')}
-                title={currentUser.username || currentUser.name || 'User Profile'}
+                title={currentUser.username || currentUser.name || 'User Profile & Settings'}
+                role="button"
+                tabIndex={0}
               >
                 {currentUser.profileImage ? (
                   <img src={currentUser.profileImage} alt="User" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -668,13 +670,6 @@ function App() {
         >
           <PieChart size={22} />
           <span>Analysis</span>
-        </div>
-        <div 
-          className={`bottom-nav-item ${activeTab === 'account' ? 'active' : ''}`}
-          onClick={() => setActiveTab('account')}
-        >
-          <User size={22} />
-          <span>Account</span>
         </div>
       </nav>
     </div>
