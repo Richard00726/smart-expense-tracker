@@ -3,7 +3,7 @@ import { Wrench, Sparkles, RefreshCw, Download, X } from 'lucide-react';
 import axios from 'axios';
 import { API_URL } from '../services/api';
 
-const CURRENT_APP_VERSION = '1.2.0';
+const CURRENT_APP_VERSION = '2.0.0';
 
 export default function SystemStatusOverlay() {
   const [status, setStatus] = useState(null);
@@ -195,12 +195,12 @@ export default function SystemStatusOverlay() {
 
         <div style={{ display: 'flex', gap: '10px' }}>
           <a
-            href={status.downloadUrl || 'https://github.com/Richard00726/smart-expense-tracker/releases/download/v1.2.0/Smart-Expense-Tracker.apk'}
+            href={status.downloadUrl || 'https://github.com/Richard00726/smart-expense-tracker/releases/download/v2.0.0/Smart-Expense-Tracker.apk'}
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => {
               setDownloadStarted(true);
-              const targetUrl = status.downloadUrl || 'https://github.com/Richard00726/smart-expense-tracker/releases/download/v1.2.0/Smart-Expense-Tracker.apk';
+              const targetUrl = status.downloadUrl || 'https://github.com/Richard00726/smart-expense-tracker/releases/download/v2.0.0/Smart-Expense-Tracker.apk';
               try {
                 window.location.href = targetUrl;
               } catch (err) {

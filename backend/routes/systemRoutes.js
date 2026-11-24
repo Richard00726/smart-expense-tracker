@@ -5,11 +5,11 @@ const router = express.Router();
 let systemConfig = {
   maintenance: process.env.MAINTENANCE_MODE === 'true',
   maintenanceMessage: process.env.MAINTENANCE_MESSAGE || "Cash & UPI Tracker is undergoing scheduled server updates. We'll be back online shortly!",
-  appVersion: '1.2.0',
+  appVersion: '2.0.0',
   minSupportedVersion: '1.0.0',
   updateAvailable: true,
-  changelog: '✨ Complete Mobile Responsive Overhaul (single-column cards, mobile transaction feed, clean header buttons) & App Icon Updates.',
-  downloadUrl: 'https://github.com/Richard00726/smart-expense-tracker/releases/download/v1.2.0/Smart-Expense-Tracker.apk'
+  changelog: '🚀 Instant Live Updates Enabled: Install this version once and all future UI improvements & features sync automatically in real-time!',
+  downloadUrl: 'https://github.com/Richard00726/smart-expense-tracker/releases/download/v2.0.0/Smart-Expense-Tracker.apk'
 };
 
 /**

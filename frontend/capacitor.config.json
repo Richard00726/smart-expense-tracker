@@ -4,8 +4,13 @@
   "webDir": "dist",
   "bundledWebRuntime": false,
   "server": {
-    "androidScheme": "https",
-    "cleartext": true
+    "url": "https://smart-expense-tracker-app-red.vercel.app",
+    "cleartext": true,
+    "allowNavigation": [
+      "smart-expense-tracker-app-red.vercel.app",
+      "cash-upi-backend.onrender.com",
+      "accounts.google.com"
+    ]
   },
   "android": {
     "backgroundColor": "#0b0f19",

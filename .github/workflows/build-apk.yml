@@ -72,21 +72,20 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: success()
         with:
-          tag_name: v1.2.0
-          name: "Smart Expense Tracker v1.2.0 APK"
+          tag_name: v2.0.0
+          name: "Smart Expense Tracker v2.0.0 (Instant Live Engine) APK"
           overwrite: true
           make_latest: true
           body: |
-            ### 📱 Cash & UPI Smart Expense Tracker (Android APK v1.2.0)
-            Download and install directly on your Android device to update:
-            - **Direct APK Download**: [Smart-Expense-Tracker.apk](https://github.com/${{ github.repository }}/releases/download/v1.2.0/Smart-Expense-Tracker.apk)
+            ### 🚀 Smart Expense Tracker v2.0.0 (Instant Live Engine)
+            Install this APK **once** on your Android device:
+            - **Direct APK Download**: [Smart-Expense-Tracker.apk](https://github.com/${{ github.repository }}/releases/download/v2.0.0/Smart-Expense-Tracker.apk)
 
-            #### What's in this update:
-            - 📱 **Complete Mobile Responsive Overhaul**: Single-column stacked balance cards, native touch transaction card feed, and clean header actions.
-            - ✨ **Starting Brand Animation**: Displays "Smart Expense Tracker" with the signature animated teal swoosh, terminal dot, and rotating taglines on opening the application.
-            - 🏦 **TMB Bank Real-Time Auto-Sync & Daily Statement Ledger**: Swift Bar toggle between Daily Statement Ledger and Auto-Tracked Transactions.
-            - ⏰ **Accurate Fetch Timestamps**: Real Gmail/App fetch timestamps instead of midnight UTC placeholders.
-            - 🔄 **In-App Auto-Update System**: Reliable update detection and one-tap in-place updates.
+            #### What's in this version:
+            - ⚡ **Instant Live Over-The-Air Updates**: All future UI fixes, animations, themes, and feature updates sync instantly in real-time without ever downloading or installing another APK!
+            - 📱 **Complete Mobile Responsive Overhaul**: Single-column stacked balance cards, native touch transaction feed, clean header action buttons.
+            - ✨ **Starting Brand Animation**: Smooth intro animation with animated teal brand swoosh, terminal dot, and rotating taglines.
+            - 🏦 **TMB Bank Real-Time Auto-Sync & Daily Statement Ledger**: Instant swift toggle between Daily Statement Ledger and Auto-Tracked Transactions.
           files: |
             frontend/android/app/build/outputs/apk/debug/Smart-Expense-Tracker.apk
         env:
