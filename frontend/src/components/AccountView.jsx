@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { User, Lock, AlertTriangle, Save, Check, X, Sun, Moon, Trash2, ArrowLeft, ChevronRight, Smartphone, RefreshCw, ShieldCheck } from 'lucide-react';
-import { getUser, updateProfile, changePassword, deleteAccount, deleteBankSyncConfig } from '../services/api';
+import { User, Lock, AlertTriangle, Save, Check, X, Sun, Moon, Trash2, ArrowLeft, ChevronRight, Smartphone, RefreshCw, ShieldCheck, Download } from 'lucide-react';
+import axios from 'axios';
+import { getUser, updateProfile, changePassword, deleteAccount, deleteBankSyncConfig, API_URL } from '../services/api';
 import profileIllustration from '../assets/profile_illustration.jpg';
 import preferencesIllustration from '../assets/preferences_illustration.jpg';
 import securityIllustration from '../assets/security_illustration.jpg';
@@ -51,6 +52,27 @@ const AccountView = ({ theme, toggleTheme, onLogout, currentUser }) => {
   
   const [privacyMode, setPrivacyMode] = useState(() => localStorage.getItem('privacyMode') === 'true');
   const [emailNotifs, setEmailNotifs] = useState(true);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState(null);
+
+  const handleCheckUpdateManual = async () => {
+    try {
+      setCheckingUpdate(true);
+      const res = await axios.get(`${API_URL}/system/status?version=1.2.0&_t=${Date.now()}`);
+      if (res.data) {
+        setUpdateInfo(res.data);
+        if (res.data.updateAvailable) {
+          showToast(`New Version ${res.data.appVersion || '1.2.0'} available!`, 'success');
+        } else {
+          showToast('App is running the latest version (v1.2.0)!', 'success');
+        }
+      }
+    } catch (err) {
+      showToast('Could not reach update server. Check your connection.', 'error');
+    } finally {
+      setCheckingUpdate(false);
+    }
+  };
 
   const handleTogglePrivacy = (val) => {
     setPrivacyMode(val);
@@ -227,6 +249,23 @@ const AccountView = ({ theme, toggleTheme, onLogout, currentUser }) => {
             <div style={{ flex: 1 }}>
               <h3 style={{ margin: '0 0 0.25rem 0', color: 'var(--text-primary)' }}>Security</h3>
               <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Update your password and secure your account</p>
+            </div>
+            <ChevronRight size={20} color="var(--text-secondary)" />
+          </div>
+
+          <div 
+            className="data-card glass animate-fade-in" 
+            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.5rem', transition: 'all 0.2s ease', animationDelay: '0.25s' }}
+            onClick={() => setActiveSetting('updates')}
+            onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+            onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            <div style={{ background: 'rgba(59, 130, 246, 0.1)', padding: '1rem', borderRadius: '50%', color: '#3b82f6' }}>
+              <RefreshCw size={24} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <h3 style={{ margin: '0 0 0.25rem 0', color: 'var(--text-primary)' }}>App Version & Updates</h3>
+              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Check for mobile updates & direct APK download</p>
             </div>
             <ChevronRight size={20} color="var(--text-secondary)" />
           </div>
@@ -544,6 +583,60 @@ const AccountView = ({ theme, toggleTheme, onLogout, currentUser }) => {
             </div>
             <div style={{ flex: '1 1 300px', display: 'flex', justifyContent: 'center' }}>
               <img src={dangerIllustration} alt="Danger Zone" style={{ width: '100%', maxWidth: '350px', borderRadius: '16px', boxShadow: '0 20px 40px rgba(0,0,0,0.3)', border: '1px solid var(--card-border)' }} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* App Updates Section */}
+      {activeSetting === 'updates' && (
+        <div className="animate-fade-in">
+          {renderBackButton()}
+          <div className="data-card glass" style={{ maxWidth: '620px', margin: '0 auto', padding: '2rem' }}>
+            <div className="data-header" style={{ marginBottom: '1.5rem' }}>
+              <h3><Smartphone size={22} className="text-accent-primary" /> App Version & Updates</h3>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                <div>
+                  <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '1rem' }}>Smart Expense Tracker</div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Mobile Android Edition</div>
+                </div>
+                <span className="badge badge-upi" style={{ fontSize: '0.9rem', padding: '6px 12px', fontWeight: 700 }}>v1.2.0</span>
+              </div>
+
+              {updateInfo && (
+                <div style={{ padding: '1.25rem', borderRadius: '12px', background: updateInfo.updateAvailable ? 'rgba(16, 185, 129, 0.1)' : 'var(--bg-card)', border: `1px solid ${updateInfo.updateAvailable ? 'rgba(16, 185, 129, 0.3)' : 'var(--border)'}` }}>
+                  <div style={{ fontWeight: 700, color: updateInfo.updateAvailable ? 'var(--success)' : 'var(--text-primary)', marginBottom: '0.35rem', fontSize: '1rem' }}>
+                    {updateInfo.updateAvailable ? '🎉 New Version Available!' : '✓ You have the latest version'}
+                  </div>
+                  <div style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                    {updateInfo.changelog || `Latest release: v${updateInfo.appVersion || '1.2.0'}`}
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleCheckUpdateManual}
+                  disabled={checkingUpdate}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.25rem', borderRadius: '10px', fontWeight: 600 }}
+                >
+                  <RefreshCw size={16} className={checkingUpdate ? 'animate-spin' : ''} />
+                  {checkingUpdate ? 'Checking Server...' : 'Check for Updates'}
+                </button>
+                <a
+                  href="https://github.com/Richard00726/smart-expense-tracker/releases/download/v1.2.0/Smart-Expense-Tracker.apk"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-secondary"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', padding: '0.75rem 1.25rem', borderRadius: '10px', fontWeight: 600 }}
+                >
+                  <Download size={16} /> Download v1.2.0 APK
+                </a>
+              </div>
             </div>
           </div>
         </div>

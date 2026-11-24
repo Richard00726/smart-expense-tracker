@@ -5,11 +5,11 @@ const router = express.Router();
 let systemConfig = {
   maintenance: process.env.MAINTENANCE_MODE === 'true',
   maintenanceMessage: process.env.MAINTENANCE_MESSAGE || "Cash & UPI Tracker is undergoing scheduled server updates. We'll be back online shortly!",
-  appVersion: '1.1.0',
+  appVersion: '1.2.0',
   minSupportedVersion: '1.0.0',
   updateAvailable: true,
-  changelog: '✨ Starting Brand Animation (Smart Expense Tracker), TMB Bank Auto-Sync Swift Bar, real Gmail fetch timestamps, and mobile responsiveness.',
-  downloadUrl: 'https://github.com/Richard00726/smart-expense-tracker/releases/download/v1.1.0/Smart-Expense-Tracker.apk'
+  changelog: '✨ Complete Mobile Responsive Overhaul (single-column cards, mobile transaction feed, clean header buttons) & App Icon Updates.',
+  downloadUrl: 'https://github.com/Richard00726/smart-expense-tracker/releases/download/v1.2.0/Smart-Expense-Tracker.apk'
 };
 
 /**
@@ -20,9 +20,9 @@ router.get('/status', (req, res) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   const clientVersion = (req.query.version || '').trim();
 
-  // Versions considered up to date: 1.1, 1.1.0, 1.1.1, or matching latest appVersion
-  const isUpToDate = clientVersion === '1.1.0' || clientVersion === '1.1' || clientVersion === systemConfig.appVersion;
-  const updateAvailable = clientVersion ? !isUpToDate : false;
+  // Versions considered up to date: only matching latest appVersion
+  const isUpToDate = clientVersion === systemConfig.appVersion;
+  const updateAvailable = clientVersion ? !isUpToDate : true;
 
   res.json({
     ...systemConfig,
@@ -33,10 +33,10 @@ router.get('/status', (req, res) => {
 
 /**
  * POST /api/system/maintenance
- * Toggles maintenance mode (can be called with secret key)
+ * Toggles maintenance mode or updates live version/download config (can be called with secret key)
  */
 router.post('/maintenance', (req, res) => {
-  const { enabled, message, secret } = req.body || {};
+  const { enabled, message, secret, appVersion, downloadUrl, changelog } = req.body || {};
   const adminSecret = process.env.ADMIN_SECRET || 'tracker_admin_2026';
 
   if (secret !== adminSecret) {
@@ -49,9 +49,18 @@ router.post('/maintenance', (req, res) => {
   if (message) {
     systemConfig.maintenanceMessage = message;
   }
+  if (appVersion) {
+    systemConfig.appVersion = appVersion;
+  }
+  if (downloadUrl) {
+    systemConfig.downloadUrl = downloadUrl;
+  }
+  if (changelog) {
+    systemConfig.changelog = changelog;
+  }
 
   res.json({
-    message: `Maintenance mode ${systemConfig.maintenance ? 'ENABLED' : 'DISABLED'}`,
+    message: `System config updated`,
     config: systemConfig
   });
 });

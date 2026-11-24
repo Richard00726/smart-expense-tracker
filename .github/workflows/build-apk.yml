@@ -72,20 +72,21 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: success()
         with:
-          tag_name: v1.1.0
-          name: "Smart Expense Tracker v1.1.0 APK"
+          tag_name: v1.2.0
+          name: "Smart Expense Tracker v1.2.0 APK"
           overwrite: true
           make_latest: true
           body: |
-            ### 📱 Cash & UPI Smart Expense Tracker (Android APK v1.1.0)
+            ### 📱 Cash & UPI Smart Expense Tracker (Android APK v1.2.0)
             Download and install directly on your Android device to update:
-            - **Direct APK Download**: [Smart-Expense-Tracker.apk](https://github.com/${{ github.repository }}/releases/download/v1.1.0/Smart-Expense-Tracker.apk)
+            - **Direct APK Download**: [Smart-Expense-Tracker.apk](https://github.com/${{ github.repository }}/releases/download/v1.2.0/Smart-Expense-Tracker.apk)
 
             #### What's in this update:
-            - ✨ **Starting Brand Animation**: Displays "Smart Expense Tracker" with the signature animated teal swoosh, terminal dot, and rotating inspirational taglines on opening the application.
+            - 📱 **Complete Mobile Responsive Overhaul**: Single-column stacked balance cards, native touch transaction card feed, and clean header actions.
+            - ✨ **Starting Brand Animation**: Displays "Smart Expense Tracker" with the signature animated teal swoosh, terminal dot, and rotating taglines on opening the application.
             - 🏦 **TMB Bank Real-Time Auto-Sync & Daily Statement Ledger**: Swift Bar toggle between Daily Statement Ledger and Auto-Tracked Transactions.
             - ⏰ **Accurate Fetch Timestamps**: Real Gmail/App fetch timestamps instead of midnight UTC placeholders.
-            - 📱 **Full Mobile Responsiveness**: Touch-optimized layouts across all cards, navigation, forms, and swift bars.
+            - 🔄 **In-App Auto-Update System**: Reliable update detection and one-tap in-place updates.
           files: |
             frontend/android/app/build/outputs/apk/debug/Smart-Expense-Tracker.apk
         env:
