@@ -234,7 +234,16 @@ function App() {
       setShowExitToast(false);
       await CapApp.exitApp();
     } catch {
-      window.close();
+      try {
+        if (window.Capacitor?.Plugins?.App?.exitApp) {
+          window.Capacitor.Plugins.App.exitApp();
+        }
+      } catch {}
+      // Fallback: drain history so the webview/browser exits
+      window.history.go(-(window.history.length + 1));
+      setTimeout(() => {
+        window.close();
+      }, 100);
     }
   };
 
@@ -244,14 +253,14 @@ function App() {
     const notPrevented = window.dispatchEvent(backEvent);
     if (!notPrevented) {
       // Handled by child component (e.g. Account sub-setting or UPI modal)
-      return;
+      return "HANDLED";
     }
 
     // 2. If on any tab other than 'home', navigate back to 'home'
     if (activeTabRef.current !== 'home') {
       setActiveTab('home');
       setShowExitToast(false);
-      return;
+      return "HANDLED";
     }
 
     // 3. User is on 'home' page: check double-tap back within 2.5 seconds (like Groww)
@@ -259,12 +268,24 @@ function App() {
     if (now - lastBackPressTimeRef.current < 2500) {
       // Second back press on Home within 2.5s — exit app!
       handleAppExit();
+      return "EXIT";
     } else {
       // First back press on Home — show Groww-style exit toast!
       lastBackPressTimeRef.current = now;
       setShowExitToast(true);
+      return "HANDLED";
     }
   };
+
+  // Expose to window so native Android Bridge / MainActivity can invoke directly
+  useEffect(() => {
+    window.__handleHardwareBack = () => {
+      return handleBackAction();
+    };
+    return () => {
+      delete window.__handleHardwareBack;
+    };
+  }, []);
 
   // Auto-dismiss the exit toast after 2.5 seconds
   useEffect(() => {
@@ -275,7 +296,37 @@ function App() {
     return () => clearTimeout(timer);
   }, [showExitToast]);
 
-  // Capacitor native Android hardware back button handler
+  // Keep a root buffer in browser history so Android WebView's canGoBack() is NEVER false!
+  useEffect(() => {
+    // 1. Initialize root buffer entry
+    if (!window.location.hash || window.location.hash === '#' || window.location.hash === '#root') {
+      window.history.replaceState({ tab: 'root' }, '', window.location.pathname + '#root');
+      window.history.pushState({ tab: 'home' }, '', window.location.pathname + '#home');
+    }
+
+    // 2. Listen to popstate (fires on Android hardware back button in WebView)
+    const handlePopState = () => {
+      // If we just popped to #root while on home, re-push #home so history buffer stays intact
+      if (window.location.hash === '#root' || !window.location.hash) {
+        window.history.pushState({ tab: 'home' }, '', window.location.pathname + '#home');
+      }
+
+      handleBackAction();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Synchronize URL hash when tab changes
+  useEffect(() => {
+    const targetHash = activeTab === 'home' ? '#home' : `#${activeTab}`;
+    if (window.location.hash !== targetHash && window.location.hash !== '#root') {
+      window.history.pushState({ tab: activeTab }, '', window.location.pathname + targetHash);
+    }
+  }, [activeTab]);
+
+  // Capacitor & Cordova hardware back button listeners
   useEffect(() => {
     let backListenerHandle = null;
 
@@ -285,34 +336,24 @@ function App() {
           handleBackAction();
         });
       } catch (err) {
-        console.debug('Capacitor backButton listener not active on web:', err);
+        console.debug('Capacitor backButton listener not active:', err);
       }
     };
 
     registerCapacitorBack();
 
+    const onDocumentBackButton = (e) => {
+      e?.preventDefault?.();
+      handleBackAction();
+    };
+    document.addEventListener('backbutton', onDocumentBackButton);
+
     return () => {
       if (backListenerHandle?.remove) {
         backListenerHandle.remove();
       }
+      document.removeEventListener('backbutton', onDocumentBackButton);
     };
-  }, []);
-
-  // Web browser popstate handling (PWA / mobile browser fallback)
-  useEffect(() => {
-    if (window.history.state?.tab !== activeTab) {
-      window.history.pushState({ tab: activeTab }, '', window.location.href);
-    }
-  }, [activeTab]);
-
-  useEffect(() => {
-    const handlePopState = (e) => {
-      window.history.pushState({ tab: activeTabRef.current }, '', window.location.href);
-      handleBackAction();
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   const handleLogout = () => {
