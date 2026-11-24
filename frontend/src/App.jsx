@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { getWallets, getTransactions, getSummary, deleteTransaction, getCurrency, getBankSyncSettings, syncGmailNow } from './services/api';
 import Dashboard from './components/Dashboard';
 import TransactionForm from './components/TransactionForm';
@@ -14,6 +14,7 @@ import PrivacyPolicy from './components/PrivacyPolicy';
 import SystemStatusOverlay from './components/SystemStatusOverlay';
 import IntroSplash from './components/IntroSplash';
 import { Wallet as WalletIcon, Home, PieChart, Activity, Sun, Moon, LogOut, User, Target, Smartphone, Coins, CreditCard } from 'lucide-react';
+import { App as CapApp } from '@capacitor/app';
 import './index.css';
 import './App.css';
 
@@ -222,9 +223,82 @@ function App() {
     };
   }, []);
 
-  // Android hardware back button — push a history entry per tab, popstate goes home
+  // Android hardware back button & exit confirmation logic
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const activeTabRef = useRef(activeTab);
+  activeTabRef.current = activeTab;
+  const showExitConfirmRef = useRef(showExitConfirm);
+  showExitConfirmRef.current = showExitConfirm;
+
+  const handleAppExit = async () => {
+    try {
+      setShowExitConfirm(false);
+      await CapApp.exitApp();
+    } catch {
+      window.close();
+    }
+  };
+
+  const handleBackAction = () => {
+    // 1. Dispatch custom event so nested views/modals can intercept
+    const backEvent = new CustomEvent('hardwareBackPress', { cancelable: true });
+    const notPrevented = window.dispatchEvent(backEvent);
+    if (!notPrevented) {
+      // Handled by child component (e.g. Account sub-setting or UPI modal)
+      return;
+    }
+
+    // 2. If exit confirm is currently showing and back is pressed again, exit app immediately
+    if (showExitConfirmRef.current) {
+      handleAppExit();
+      return;
+    }
+
+    // 3. If on any tab other than 'home', navigate back to 'home'
+    if (activeTabRef.current !== 'home') {
+      setActiveTab('home');
+      setShowExitConfirm(false);
+      return;
+    }
+
+    // 4. Already on 'home' — indicate and show confirm to quit dialog
+    setShowExitConfirm(true);
+  };
+
+  // Auto-dismiss the exit confirm dialog after 4.5 seconds if unused
   useEffect(() => {
-    // Push an initial entry so back doesn't instantly exit
+    if (!showExitConfirm) return;
+    const timer = setTimeout(() => {
+      setShowExitConfirm(false);
+    }, 4500);
+    return () => clearTimeout(timer);
+  }, [showExitConfirm]);
+
+  // Capacitor native Android hardware back button handler
+  useEffect(() => {
+    let backListenerHandle = null;
+
+    const registerCapacitorBack = async () => {
+      try {
+        backListenerHandle = await CapApp.addListener('backButton', () => {
+          handleBackAction();
+        });
+      } catch (err) {
+        console.debug('Capacitor backButton listener not active on web:', err);
+      }
+    };
+
+    registerCapacitorBack();
+
+    return () => {
+      if (backListenerHandle?.remove) {
+        backListenerHandle.remove();
+      }
+    };
+  }, []);
+
+  // Web browser popstate handling (PWA / mobile browser fallback)
+  useEffect(() => {
     if (window.history.state?.tab !== activeTab) {
       window.history.pushState({ tab: activeTab }, '', window.location.href);
     }
@@ -232,19 +306,13 @@ function App() {
 
   useEffect(() => {
     const handlePopState = (e) => {
-      const prevTab = e.state?.tab;
-      if (activeTab !== 'home') {
-        // Navigate to home on back press instead of exiting
-        setActiveTab('home');
-        window.history.pushState({ tab: 'home' }, '', window.location.href);
-      } else {
-        // Already on home — push state back so next back can still be caught
-        window.history.pushState({ tab: 'home' }, '', window.location.href);
-      }
+      window.history.pushState({ tab: activeTabRef.current }, '', window.location.href);
+      handleBackAction();
     };
+
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [activeTab]);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -672,6 +740,43 @@ function App() {
           <span>Analysis</span>
         </div>
       </nav>
+
+      {/* Exit App Confirmation Modal (shown only on Home screen back press) */}
+      {showExitConfirm && (
+        <div 
+          className="exit-confirm-overlay" 
+          onClick={() => setShowExitConfirm(false)}
+        >
+          <div 
+            className="exit-confirm-card" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="exit-confirm-icon-wrap">
+              <LogOut size={26} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <h3 className="exit-confirm-title">Exit App?</h3>
+              <p className="exit-confirm-desc">Are you sure you want to close Smart Expense Tracker?</p>
+            </div>
+            <div className="exit-confirm-actions">
+              <button 
+                type="button" 
+                className="exit-confirm-btn-cancel"
+                onClick={() => setShowExitConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                type="button" 
+                className="exit-confirm-btn-exit"
+                onClick={handleAppExit}
+              >
+                Exit App
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -247,6 +247,27 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
     };
   }, [bankOverview, lastSyncTime, googleTokenExpired, hasGoogleAuth, syncingGmail]);
 
+  // Hardware back button interception for open modals and drop panels
+  useEffect(() => {
+    const handleBack = (e) => {
+      if (showConsentModal) {
+        e.preventDefault();
+        setShowConsentModal(false);
+      } else if (showBankDetails) {
+        e.preventDefault();
+        setShowBankDetails(false);
+      } else if (showDropzone) {
+        e.preventDefault();
+        setShowDropzone(false);
+      } else if (showGuide) {
+        e.preventDefault();
+        setShowGuide(false);
+      }
+    };
+    window.addEventListener('hardwareBackPress', handleBack);
+    return () => window.removeEventListener('hardwareBackPress', handleBack);
+  }, [showConsentModal, showBankDetails, showDropzone, showGuide]);
+
   const [copiedKey, setCopiedKey] = useState(null);
 
   const handleCopy = (text, key) => {

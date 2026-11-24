@@ -74,6 +74,24 @@ const AccountView = ({ theme, toggleTheme, onLogout, currentUser }) => {
     }
   };
 
+  // Hardware back button interception for sub-settings & modals
+  useEffect(() => {
+    const handleBack = (e) => {
+      if (showDeleteConfirm) {
+        e.preventDefault();
+        setShowDeleteConfirm(false);
+      } else if (showDeleteSyncConfirm) {
+        e.preventDefault();
+        setShowDeleteSyncConfirm(false);
+      } else if (activeSetting) {
+        e.preventDefault();
+        setActiveSetting(null);
+      }
+    };
+    window.addEventListener('hardwareBackPress', handleBack);
+    return () => window.removeEventListener('hardwareBackPress', handleBack);
+  }, [activeSetting, showDeleteConfirm, showDeleteSyncConfirm]);
+
   const handleTogglePrivacy = (val) => {
     setPrivacyMode(val);
     localStorage.setItem('privacyMode', val);
