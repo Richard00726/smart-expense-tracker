@@ -223,16 +223,15 @@ function App() {
     };
   }, []);
 
-  // Android hardware back button & exit confirmation logic
-  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  // Android hardware back button & Groww-style double-tap exit logic
+  const [showExitToast, setShowExitToast] = useState(false);
   const activeTabRef = useRef(activeTab);
   activeTabRef.current = activeTab;
-  const showExitConfirmRef = useRef(showExitConfirm);
-  showExitConfirmRef.current = showExitConfirm;
+  const lastBackPressTimeRef = useRef(0);
 
   const handleAppExit = async () => {
     try {
-      setShowExitConfirm(false);
+      setShowExitToast(false);
       await CapApp.exitApp();
     } catch {
       window.close();
@@ -248,31 +247,33 @@ function App() {
       return;
     }
 
-    // 2. If exit confirm is currently showing and back is pressed again, exit app immediately
-    if (showExitConfirmRef.current) {
-      handleAppExit();
-      return;
-    }
-
-    // 3. If on any tab other than 'home', navigate back to 'home'
+    // 2. If on any tab other than 'home', navigate back to 'home'
     if (activeTabRef.current !== 'home') {
       setActiveTab('home');
-      setShowExitConfirm(false);
+      setShowExitToast(false);
       return;
     }
 
-    // 4. Already on 'home' — indicate and show confirm to quit dialog
-    setShowExitConfirm(true);
+    // 3. User is on 'home' page: check double-tap back within 2.5 seconds (like Groww)
+    const now = Date.now();
+    if (now - lastBackPressTimeRef.current < 2500) {
+      // Second back press on Home within 2.5s — exit app!
+      handleAppExit();
+    } else {
+      // First back press on Home — show Groww-style exit toast!
+      lastBackPressTimeRef.current = now;
+      setShowExitToast(true);
+    }
   };
 
-  // Auto-dismiss the exit confirm dialog after 4.5 seconds if unused
+  // Auto-dismiss the exit toast after 2.5 seconds
   useEffect(() => {
-    if (!showExitConfirm) return;
+    if (!showExitToast) return;
     const timer = setTimeout(() => {
-      setShowExitConfirm(false);
-    }, 4500);
+      setShowExitToast(false);
+    }, 2500);
     return () => clearTimeout(timer);
-  }, [showExitConfirm]);
+  }, [showExitToast]);
 
   // Capacitor native Android hardware back button handler
   useEffect(() => {
@@ -741,40 +742,15 @@ function App() {
         </div>
       </nav>
 
-      {/* Exit App Confirmation Modal (shown only on Home screen back press) */}
-      {showExitConfirm && (
-        <div 
-          className="exit-confirm-overlay" 
-          onClick={() => setShowExitConfirm(false)}
-        >
-          <div 
-            className="exit-confirm-card" 
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="exit-confirm-icon-wrap">
-              <LogOut size={26} />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-              <h3 className="exit-confirm-title">Exit App?</h3>
-              <p className="exit-confirm-desc">Are you sure you want to close Smart Expense Tracker?</p>
-            </div>
-            <div className="exit-confirm-actions">
-              <button 
-                type="button" 
-                className="exit-confirm-btn-cancel"
-                onClick={() => setShowExitConfirm(false)}
-              >
-                Cancel
-              </button>
-              <button 
-                type="button" 
-                className="exit-confirm-btn-exit"
-                onClick={handleAppExit}
-              >
-                Exit App
-              </button>
-            </div>
+      {/* Groww-style Exit Toast (shown only on Home screen back press) */}
+      {showExitToast && (
+        <div className="groww-exit-toast">
+          <div className="groww-exit-toast-icon">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none">
+              <path d="M 3 13 C 9 19, 16 19, 21 8" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" />
+            </svg>
           </div>
+          <span>Press back again to exit Smart Expense</span>
         </div>
       )}
     </div>
