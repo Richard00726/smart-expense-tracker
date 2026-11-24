@@ -7,7 +7,7 @@ import {
   RefreshCw, Eye, EyeOff, ShieldCheck, Mail, Key, HelpCircle,
   ChevronDown, ChevronUp, LogOut, Check, ArrowRight, ArrowLeft,
   ExternalLink, Building2, Lock, Sparkles, Clock, Settings, Copy, Download, Trash2,
-  Receipt, ChevronLeft, ChevronRight, Calendar
+  Receipt, ChevronLeft, ChevronRight, Calendar, Info
 } from 'lucide-react';
 import {
   getBankSyncSettings,
@@ -1510,14 +1510,14 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
               /* ─── MOBILE CLEAN FINTECH BANK CARD ─── */
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', width: '100%' }}>
                 <div style={{
-                  background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  background: 'linear-gradient(135deg, #1e1b4b 0%, #1e293b 55%, #0f172a 100%)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
                   borderRadius: '16px',
                   padding: '1.25rem',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '1rem',
-                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                  gap: '0.9rem',
+                  boxShadow: '0 10px 28px -4px rgba(15, 23, 42, 0.45)',
                   position: 'relative',
                   overflow: 'hidden',
                   width: '100%',
@@ -1526,11 +1526,11 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                   {/* Background Radial Glow */}
                   <div style={{
                     position: 'absolute',
-                    top: '-30px',
-                    right: '-30px',
-                    width: '130px',
-                    height: '130px',
-                    background: 'radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, transparent 70%)',
+                    top: '-25px',
+                    right: '-25px',
+                    width: '120px',
+                    height: '120px',
+                    background: 'radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, transparent 70%)',
                     pointerEvents: 'none'
                   }} />
 
@@ -1538,90 +1538,94 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                       <div style={{
-                        width: '34px',
-                        height: '34px',
-                        borderRadius: '10px',
-                        background: 'rgba(99, 102, 241, 0.18)',
-                        color: 'var(--accent-primary, #6366f1)',
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '9px',
+                        background: 'rgba(56, 189, 248, 0.18)',
+                        color: '#38bdf8',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        border: '1px solid rgba(99, 102, 241, 0.3)'
+                        border: '1px solid rgba(56, 189, 248, 0.3)'
                       }}>
-                        <Building2 size={18} />
+                        <Building2 size={17} />
                       </div>
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                          <span style={{ fontWeight: 700, fontSize: '0.98rem', color: 'var(--text-primary)' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#ffffff', letterSpacing: '0.2px' }}>
                             TMB Bank
                           </span>
                           <span
                             className={(!googleTokenExpired && hasGoogleAuth) ? "pulse-dot-green" : "pulse-dot-orange"}
                             style={{
-                              width: 7,
-                              height: 7,
+                              width: 6,
+                              height: 6,
                               borderRadius: '50%',
-                              background: (!googleTokenExpired && hasGoogleAuth) ? '#10b981' : '#f59e0b',
-                              boxShadow: (!googleTokenExpired && hasGoogleAuth) ? '0 0 8px #10b981' : '0 0 8px #f59e0b'
+                              background: (!googleTokenExpired && hasGoogleAuth) ? '#34d399' : '#fbbf24',
+                              boxShadow: (!googleTokenExpired && hasGoogleAuth) ? '0 0 8px #34d399' : '0 0 8px #fbbf24'
                             }}
                           />
                         </div>
-                        <span style={{ fontSize: '0.72rem', color: (!googleTokenExpired && hasGoogleAuth) ? '#10b981' : '#f59e0b', fontWeight: 600 }}>
-                          {(!googleTokenExpired && hasGoogleAuth) ? '● Live Sync Active' : '● Re-link Required'}
+                        <span style={{ fontSize: '0.7rem', color: (!googleTokenExpired && hasGoogleAuth) ? '#34d399' : '#fbbf24', fontWeight: 600 }}>
+                          {(!googleTokenExpired && hasGoogleAuth) ? 'Live Sync Active' : 'Re-link Required'}
                         </span>
                       </div>
                     </div>
 
+                    {/* Compact Minimal A/C box */}
                     {bankOverview?.accountNo && (
-                      <span style={{
-                        fontSize: '0.8rem',
+                      <div style={{
+                        fontSize: '0.72rem',
                         fontFamily: 'monospace',
-                        color: 'var(--text-secondary)',
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        padding: '0.28rem 0.65rem',
-                        borderRadius: '8px',
-                        border: '1px solid var(--card-border)',
-                        letterSpacing: '0.5px'
+                        color: 'rgba(255, 255, 255, 0.85)',
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        padding: '3px 8px',
+                        borderRadius: '6px',
+                        border: '1px solid rgba(255, 255, 255, 0.18)',
+                        letterSpacing: '0.5px',
+                        fontWeight: 500
                       }}>
-                        A/C •••• {bankOverview.accountNo.replace(/^X+/, '') || bankOverview.accountNo.slice(-5)}
-                      </span>
+                        •••• {bankOverview.accountNo.replace(/^X+/, '') || bankOverview.accountNo.slice(-5)}
+                      </div>
                     )}
                   </div>
 
                   {/* Center: Available Balance */}
-                  <div style={{ padding: '0.25rem 0' }}>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '0.3rem', fontWeight: 600 }}>
+                  <div style={{ padding: '0.15rem 0' }}>
+                    <div style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.72)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.25rem', fontWeight: 600 }}>
                       Available Balance
                     </div>
                     <div style={{
                       fontSize: '2.1rem',
                       fontWeight: 800,
-                      color: 'var(--text-primary)',
+                      color: '#ffffff',
                       letterSpacing: '-0.5px',
                       display: 'flex',
                       alignItems: 'baseline',
-                      gap: '0.2rem'
+                      gap: '4px',
+                      lineHeight: 1.1
                     }}>
-                      <span style={{ fontSize: '1.4rem', color: 'var(--accent-primary, #6366f1)', fontWeight: 700 }}>₹</span>
+                      <span style={{ fontSize: '1.4rem', color: '#38bdf8', fontWeight: 700 }}>₹</span>
                       <span>{effectiveLiveBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                   </div>
 
-                  {/* Footer Row: Timestamp + Refresh & Clean Options */}
+                  {/* Footer Row: Timestamp + Refresh & Clean Icon-Only Action Buttons */}
                   <div style={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-                    paddingTop: '0.75rem',
-                    fontSize: '0.75rem',
-                    color: 'var(--text-secondary)'
+                    borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+                    paddingTop: '0.65rem',
+                    fontSize: '0.74rem',
+                    color: 'rgba(255, 255, 255, 0.75)'
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      <Clock size={12} style={{ color: '#10b981', flexShrink: 0 }} />
-                      <span>
+                    {/* Left: Strictly single-line timestamp */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', minWidth: 0, whiteSpace: 'nowrap' }}>
+                      <Clock size={12} style={{ color: '#34d399', flexShrink: 0 }} />
+                      <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '0.72rem' }}>
                         {lastSyncTime
-                          ? `Synced ${lastSyncTime.toLocaleDateString() === new Date().toLocaleDateString() ? 'today' : lastSyncTime.toLocaleDateString()} at ${lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                          ? `Today, ${lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
                           : 'Auto-sync active'}
                       </span>
                       <button
@@ -1634,54 +1638,67 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                         }}
                         disabled={syncingGmail}
                         style={{
-                          background: 'none',
-                          border: 'none',
-                          color: 'var(--accent-primary, #6366f1)',
+                          background: 'rgba(255, 255, 255, 0.08)',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          color: '#38bdf8',
                           cursor: syncingGmail ? 'not-allowed' : 'pointer',
-                          padding: '2px',
+                          width: '26px',
+                          height: '26px',
+                          borderRadius: '6px',
                           display: 'inline-flex',
                           alignItems: 'center',
-                          marginLeft: '0.2rem'
+                          justifyContent: 'center',
+                          marginLeft: '0.2rem',
+                          flexShrink: 0
                         }}
-                        title="Sync now"
+                        title="Sync Gmail now"
                       >
-                        <RefreshCw size={13} style={{ animation: syncingGmail ? 'spin 1s linear infinite' : 'none' }} />
+                        <RefreshCw size={12} style={{ animation: syncingGmail ? 'spin 1s linear infinite' : 'none' }} />
                       </button>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    {/* Right: Icon-only buttons for Info/Details and Drop Statement (no clumsy text) */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
                       {syncingGmail && (
-                        <span style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 600 }}>Syncing...</span>
+                        <span style={{ fontSize: '0.7rem', color: '#34d399', fontWeight: 600, marginRight: '0.2rem' }}>Syncing...</span>
                       )}
-                      <button
-                        onClick={() => setShowBankDetails(b => !b)}
-                        style={{
-                          background: showBankDetails ? 'var(--accent-primary)' : 'rgba(255, 255, 255, 0.07)',
-                          color: showBankDetails ? '#fff' : 'var(--text-primary)',
-                          border: '1px solid var(--card-border)',
-                          borderRadius: '6px',
-                          padding: '0.25rem 0.55rem',
-                          fontSize: '0.72rem',
-                          cursor: 'pointer',
-                          fontWeight: 500
-                        }}
-                      >
-                        {showBankDetails ? 'Details ▴' : 'Details ▾'}
-                      </button>
+                      {bankOverview?.customerDetails && (
+                        <button
+                          onClick={() => setShowBankDetails(b => !b)}
+                          style={{
+                            background: showBankDetails ? 'var(--accent-primary, #6366f1)' : 'rgba(255, 255, 255, 0.08)',
+                            color: '#ffffff',
+                            border: '1px solid rgba(255, 255, 255, 0.18)',
+                            borderRadius: '7px',
+                            width: '28px',
+                            height: '28px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer'
+                          }}
+                          title={showBankDetails ? "Hide Branch Details" : "Show Branch Details"}
+                        >
+                          <Info size={14} />
+                        </button>
+                      )}
                       <button
                         onClick={() => setShowDropzone(d => !d)}
                         style={{
-                          background: showDropzone ? 'var(--accent-primary)' : 'rgba(255, 255, 255, 0.07)',
-                          color: showDropzone ? '#fff' : 'var(--text-primary)',
-                          border: '1px solid var(--card-border)',
-                          borderRadius: '6px',
-                          padding: '0.25rem 0.55rem',
-                          fontSize: '0.72rem',
-                          cursor: 'pointer',
-                          fontWeight: 500
+                          background: showDropzone ? 'var(--accent-primary, #6366f1)' : 'rgba(255, 255, 255, 0.08)',
+                          color: '#ffffff',
+                          border: '1px solid rgba(255, 255, 255, 0.18)',
+                          borderRadius: '7px',
+                          width: '28px',
+                          height: '28px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer'
                         }}
+                        title={showDropzone ? "Close PDF Drop" : "Upload / Drop Statement PDF"}
                       >
-                        {showDropzone ? 'Drop ✕' : 'Drop PDF'}
+                        <UploadCloud size={14} />
                       </button>
                     </div>
                   </div>
