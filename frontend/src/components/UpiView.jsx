@@ -7,7 +7,7 @@ import {
   RefreshCw, Eye, EyeOff, ShieldCheck, Mail, Key, HelpCircle,
   ChevronDown, ChevronUp, LogOut, Check, ArrowRight, ArrowLeft,
   ExternalLink, Building2, Lock, Sparkles, Clock, Settings, Copy, Download, Trash2,
-  Receipt, ChevronLeft, ChevronRight
+  Receipt, ChevronLeft, ChevronRight, Calendar
 } from 'lucide-react';
 import {
   getBankSyncSettings,
@@ -2821,7 +2821,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                     </div>
                   </div>
 
-                  <div className="transaction-table-container" style={{ margin: 0 }}>
+                  <div className="transaction-table-container desktop-table-view" style={{ margin: 0 }}>
                     <table style={{ tableLayout: 'fixed', width: '100%', minWidth: '650px', borderCollapse: 'separate', borderSpacing: 0 }}>
                       <thead style={{ position: 'sticky', top: 0, zIndex: 20 }}>
                         <tr>
@@ -2876,6 +2876,55 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                         ))}
                       </tbody>
                     </table>
+                  </div>
+
+                  {/* Mobile Touch-Friendly Daily Statement Ledger Feed */}
+                  <div className="mobile-ledger-feed">
+                    {paginatedDailySummaries.map((summary, idx) => (
+                      <div key={summary.period || idx} className="mobile-ledger-card animate-fade-in">
+                        <div className="mobile-ledger-card-header">
+                          <div className="mobile-ledger-date">
+                            <Calendar size={14} style={{ color: 'var(--accent-primary)' }} />
+                            <span>{summary.statementDate || summary.period}</span>
+                          </div>
+                          <span className="badge badge-success" style={{ fontSize: '11px', padding: '2px 8px' }}>
+                            <CheckCircle2 size={10} style={{ marginRight: '3px' }} /> Synced
+                          </span>
+                        </div>
+
+                        <div className="mobile-ledger-closing-row">
+                          <span className="mobile-ledger-closing-label">Closing Balance</span>
+                          <span className="mobile-ledger-closing-val">
+                            ₹{Number(summary.closingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                        </div>
+
+                        <div className="mobile-ledger-flow-grid">
+                          <div className="mobile-ledger-flow-item">
+                            <span className="mobile-ledger-flow-lbl">Opening</span>
+                            <span className="mobile-ledger-flow-num">
+                              ₹{Number(summary.openingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                          </div>
+                          <div className="mobile-ledger-flow-item">
+                            <span className="mobile-ledger-flow-lbl">Deposits (+)</span>
+                            <span className="mobile-ledger-flow-num" style={{ color: '#10b981' }}>
+                              {summary.totalDeposits > 0 
+                                ? `+₹${Number(summary.totalDeposits).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
+                                : '—'}
+                            </span>
+                          </div>
+                          <div className="mobile-ledger-flow-item">
+                            <span className="mobile-ledger-flow-lbl">Withdrawals (-)</span>
+                            <span className="mobile-ledger-flow-num" style={{ color: summary.totalWithdrawals > 0 ? '#ef4444' : 'var(--text-secondary)' }}>
+                              {summary.totalWithdrawals > 0 
+                                ? `-₹${Number(summary.totalWithdrawals).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
+                                : '—'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
 
                   {/* Daily Statement Ledger Pagination */}

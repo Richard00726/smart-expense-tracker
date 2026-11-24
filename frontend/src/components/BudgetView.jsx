@@ -235,9 +235,9 @@ const BudgetView = ({ transactions: initialTransactions }) => {
         }} />
 
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+          <div className="budget-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+            <div className="budget-title-area">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
                 <h2 style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.75rem', margin: 0 }}>
                   <Target className="text-accent-primary" size={28} />
                   {getTitle()}
@@ -259,7 +259,7 @@ const BudgetView = ({ transactions: initialTransactions }) => {
             </div>
 
             {limit > 0 && (
-              <div style={{ background: 'var(--empty-state-bg)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--card-border)', minWidth: '200px' }}>
+              <div className="budget-limit-box" style={{ background: 'var(--empty-state-bg)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--card-border)', minWidth: '200px' }}>
                 <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', textTransform: 'capitalize' }}>{timeframe} Limit</div>
                 {isEditing ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -390,7 +390,7 @@ const BudgetView = ({ transactions: initialTransactions }) => {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
+              <div className="budget-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
                 <div style={{
                   background: isOverBudget ? 'rgba(239, 68, 68, 0.05)' : 'rgba(16, 185, 129, 0.05)',
                   border: `1px solid ${isOverBudget ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'}`,
@@ -420,7 +420,7 @@ const BudgetView = ({ transactions: initialTransactions }) => {
               </div>
 
               {pieChartData.length > 0 && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+                <div className="budget-charts-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
                   
                   <div style={{ background: 'var(--empty-state-bg)', padding: '1.5rem', borderRadius: '16px', border: '1px solid var(--card-border)' }}>
                     <h3 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '1.5rem', color: 'var(--text-primary)', textAlign: 'center' }}>Expenses by Category</h3>

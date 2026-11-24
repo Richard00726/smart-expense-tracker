@@ -650,11 +650,11 @@ const AnalysisView = ({ refreshTrigger }) => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       
       {/* Sub-Navigation Pills */}
-      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+      <div className="analysis-sub-nav" style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
         <button
-          className={`btn ${activeAnalysisTab === 'spending' ? 'btn-danger' : ''}`}
+          className={`btn analysis-nav-btn ${activeAnalysisTab === 'spending' ? 'btn-danger' : ''}`}
           style={{ 
-            flex: 1, minWidth: '150px', 
+            flex: 1,
             background: activeAnalysisTab === 'spending' ? 'var(--danger)' : 'var(--empty-state-bg)',
             color: activeAnalysisTab === 'spending' ? '#fff' : 'var(--text-primary)',
             border: activeAnalysisTab === 'spending' ? 'none' : '1px solid var(--card-border)'
@@ -664,9 +664,9 @@ const AnalysisView = ({ refreshTrigger }) => {
           <PieChartIcon size={18} /> Spending
         </button>
         <button
-          className={`btn ${activeAnalysisTab === 'income' ? 'btn-success' : ''}`}
+          className={`btn analysis-nav-btn ${activeAnalysisTab === 'income' ? 'btn-success' : ''}`}
           style={{ 
-            flex: 1, minWidth: '150px', 
+            flex: 1,
             background: activeAnalysisTab === 'income' ? 'var(--success)' : 'var(--empty-state-bg)',
             color: activeAnalysisTab === 'income' ? '#fff' : 'var(--text-primary)',
             border: activeAnalysisTab === 'income' ? 'none' : '1px solid var(--card-border)'
@@ -676,9 +676,9 @@ const AnalysisView = ({ refreshTrigger }) => {
           <TrendingUp size={18} /> Income
         </button>
         <button
-          className={`btn ${activeAnalysisTab === 'cashflow' ? 'btn-primary' : ''}`}
+          className={`btn analysis-nav-btn ${activeAnalysisTab === 'cashflow' ? 'btn-primary' : ''}`}
           style={{ 
-            flex: 1, minWidth: '150px', 
+            flex: 1,
             background: activeAnalysisTab === 'cashflow' ? 'var(--accent-primary)' : 'var(--empty-state-bg)',
             color: activeAnalysisTab === 'cashflow' ? '#fff' : 'var(--text-primary)',
             border: activeAnalysisTab === 'cashflow' ? 'none' : '1px solid var(--card-border)'
@@ -736,9 +736,9 @@ const AnalysisView = ({ refreshTrigger }) => {
             <p style={{ color: 'var(--text-secondary)' }}>No spending recorded for this period.</p>
           </div>
         ) : (
-          <div style={{ padding: '24px' }}>
+          <div className="analysis-charts-container" style={{ padding: '24px' }}>
             <div
-              className="charts-grid"
+              className="charts-grid analysis-charts-grid"
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
@@ -931,7 +931,7 @@ const AnalysisView = ({ refreshTrigger }) => {
                 </div>
 
                 {/* Side-by-side Donut & Category List Container */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, minHeight: '220px' }}>
+                <div className="donut-category-container" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, minHeight: '220px' }}>
                   {/* Donut Chart */}
                   <div style={{ position: 'relative', width: '135px', height: '135px', flexShrink: 0, margin: '0 auto' }}>
                     <ResponsiveContainer width="100%" height="100%">
@@ -1361,7 +1361,7 @@ const AnalysisView = ({ refreshTrigger }) => {
               </div>
 
               {/* Side-by-side Donut & Category List Container */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, minHeight: '220px' }}>
+              <div className="donut-category-container" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, minHeight: '220px' }}>
                 {/* Donut Chart */}
                 <div style={{ position: 'relative', width: '135px', height: '135px', flexShrink: 0, margin: '0 auto' }}>
                   <ResponsiveContainer width="100%" height="100%">
@@ -1675,7 +1675,7 @@ const AnalysisView = ({ refreshTrigger }) => {
             </div>
 
             {/* 4-Card Complete Ledger Flow */}
-            <div style={{
+            <div className="cashflow-ledger-grid" style={{
               marginTop: '1.5rem',
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',

@@ -1064,6 +1064,90 @@ path:focus-visible {
   border-color: var(--danger, #ef4444);
 }
 
+/* Mobile Daily Statement Ledger Feed (Hidden by default on desktop) */
+.mobile-ledger-feed {
+  display: none;
+}
+
+.mobile-ledger-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.mobile-ledger-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px dashed var(--border);
+  padding-bottom: 0.5rem;
+}
+
+.mobile-ledger-date {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.mobile-ledger-closing-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.mobile-ledger-closing-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.mobile-ledger-closing-val {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #38bdf8;
+  font-family: var(--font-mono, monospace);
+}
+
+.mobile-ledger-flow-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+  background: var(--bg-card-subtle, rgba(255, 255, 255, 0.03));
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.mobile-ledger-flow-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: center;
+}
+
+.mobile-ledger-flow-lbl {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.mobile-ledger-flow-num {
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  font-family: var(--font-mono, monospace);
+}
+
 /* Responsive Media Queries */
 @media (max-width: 768px) {
   .sidebar {
@@ -1150,16 +1234,16 @@ path:focus-visible {
     margin-bottom: 0.6rem !important;
   }
 
-  /* Transactions Table / Mobile Feed */
+  /* Transactions & Ledger Feeds */
   .desktop-table-view {
     display: none !important;
   }
 
-  .mobile-tx-feed {
+  .mobile-tx-feed, .mobile-ledger-feed {
     display: flex !important;
     flex-direction: column !important;
     gap: 0.75rem !important;
-    padding: 0.75rem 0 !important;
+    padding: 0.5rem 0 !important;
   }
 
   .pagination-bar {
@@ -1171,18 +1255,127 @@ path:focus-visible {
   }
 
   .activity-header, .data-header {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
     padding: 0.85rem 1rem !important;
-    gap: 0.5rem !important;
+    gap: 0.75rem !important;
+  }
+
+  .data-header h3 {
+    font-size: 1.1rem !important;
+  }
+
+  /* Date Hierarchy Filter on Mobile */
+  .date-hierarchy-filter {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.4rem !important;
+    width: 100% !important;
+  }
+
+  .filter-pill-select {
+    flex: 1 1 calc(50% - 0.4rem) !important;
+    min-width: 110px !important;
+    font-size: 0.78rem !important;
+    padding: 0.35rem 1.6rem 0.35rem 0.6rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .filter-date-pill {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .filter-date-pill input {
+    font-size: 0.78rem !important;
+  }
+
+  /* Budget View Responsive */
+  .budget-header-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 1rem !important;
+    margin-bottom: 1.25rem !important;
+  }
+
+  .budget-title-area h2 {
+    font-size: 1.35rem !important;
+  }
+
+  .budget-limit-box {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .budget-stats-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.85rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  .budget-charts-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+    width: 100% !important;
+  }
+
+  /* Analysis View Responsive */
+  .analysis-sub-nav {
+    display: flex !important;
+    gap: 0.35rem !important;
+    width: 100% !important;
+    margin-bottom: 0.85rem !important;
+  }
+
+  .analysis-nav-btn {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    padding: 0.55rem 0.35rem !important;
+    font-size: 0.78rem !important;
+    justify-content: center !important;
+    text-align: center !important;
+    border-radius: 10px !important;
+  }
+
+  .analysis-charts-container {
+    padding: 0.65rem 0.75rem !important;
+  }
+
+  .analysis-charts-grid, .charts-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+  .chart-wrapper {
+    padding: 0.85rem !important;
+    border-radius: 12px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+  }
+
+  .donut-category-container {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 1.25rem !important;
+    width: 100% !important;
+    min-height: auto !important;
+  }
+
+  .cashflow-ledger-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+    width: 100% !important;
   }
 
   .main-content {
     grid-template-columns: 1fr;
     gap: 1rem;
     margin-top: 1rem !important;
-  }
-
-  .charts-grid {
-    grid-template-columns: 1fr;
   }
 
   .form-card, .data-card {
