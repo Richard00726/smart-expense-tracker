@@ -400,6 +400,9 @@ router.get("/summary", protect, async (req, res) => {
     let upiOpening = 0;
     if (lastUpiBefore && lastUpiBefore.balance !== null) {
       upiOpening = Number(lastUpiBefore.balance);
+    } else if (!startDate || (startDate && new Date(start).toISOString().slice(0, 7) === '2026-07')) {
+      // Official initial statement opening balance for all-time and starting month (July 2026)
+      upiOpening = 208.47;
     } else {
       // Find first UPI transaction in period directly from in-memory array (0 extra DB queries!)
       const upiInPeriod = allFilteredTransactions

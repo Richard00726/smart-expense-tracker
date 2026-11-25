@@ -721,8 +721,16 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
   }, [flowFilterType, liveAvailableBalance, activeLedger.closing]);
 
   const displayOpeningBalance = useMemo(() => {
-    return Number(activeLedger.opening ?? 0);
-  }, [activeLedger.opening]);
+    // When viewing "All Time" or the initial statement month (July 2026),
+    // use the official verified statement opening balance of ₹208.47
+    if (flowFilterType === 'all') {
+      return 208.47;
+    }
+    if (flowFilterType === 'month' && flowFilterValue === '2026-07') {
+      return 208.47;
+    }
+    return Number(activeLedger.opening ?? 208.47);
+  }, [flowFilterType, flowFilterValue, activeLedger.opening]);
 
   const reconciliationAdjustment = useMemo(() => {
     const calculated = displayOpeningBalance + activeLedger.inflow - activeLedger.outflow;
