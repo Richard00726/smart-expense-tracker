@@ -53,7 +53,7 @@ const getInitialSummary = (key) => {
   return null;
 };
 
-const AnalysisView = ({ refreshTrigger }) => {
+const AnalysisView = ({ refreshTrigger, balances }) => {
   const today = new Date();
   const todayString = today.toISOString().split('T')[0];
   const currentMonthString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
@@ -66,6 +66,37 @@ const AnalysisView = ({ refreshTrigger }) => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Derive live verified balance matching Home dashboard
+  const liveBalances = useMemo(() => {
+    if (balances && (balances.total !== undefined || balances.upi !== undefined)) {
+      return {
+        cash: Number(balances.cash || 0),
+        upi: Number(balances.upi || 0),
+        total: Number(balances.total || (Number(balances.cash || 0) + Number(balances.upi || 0)))
+      };
+    }
+    // Fallback: search refreshTrigger transactions for latest verified bank balance
+    let upi = 0;
+    if (Array.isArray(refreshTrigger) && refreshTrigger.length > 0) {
+      const latestBankTx = refreshTrigger.find(t => t.wallet === 'UPI' && t.balance !== null && t.balance !== undefined && !isNaN(t.balance));
+      if (latestBankTx) {
+        upi = Number(latestBankTx.balance);
+      }
+    }
+    let cash = 0;
+    try {
+      const cached = JSON.parse(localStorage.getItem('cached_balances') || '{}');
+      cash = Number(cached.cash || 0);
+      if (!upi && cached.upi !== undefined) upi = Number(cached.upi);
+    } catch {}
+
+    return {
+      cash,
+      upi,
+      total: cash + upi
+    };
+  }, [balances, refreshTrigger]);
 
   const availableMonths = React.useMemo(() => {
     const monthsMap = new Map();
@@ -631,6 +662,26 @@ const AnalysisView = ({ refreshTrigger }) => {
       };
     }
   }
+
+  const liveAvailableBalance = useMemo(() => {
+    if (flowWalletFilter === 'Cash') return liveBalances.cash;
+    if (flowWalletFilter === 'UPI') return liveBalances.upi;
+    return liveBalances.total;
+  }, [flowWalletFilter, liveBalances]);
+
+  const displayClosingBalance = useMemo(() => {
+    // When viewing "All Time", ALWAYS synchronize with Home dashboard's live verified balance!
+    if (flowFilterType === 'all') {
+      return liveAvailableBalance;
+    }
+    return Number(activeLedger.closing ?? liveAvailableBalance);
+  }, [flowFilterType, liveAvailableBalance, activeLedger.closing]);
+
+  const reconciliationAdjustment = useMemo(() => {
+    const calculated = activeLedger.opening + activeLedger.inflow - activeLedger.outflow;
+    const diff = displayClosingBalance - calculated;
+    return Math.abs(diff) > 0.01 ? diff : 0;
+  }, [displayClosingBalance, activeLedger.opening, activeLedger.inflow, activeLedger.outflow]);
 
   const hasSpendingData = categoryData.length > 0 || walletSpendingData.length > 0;
   const totalIncomeCategory = incomeCategoryData.reduce((acc, curr) => acc + (Number(curr.value) || 0), 0);
@@ -1806,8 +1857,8 @@ const AnalysisView = ({ refreshTrigger }) => {
 
               {/* Card 4: Ending / Available Balance */}
               <div style={{
-                background: activeLedger.closing >= 0 ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
-                border: `1px solid ${activeLedger.closing >= 0 ? 'rgba(16, 185, 129, 0.35)' : 'rgba(239, 68, 68, 0.35)'}`,
+                background: displayClosingBalance >= 0 ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                border: `1px solid ${displayClosingBalance >= 0 ? 'rgba(16, 185, 129, 0.35)' : 'rgba(239, 68, 68, 0.35)'}`,
                 borderRadius: '12px',
                 padding: '1rem',
                 display: 'flex',
@@ -1818,8 +1869,8 @@ const AnalysisView = ({ refreshTrigger }) => {
                   width: 40,
                   height: 40,
                   borderRadius: '10px',
-                  background: activeLedger.closing >= 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-                  color: activeLedger.closing >= 0 ? '#10b981' : '#ef4444',
+                  background: displayClosingBalance >= 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                  color: displayClosingBalance >= 0 ? '#10b981' : '#ef4444',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -1829,12 +1880,12 @@ const AnalysisView = ({ refreshTrigger }) => {
                 </div>
                 <div>
                   <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block' }}>
-                    {flowWalletFilter === 'all' && 'Current Available Balance'}
-                    {flowWalletFilter === 'Cash' && 'Cash Available Balance'}
-                    {flowWalletFilter === 'UPI' && 'Current Bank Balance'}
+                    {flowWalletFilter === 'all' && (flowFilterType === 'all' ? 'Current Available Balance' : 'Ending Balance (Combined)')}
+                    {flowWalletFilter === 'Cash' && (flowFilterType === 'all' ? 'Cash Available Balance' : 'Cash Ending Balance')}
+                    {flowWalletFilter === 'UPI' && (flowFilterType === 'all' ? 'Current Bank Balance' : 'Bank Ending Balance')}
                   </span>
-                  <strong style={{ fontSize: '1.25rem', color: activeLedger.closing >= 0 ? '#10b981' : '#ef4444' }}>
-                    {getCurrency()}{formatAmt(activeLedger.closing)}
+                  <strong style={{ fontSize: '1.25rem', color: displayClosingBalance >= 0 ? '#10b981' : '#ef4444' }}>
+                    {getCurrency()}{formatAmt(displayClosingBalance)}
                   </strong>
                   <span style={{ fontSize: '0.7rem', color: '#10b981', display: 'block', marginTop: '2px', fontWeight: 600 }}>
                     Active & verified in account
@@ -1870,6 +1921,14 @@ const AnalysisView = ({ refreshTrigger }) => {
                 <span style={{ fontWeight: 600, color: '#ef4444' }}>
                   {getCurrency()}{formatAmt(activeLedger.outflow)}
                 </span>
+                {reconciliationAdjustment !== 0 && (
+                  <>
+                    <span style={{ color: 'var(--text-muted)' }}>{reconciliationAdjustment > 0 ? '+' : '-'}</span>
+                    <span style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.82rem' }} title="Bank statement reconciliation adjustments">
+                      {getCurrency()}{formatAmt(Math.abs(reconciliationAdjustment))} (Bank Adjustments)
+                    </span>
+                  </>
+                )}
                 <span style={{ color: 'var(--text-muted)' }}>=</span>
                 <span style={{
                   fontWeight: 700,
@@ -1879,7 +1938,7 @@ const AnalysisView = ({ refreshTrigger }) => {
                   borderRadius: '6px',
                   border: '1px solid rgba(16, 185, 129, 0.3)'
                 }}>
-                  {getCurrency()}{formatAmt(activeLedger.closing)}
+                  {getCurrency()}{formatAmt(displayClosingBalance)}
                 </span>
               </div>
 

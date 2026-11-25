@@ -783,7 +783,7 @@ function App() {
           {activeTab === 'analysis' && (
             <div className="tab-page-container">
               <ErrorBoundary>
-                <AnalysisView refreshTrigger={transactions} />
+                <AnalysisView refreshTrigger={transactions} balances={effectiveBalances} />
               </ErrorBoundary>
             </div>
           )}

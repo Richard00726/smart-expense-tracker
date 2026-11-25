@@ -419,7 +419,23 @@ router.get("/summary", protect, async (req, res) => {
     }
 
     const cashOpening = Number((cashPriorCredits._sum?.amount || 0) - (cashPriorDebits._sum?.amount || 0));
-    const upiClosing = upiOpening + upiPeriodIn - upiPeriodOut;
+
+    // Find latest verified UPI transaction in period if available (from bank statements)
+    const upiInPeriodDesc = allFilteredTransactions
+      .filter(t => t.wallet === 'UPI' && t.balance !== null && t.balance !== undefined && !isNaN(t.balance))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime() || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    const latestUpiInPeriod = upiInPeriodDesc[0];
+
+    let upiClosing;
+    if (latestUpiInPeriod && latestUpiInPeriod.balance !== null && latestUpiInPeriod.balance !== undefined) {
+      upiClosing = Number(latestUpiInPeriod.balance);
+    } else if (upiWallet && !endDate) {
+      upiClosing = Number(upiWallet.balance);
+    } else {
+      upiClosing = upiOpening + upiPeriodIn - upiPeriodOut;
+    }
+
     const cashClosing = cashOpening + cashPeriodIn - cashPeriodOut;
 
     const flowLedger = {
