@@ -7,7 +7,7 @@ import {
   RefreshCw, Eye, EyeOff, ShieldCheck, Mail, Key, HelpCircle,
   ChevronDown, ChevronUp, LogOut, Check, ArrowRight, ArrowLeft,
   ExternalLink, Building2, Lock, Sparkles, Clock, Settings, Copy, Download, Trash2,
-  Receipt, ChevronLeft, ChevronRight, Calendar, Info
+  Receipt, ChevronLeft, ChevronRight, Calendar, Info, Edit3
 } from 'lucide-react';
 import {
   getBankSyncSettings,
@@ -1579,7 +1579,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
           onClick={() => setMainTab('auto')}
         >
           <Building2 size={16} />
-          <span>{isMobile ? '⚡ Bank Auto-Sync' : 'Auto-Tracker-UPI (Bank Sync)'}</span>
+          <span>{isMobile ? 'Bank Auto-Sync' : 'Auto-Tracker-UPI (Bank Sync)'}</span>
           {isConfigured && (
             <span
               style={{
@@ -1597,18 +1597,23 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
         <button
           className="btn"
           style={{
-            flex: isMobile ? '0 0 auto' : 1,
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.45rem',
             background: mainTab === 'manual' ? 'var(--accent-primary, #6366f1)' : 'var(--empty-state-bg)',
             color: mainTab === 'manual' ? '#fff' : 'var(--text-primary)',
             fontWeight: 600,
             fontSize: isMobile ? '0.82rem' : '0.9rem',
-            padding: isMobile ? '0.55rem 0.85rem' : '0.65rem 1.25rem',
+            padding: isMobile ? '0.55rem 0.5rem' : '0.65rem 1.25rem',
             whiteSpace: 'nowrap',
             borderRadius: '10px'
           }}
           onClick={() => setMainTab('manual')}
         >
-          <span>{isMobile ? '✏️ Manual Entry' : 'Manual Entry'}</span>
+          <Edit3 size={15} />
+          <span>Manual Entry</span>
         </button>
       </div>
 
