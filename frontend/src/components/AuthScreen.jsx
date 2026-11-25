@@ -7,15 +7,8 @@ import {
 import IntroSplash from './IntroSplash';
 import './AuthScreen.css';
 
-const AuthScreen = ({ onAuthSuccess, initialSkipSplash = false }) => {
-  const [showSplash, setShowSplash] = useState(() => {
-    if (initialSkipSplash) return false;
-    try {
-      return sessionStorage.getItem('skip_splash') !== 'true';
-    } catch {
-      return true;
-    }
-  });
+const AuthScreen = ({ onAuthSuccess, initialSkipSplash = true }) => {
+  const [showSplash, setShowSplash] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const [step, setStep] = useState(1); // 1: Form details, 2: OTP / Password
   

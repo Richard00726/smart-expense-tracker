@@ -21,20 +21,8 @@ import './App.css';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
   const [currentUser, setCurrentUser] = useState(() => JSON.parse(localStorage.getItem('user') || '{}'));
-  const [showSplash, setShowSplash] = useState(() => {
-    try {
-      return sessionStorage.getItem('skip_splash') !== 'true';
-    } catch {
-      return true;
-    }
-  });
-  const [hasSessionSplashShown, setHasSessionSplashShown] = useState(() => {
-    try {
-      return sessionStorage.getItem('skip_splash') === 'true';
-    } catch {
-      return false;
-    }
-  });
+  const [showSplash, setShowSplash] = useState(false);
+  const [hasSessionSplashShown, setHasSessionSplashShown] = useState(true);
   const [showProfileTooltip, setShowProfileTooltip] = useState(false);
   const [balances, setBalances] = useState(() => {
     try {
