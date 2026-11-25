@@ -55,11 +55,43 @@ function App() {
     if (window.location.hash === '#privacy' || window.location.pathname === '/privacy' || window.location.pathname === '/privacy.html') {
       return 'privacy';
     }
-    if (window.location.hash === '#analysis' || window.location.hash === '#cashflow') {
+    const cleanHash = window.location.hash.replace('#', '').toLowerCase();
+    const validTabs = ['home', 'cash', 'upi', 'budget', 'analysis', 'account', 'privacy'];
+    if (validTabs.includes(cleanHash)) {
+      return cleanHash;
+    }
+    if (cleanHash === 'cashflow') {
       return 'analysis';
+    }
+    const saved = localStorage.getItem('active_tab');
+    if (saved && validTabs.includes(saved)) {
+      return saved;
     }
     return 'home';
   });
+
+  // Keep activeTab persisted in localStorage and synced to URL hash
+  useEffect(() => {
+    if (activeTab) {
+      localStorage.setItem('active_tab', activeTab);
+      const targetHash = '#' + activeTab;
+      if (window.location.hash !== targetHash) {
+        window.history.replaceState(null, '', targetHash);
+      }
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const cleanHash = window.location.hash.replace('#', '').toLowerCase();
+      const validTabs = ['home', 'cash', 'upi', 'budget', 'analysis', 'account', 'privacy'];
+      if (validTabs.includes(cleanHash) && cleanHash !== activeTab) {
+        setActiveTab(cleanHash);
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [activeTab]);
   const today = new Date();
   const todayString = today.toISOString().split('T')[0];
   const currentMonthString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;

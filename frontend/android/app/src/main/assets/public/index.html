@@ -9,7 +9,24 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
     
-    <!-- Instant Single Entrance Splash (Pure White, Runs Exactly Once) -->
+    <!-- Fast Refresh Detection: Suppress Splash Instantly on Reload -->
+    <script>
+      (function() {
+        try {
+          var navEntries = performance.getEntriesByType && performance.getEntriesByType('navigation');
+          var isReload = (navEntries && navEntries[0] && navEntries[0].type === 'reload') || (window.performance && window.performance.navigation && window.performance.navigation.type === 1);
+          var hasOpened = sessionStorage.getItem('app_has_opened');
+          if (isReload || hasOpened) {
+            var s = document.createElement('style');
+            s.id = 'kill-splash';
+            s.textContent = '#splash-screen { display: none !important; opacity: 0 !important; visibility: hidden !important; }';
+            document.head.appendChild(s);
+          }
+        } catch(e) {}
+      })();
+    </script>
+    
+    <!-- Instant Single Entrance Splash (Pure White, Runs Exactly Once on Fresh Open) -->
     <style>
       html, body {
         margin: 0;
@@ -129,7 +146,7 @@
         to { opacity: 1; transform: translateY(0); }
       }
     </style>
-    <script type="module" crossorigin src="/assets/index-7EzQA3T8.js"></script>
+    <script type="module" crossorigin src="/assets/index-qaZ55loy.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-YHWNbufB.css">
   </head>
   <body>
@@ -158,6 +175,21 @@
 
     <script>
       (function() {
+        try {
+          var navEntries = performance.getEntriesByType && performance.getEntriesByType('navigation');
+          var isReload = (navEntries && navEntries[0] && navEntries[0].type === 'reload') || (window.performance && window.performance.navigation && window.performance.navigation.type === 1);
+          var hasOpened = sessionStorage.getItem('app_has_opened');
+          var el = document.getElementById('splash-screen');
+          
+          if (isReload || hasOpened) {
+            if (el && el.parentNode) {
+              el.parentNode.removeChild(el);
+            }
+            return;
+          }
+          sessionStorage.setItem('app_has_opened', 'true');
+        } catch(e) {}
+
         var taglines = [
           "Know where every rupee goes.",
           "Track today. Save tomorrow.",
