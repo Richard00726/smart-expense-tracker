@@ -588,24 +588,21 @@ function App() {
               onClick={() => setActiveTab('home')} 
               title="Smart Expense Tracker"
             >
-              <div className="header-mobile-brand-icon">
-                <svg viewBox="0 0 160 160" fill="none">
+              <span className="header-mobile-brand-title">Smart Expense</span>
+              <div className="header-mobile-brand-swoosh">
+                <svg viewBox="0 0 460 48" fill="none">
                   <defs>
-                    <linearGradient id="hdrSwooshGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <linearGradient id="headerSwooshGrad" x1="0%" y1="0%" x2="100%" y2="0%">
                       <stop offset="0%" stop-color="#00c853" />
                       <stop offset="100%" stop-color="#00c4cc" />
                     </linearGradient>
                   </defs>
-                  <rect width="160" height="160" rx="36" fill="var(--bg-card, #0f172a)" stroke="var(--border, rgba(255,255,255,0.1))" strokeWidth="6" />
-                  <text x="80" y="66" textAnchor="middle" fontSize="30" fontWeight="900" fill="var(--text-primary, #ffffff)" fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">S</text>
-                  <path d="M 32 94 C 56 106, 96 106, 122 84" stroke="url(#hdrSwooshGrad)" strokeWidth="8" strokeLinecap="round" />
-                  <circle cx="124" cy="82.5" r="7" fill="#00c4cc" />
-                  <circle cx="124" cy="82.5" r="3" fill="#ffffff" />
+                  <path d="M 12 22 C 145 42, 315 42, 438 12" stroke="url(#headerSwooshGrad)" strokeWidth="6" strokeLinecap="round" />
+                  <circle cx="441" cy="11" r="7.5" fill="#00c4cc" />
                 </svg>
               </div>
-              <div className="header-mobile-brand-text">
-                <span className="header-mobile-brand-title">Smart Expense</span>
-                <span className="header-mobile-brand-tracker">TRACKER</span>
+              <div className="header-mobile-brand-tracker">
+                <span>T</span><span>R</span><span>A</span><span>C</span><span>K</span><span>E</span><span>R</span>
               </div>
             </div>
             <h1 className="header-page-title">
@@ -672,7 +669,7 @@ function App() {
             <>
               <Dashboard balances={effectiveBalances} onOpenSetupGuide={() => setActiveTab('upi')} />
 
-              <div className="main-content" style={{ marginTop: '2rem' }}>
+              <div className="main-content">
                 <div className="action-cards" style={{ gridColumn: '1 / -1' }}>
                   <TransactionsTable
                     title={txFilterType === 'all' ? 'All Transactions' : getDashboardFeedTitle()}
@@ -713,13 +710,13 @@ function App() {
           )}
 
           {activeTab === 'budget' && (
-            <div style={{ marginTop: '2rem' }}>
+            <div className="tab-page-container">
               <BudgetView transactions={transactions} />
             </div>
           )}
 
           {activeTab === 'analysis' && (
-            <div style={{ marginTop: '0.5rem', marginBottom: '2rem' }}>
+            <div className="tab-page-container">
               <ErrorBoundary>
                 <AnalysisView refreshTrigger={transactions} />
               </ErrorBoundary>
@@ -727,7 +724,7 @@ function App() {
           )}
 
           {activeTab === 'account' && (
-            <div style={{ marginTop: '2rem' }}>
+            <div className="tab-page-container">
               <AccountView currentUser={currentUser} theme={theme} toggleTheme={toggleTheme} onLogout={handleLogout} />
             </div>
           )}

@@ -165,11 +165,11 @@ const TransactionForm = ({ onTransactionComplete, type, onTypeChange, hideToggle
     <div className="form-card glass animate-fade-in">
       <h3>
         {editData ? (
-          <><Edit2 size={24} className="text-accent-primary" /> Edit Transaction</>
+          <><Edit2 size={20} className="text-accent-primary" /> Edit Transaction</>
         ) : type === 'debit' ? (
-          <><MinusCircle size={24} className="text-danger" /> Spend Money</>
+          <><MinusCircle size={20} className="text-danger" /> Spend Money</>
         ) : (
-          <><PlusCircle size={24} className="text-success" /> Add Money</>
+          <><PlusCircle size={20} className="text-success" /> Add Money</>
         )}
       </h3>
 

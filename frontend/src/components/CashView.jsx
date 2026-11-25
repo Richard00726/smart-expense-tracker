@@ -6,19 +6,19 @@ const CashView = ({ refreshAllData, transactions, txLoading, handleDeleteTransac
   const [subTab, setSubTab] = useState('add');
 
   return (
-    <div className="main-content" style={{ marginTop: '2rem' }}>
+    <div className="main-content cash-view-content">
       <div className="action-cards">
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', justifyContent: 'center', width: '100%' }}>
+        <div className="cash-tab-toggle-group">
           <button 
-            className={`btn ${subTab === 'add' ? 'btn-success' : ''}`}
-            style={{ flex: 1, background: subTab === 'add' ? 'var(--success)' : 'var(--empty-state-bg)', color: subTab === 'add' ? 'white' : 'var(--text-primary)', padding: '0.5rem' }}
+            className={`btn cash-tab-btn ${subTab === 'add' ? 'btn-success' : ''}`}
+            style={{ flex: 1, background: subTab === 'add' ? 'var(--success)' : 'var(--empty-state-bg)', color: subTab === 'add' ? 'white' : 'var(--text-primary)' }}
             onClick={() => setSubTab('add')}
           >
             Add Money
           </button>
           <button 
-            className={`btn ${subTab === 'spend' ? 'btn-danger' : ''}`}
-            style={{ flex: 1, background: subTab === 'spend' ? 'var(--danger)' : 'var(--empty-state-bg)', color: subTab === 'spend' ? 'white' : 'var(--text-primary)', padding: '0.5rem' }}
+            className={`btn cash-tab-btn ${subTab === 'spend' ? 'btn-danger' : ''}`}
+            style={{ flex: 1, background: subTab === 'spend' ? 'var(--danger)' : 'var(--empty-state-bg)', color: subTab === 'spend' ? 'white' : 'var(--text-primary)' }}
             onClick={() => setSubTab('spend')}
           >
             Spend Money
