@@ -721,10 +721,14 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
   }, [flowFilterType, liveAvailableBalance, activeLedger.closing]);
 
   const displayOpeningBalance = useMemo(() => {
-    // Universal Accounting Formula: Opening Balance + Total Inflow - Total Outflow = Current Balance
-    // Therefore: Opening Balance = Current Balance - (Total Inflow - Total Outflow)
-    return displayClosingBalance - (activeLedger.inflow - activeLedger.outflow);
-  }, [displayClosingBalance, activeLedger.inflow, activeLedger.outflow]);
+    return Number(activeLedger.opening ?? 0);
+  }, [activeLedger.opening]);
+
+  const reconciliationAdjustment = useMemo(() => {
+    const calculated = displayOpeningBalance + activeLedger.inflow - activeLedger.outflow;
+    const diff = displayClosingBalance - calculated;
+    return Math.abs(diff) > 0.01 ? diff : 0;
+  }, [displayClosingBalance, displayOpeningBalance, activeLedger.inflow, activeLedger.outflow]);
 
   const hasSpendingData = categoryData.length > 0 || walletSpendingData.length > 0;
   const totalIncomeCategory = incomeCategoryData.reduce((acc, curr) => acc + (Number(curr.value) || 0), 0);
@@ -1963,6 +1967,14 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                 <span style={{ fontWeight: 600, color: '#ef4444' }}>
                   {getCurrency()}{formatAmt(activeLedger.outflow)}
                 </span>
+                {reconciliationAdjustment !== 0 && (
+                  <>
+                    <span style={{ color: 'var(--text-muted)' }}>{reconciliationAdjustment > 0 ? '+' : '-'}</span>
+                    <span style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.82rem' }} title="Bank statement reconciliation adjustments">
+                      {getCurrency()}{formatAmt(Math.abs(reconciliationAdjustment))} (Bank Adjustments)
+                    </span>
+                  </>
+                )}
                 <span style={{ color: 'var(--text-muted)' }}>=</span>
                 <span style={{
                   fontWeight: 700,
