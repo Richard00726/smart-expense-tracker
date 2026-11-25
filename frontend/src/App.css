@@ -1381,6 +1381,12 @@ path:focus-visible {
     box-sizing: border-box !important;
   }
 
+  /* When only one filter dropdown is active (e.g. All Time, Today), expand to full width */
+  .date-hierarchy-filter select.filter-pill-select:only-child {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+  }
+
   .filter-date-pill {
     flex: 1 1 100% !important;
     width: 100% !important;

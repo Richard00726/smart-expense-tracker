@@ -631,6 +631,49 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
     return isNaN(num) ? '0.00' : num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
+  const CustomFlowTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      const incomeItem = payload.find(p => p.dataKey === 'income');
+      const spendItem = payload.find(p => p.dataKey === 'spend');
+      const income = Number(incomeItem?.value || 0);
+      const spend = Number(spendItem?.value || 0);
+      const diff = income - spend;
+      return (
+        <div style={{
+          backgroundColor: 'var(--card-bg, #fff)',
+          border: '1px solid var(--card-border, #e2e8f0)',
+          borderRadius: '10px',
+          padding: '0.65rem 0.85rem',
+          boxShadow: 'var(--card-shadow, 0 4px 12px rgba(0,0,0,0.1))',
+          fontSize: '0.85rem'
+        }}>
+          <p style={{ margin: '0 0 0.4rem 0', fontWeight: 700, color: 'var(--text-primary)' }}>{label}</p>
+          <p style={{ margin: '0 0 0.25rem 0', color: '#10b981', display: 'flex', justifyContent: 'space-between', gap: '1.25rem' }}>
+            <span>Income :</span>
+            <span style={{ fontWeight: 600 }}>{getCurrency()}{formatAmt(income)}</span>
+          </p>
+          <p style={{ margin: '0 0 0.4rem 0', color: '#ef4444', display: 'flex', justifyContent: 'space-between', gap: '1.25rem' }}>
+            <span>Spend :</span>
+            <span style={{ fontWeight: 600 }}>{getCurrency()}{formatAmt(spend)}</span>
+          </p>
+          <div style={{
+            borderTop: '1px solid var(--card-border, #e2e8f0)',
+            paddingTop: '0.35rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: '1.25rem',
+            fontWeight: 700,
+            color: diff >= 0 ? '#10b981' : '#ef4444'
+          }}>
+            <span>{diff >= 0 ? 'Net Saved :' : 'Net Spend :'}</span>
+            <span>{diff >= 0 ? '+' : '-'}{getCurrency()}{formatAmt(Math.abs(diff))}</span>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   const formatCompactAmt = (val) => {
     const num = Number(val ?? 0);
     if (isNaN(num) || num === 0) return '0.00';
@@ -677,11 +720,11 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
     return Number(activeLedger.closing ?? liveAvailableBalance);
   }, [flowFilterType, liveAvailableBalance, activeLedger.closing]);
 
-  const reconciliationAdjustment = useMemo(() => {
-    const calculated = activeLedger.opening + activeLedger.inflow - activeLedger.outflow;
-    const diff = displayClosingBalance - calculated;
-    return Math.abs(diff) > 0.01 ? diff : 0;
-  }, [displayClosingBalance, activeLedger.opening, activeLedger.inflow, activeLedger.outflow]);
+  const displayOpeningBalance = useMemo(() => {
+    // Universal Accounting Formula: Opening Balance + Total Inflow - Total Outflow = Current Balance
+    // Therefore: Opening Balance = Current Balance - (Total Inflow - Total Outflow)
+    return displayClosingBalance - (activeLedger.inflow - activeLedger.outflow);
+  }, [displayClosingBalance, activeLedger.inflow, activeLedger.outflow]);
 
   const hasSpendingData = categoryData.length > 0 || walletSpendingData.length > 0;
   const totalIncomeCategory = incomeCategoryData.reduce((acc, curr) => acc + (Number(curr.value) || 0), 0);
@@ -1714,8 +1757,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                   <YAxis stroke="var(--text-secondary)" />
                   <Tooltip 
                     cursor={{ fill: 'var(--hover-bg)' }}
-                    contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', color: 'var(--text-primary)' }}
-                    formatter={(value) => `${getCurrency()}${Number(value).toFixed(2)}`}
+                    content={<CustomFlowTooltip />}
                   />
                   <Legend />
                   <Bar
@@ -1771,7 +1813,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                     {flowWalletFilter === 'UPI' && 'Bank Opening Balance'}
                   </span>
                   <strong style={{ fontSize: '1.2rem', color: '#6366f1' }}>
-                    {getCurrency()}{formatAmt(activeLedger.opening)}
+                    {getCurrency()}{formatAmt(displayOpeningBalance)}
                   </strong>
                   <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
                     Start of selected period
@@ -1911,7 +1953,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
                 <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Ledger Reconciliation:</span>
                 <span style={{ fontWeight: 600, color: '#6366f1' }}>
-                  {getCurrency()}{formatAmt(activeLedger.opening)}
+                  {getCurrency()}{formatAmt(displayOpeningBalance)}
                 </span>
                 <span style={{ color: 'var(--text-muted)' }}>+</span>
                 <span style={{ fontWeight: 600, color: '#10b981' }}>
@@ -1921,33 +1963,25 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                 <span style={{ fontWeight: 600, color: '#ef4444' }}>
                   {getCurrency()}{formatAmt(activeLedger.outflow)}
                 </span>
-                {reconciliationAdjustment !== 0 && (
-                  <>
-                    <span style={{ color: 'var(--text-muted)' }}>{reconciliationAdjustment > 0 ? '+' : '-'}</span>
-                    <span style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.82rem' }} title="Bank statement reconciliation adjustments">
-                      {getCurrency()}{formatAmt(Math.abs(reconciliationAdjustment))} (Bank Adjustments)
-                    </span>
-                  </>
-                )}
                 <span style={{ color: 'var(--text-muted)' }}>=</span>
                 <span style={{
                   fontWeight: 700,
-                  color: '#10b981',
-                  background: 'rgba(16, 185, 129, 0.15)',
+                  color: displayClosingBalance >= 0 ? '#10b981' : '#ef4444',
+                  background: displayClosingBalance >= 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
                   padding: '2px 8px',
                   borderRadius: '6px',
-                  border: '1px solid rgba(16, 185, 129, 0.3)'
+                  border: `1px solid ${displayClosingBalance >= 0 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`
                 }}>
                   {getCurrency()}{formatAmt(displayClosingBalance)}
                 </span>
               </div>
 
-              <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                Period Net Change: <strong style={{ color: (activeLedger.inflow - activeLedger.outflow) >= 0 ? '#10b981' : '#f97316', whiteSpace: 'nowrap' }}>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                Period Net Change: <strong style={{ color: (activeLedger.inflow - activeLedger.outflow) >= 0 ? '#10b981' : '#ef4444', whiteSpace: 'nowrap' }}>
                   {(activeLedger.inflow - activeLedger.outflow) >= 0 ? '+' : '-'}{getCurrency()}{formatAmt(Math.abs(activeLedger.inflow - activeLedger.outflow))}
                 </strong>
-                <span style={{ color: 'var(--text-muted)', marginLeft: '6px' }}>
-                  {(activeLedger.inflow - activeLedger.outflow) >= 0 ? '(Saved)' : '(Drawn from balance)'}
+                <span style={{ color: (activeLedger.inflow - activeLedger.outflow) >= 0 ? '#10b981' : '#ef4444', marginLeft: '6px', fontWeight: 600 }}>
+                  {(activeLedger.inflow - activeLedger.outflow) >= 0 ? '(Net Saved)' : '(Net Spend)'}
                 </span>
               </div>
             </div>

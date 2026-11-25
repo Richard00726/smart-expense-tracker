@@ -3130,7 +3130,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                         Showing {displayedDailySummaries.length} statement(s)
                       </span>
                     </div>
-                    <div className="filter-wrapper">
+                    <div className="filter-wrapper" style={{ width: isMobile ? '100%' : 'auto' }}>
                       {renderLedgerFilterControls()}
                     </div>
                   </div>
