@@ -1502,36 +1502,36 @@ path:focus-visible {
   }
 
   .form-card, .data-card {
-    padding: 0.95rem 1rem !important;
+    padding: 0.9rem 1rem !important;
     border-radius: 12px !important;
   }
 
   .form-card h3 {
-    font-size: 1.05rem !important;
-    margin-bottom: 0.75rem !important;
+    font-size: 0.98rem !important;
+    margin-bottom: 0.7rem !important;
     gap: 0.45rem !important;
   }
 
   .form-group {
-    margin-bottom: 0.65rem !important;
+    margin-bottom: 0.55rem !important;
   }
 
   .form-label {
-    font-size: 0.82rem !important;
-    margin-bottom: 0.25rem !important;
+    font-size: 0.78rem !important;
+    margin-bottom: 0.2rem !important;
     font-weight: 600 !important;
     color: var(--text-secondary) !important;
   }
 
   .form-control {
-    font-size: 0.9rem !important;
-    padding: 0.55rem 0.8rem !important;
+    font-size: 0.86rem !important;
+    padding: 0.5rem 0.75rem !important;
     border-radius: 8px !important;
   }
 
   .form-card .btn {
-    font-size: 0.9rem !important;
-    padding: 0.65rem 1rem !important;
+    font-size: 0.86rem !important;
+    padding: 0.58rem 1rem !important;
     border-radius: 10px !important;
     margin-top: 0.35rem !important;
   }

@@ -1559,7 +1559,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
         </div>
       )}
       {/* Main Mode Switcher */}
-      <div style={{ display: 'flex', gap: isMobile ? '0.5rem' : '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '0.75rem', width: '100%', boxSizing: 'border-box' }}>
+      <div style={{ display: 'flex', gap: isMobile ? '0.5rem' : '1rem', marginBottom: isMobile ? '0.75rem' : '1.5rem', borderBottom: '1px solid var(--card-border)', paddingBottom: isMobile ? '0.5rem' : '0.75rem', width: '100%', boxSizing: 'border-box' }}>
         <button
           className="btn"
           style={{
@@ -3367,19 +3367,19 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
 
       {/* ─── MANUAL ENTRY TAB (Preserved for Cash & Quick Add) ─── */}
       {mainTab === 'manual' && (
-        <div className="main-content animate-fade-in">
+        <div className="main-content cash-view-content animate-fade-in">
           <div className="action-cards">
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', justifyContent: 'center', width: '100%' }}>
+            <div className="cash-tab-toggle-group">
               <button
-                className={`btn ${subTab === 'add' ? 'btn-success' : ''}`}
-                style={{ flex: 1, background: subTab === 'add' ? 'var(--success)' : 'var(--empty-state-bg)', color: subTab === 'add' ? 'white' : 'var(--text-primary)', padding: '0.5rem' }}
+                className={`btn cash-tab-btn ${subTab === 'add' ? 'btn-success' : ''}`}
+                style={{ flex: 1, background: subTab === 'add' ? 'var(--success)' : 'var(--empty-state-bg)', color: subTab === 'add' ? 'white' : 'var(--text-primary)' }}
                 onClick={() => setSubTab('add')}
               >
                 Add Money
               </button>
               <button
-                className={`btn ${subTab === 'spend' ? 'btn-danger' : ''}`}
-                style={{ flex: 1, background: subTab === 'spend' ? 'var(--danger)' : 'var(--empty-state-bg)', color: subTab === 'spend' ? 'white' : 'var(--text-primary)', padding: '0.5rem' }}
+                className={`btn cash-tab-btn ${subTab === 'spend' ? 'btn-danger' : ''}`}
+                style={{ flex: 1, background: subTab === 'spend' ? 'var(--danger)' : 'var(--empty-state-bg)', color: subTab === 'spend' ? 'white' : 'var(--text-primary)' }}
                 onClick={() => setSubTab('spend')}
               >
                 Spend Money
