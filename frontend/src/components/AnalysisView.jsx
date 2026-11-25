@@ -1935,8 +1935,8 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                   <strong style={{ fontSize: '1.25rem', color: displayClosingBalance >= 0 ? '#10b981' : '#ef4444' }}>
                     {getCurrency()}{formatAmt(displayClosingBalance)}
                   </strong>
-                  <span style={{ fontSize: '0.7rem', color: '#10b981', display: 'block', marginTop: '2px', fontWeight: 600 }}>
-                    Active & verified in account
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
+                    {flowFilterType === 'all' ? 'Present account balance' : 'End of selected period'}
                   </span>
                 </div>
               </div>
@@ -1952,37 +1952,25 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
               display: 'flex',
               flexWrap: 'wrap',
               alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '1rem',
+              justifyContent: 'center',
+              gap: '0.65rem',
               fontSize: '0.88rem'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Period Net Cash Flow:</span>
-                <strong style={{ color: (activeLedger.inflow - activeLedger.outflow) >= 0 ? '#10b981' : '#ef4444', fontSize: '1rem', whiteSpace: 'nowrap' }}>
-                  {(activeLedger.inflow - activeLedger.outflow) >= 0 ? '+' : '-'}{getCurrency()}{formatAmt(Math.abs(activeLedger.inflow - activeLedger.outflow))}
-                </strong>
-                <span style={{
-                  color: (activeLedger.inflow - activeLedger.outflow) >= 0 ? '#10b981' : '#ef4444',
-                  background: (activeLedger.inflow - activeLedger.outflow) >= 0 ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
-                  border: `1px solid ${(activeLedger.inflow - activeLedger.outflow) >= 0 ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`,
-                  padding: '2px 8px',
-                  borderRadius: '6px',
-                  fontWeight: 600,
-                  fontSize: '0.8rem'
-                }}>
-                  {(activeLedger.inflow - activeLedger.outflow) >= 0 ? 'Net Saved' : 'Net Spend'}
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                <span>Verified Balance:</span>
-                <strong style={{ color: displayClosingBalance >= 0 ? '#10b981' : '#ef4444', fontWeight: 700 }}>
-                  {getCurrency()}{formatAmt(displayClosingBalance)}
-                </strong>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                  ({flowWalletFilter === 'all' ? 'UPI + Cash' : flowWalletFilter})
-                </span>
-              </div>
+              <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Period Net Cash Flow:</span>
+              <strong style={{ color: (activeLedger.inflow - activeLedger.outflow) >= 0 ? '#10b981' : '#ef4444', fontSize: '1.05rem', whiteSpace: 'nowrap' }}>
+                {(activeLedger.inflow - activeLedger.outflow) >= 0 ? '+' : '-'}{getCurrency()}{formatAmt(Math.abs(activeLedger.inflow - activeLedger.outflow))}
+              </strong>
+              <span style={{
+                color: (activeLedger.inflow - activeLedger.outflow) >= 0 ? '#10b981' : '#ef4444',
+                background: (activeLedger.inflow - activeLedger.outflow) >= 0 ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                border: `1px solid ${(activeLedger.inflow - activeLedger.outflow) >= 0 ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`,
+                padding: '2px 8px',
+                borderRadius: '6px',
+                fontWeight: 600,
+                fontSize: '0.8rem'
+              }}>
+                {(activeLedger.inflow - activeLedger.outflow) >= 0 ? 'Net Saved' : 'Net Spend'}
+              </span>
             </div>
 
             {/* Wallet Sub-breakdown Banner when Combined Flow is active */}
