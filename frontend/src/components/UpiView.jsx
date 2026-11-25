@@ -3113,13 +3113,15 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                     borderRadius: '14px'
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      <FileText size={18} style={{ color: '#10b981' }} />
-                      <strong style={{ fontSize: isMobile ? '0.88rem' : '0.95rem', color: 'var(--text-primary)' }}>
-                        {isMobile ? 'Daily Statement Ledger' : 'Daily Statement Ledger (Day-by-Day Reconciliation)'}
-                      </strong>
-                      <span style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', marginLeft: '0.5rem', background: 'var(--card-bg)', padding: '0.2rem 0.5rem', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+                  <div className="activity-header data-header" style={{ padding: 0, marginBottom: '1rem' }}>
+                    <div className="activity-title-group" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                      <div className="activity-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <FileText size={18} style={{ color: '#10b981' }} />
+                        <span style={{ fontSize: isMobile ? '0.92rem' : '1.05rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                          {isMobile ? 'Daily Statement Ledger' : 'Daily Statement Ledger (Day-by-Day Reconciliation)'}
+                        </span>
+                      </div>
+                      <span className="activity-badge">
                         Showing {displayedDailySummaries.length} statement(s)
                       </span>
                     </div>
