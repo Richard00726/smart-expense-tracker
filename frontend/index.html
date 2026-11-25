@@ -8,9 +8,136 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+    
+    <!-- Instant First-Frame Splash Styles (Zero Black Screen Delay) -->
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        background-color: #ffffff;
+        color: #0f172a;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        overflow: hidden;
+      }
+      #root {
+        width: 100vw;
+        height: 100vh;
+        background-color: #ffffff;
+      }
+      .pre-splash {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        background: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999;
+      }
+      .pre-center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 90%;
+        max-width: 600px;
+        text-align: center;
+      }
+      .pre-title {
+        margin: 0;
+        font-size: clamp(3rem, 7.5vw, 4.8rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        color: #0f172a;
+        line-height: 1.1;
+        animation: preFadeIn 0.35s ease-out both;
+      }
+      .pre-swoosh {
+        width: 100%;
+        max-width: 520px;
+        margin-top: 0.5rem;
+        margin-bottom: 1.8rem;
+        display: flex;
+        justify-content: center;
+      }
+      .pre-swoosh svg {
+        width: 100%;
+        height: auto;
+        overflow: visible;
+      }
+      .pre-swoosh-path {
+        stroke-dasharray: 480;
+        stroke-dashoffset: 480;
+        animation: preDraw 0.5s cubic-bezier(0.25, 1, 0.5, 1) 0.15s forwards;
+      }
+      .pre-swoosh-dot {
+        transform-origin: 441px 11px;
+        animation: preDot 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) 0.5s both;
+      }
+      .pre-subtitle {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: clamp(0.8rem, 2.2vw, 1.6rem);
+        font-size: clamp(1.1rem, 2.4vw, 1.5rem);
+        font-weight: 700;
+        color: #334155;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        animation: preFadeIn 0.4s ease-out 0.4s both;
+      }
+      .pre-tagline {
+        position: absolute;
+        bottom: 2.5rem;
+        left: 0;
+        right: 0;
+        margin: 0;
+        font-size: clamp(0.85rem, 1.8vw, 1.05rem);
+        color: #94a3b8;
+        text-align: center;
+        animation: preFadeIn 0.4s ease-out 0.6s both;
+      }
+      @keyframes preFadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes preDraw {
+        from { stroke-dashoffset: 480; opacity: 0; }
+        to { stroke-dashoffset: 0; opacity: 1; }
+      }
+      @keyframes preDot {
+        0% { transform: scale(0); opacity: 0; }
+        60% { transform: scale(1.3); opacity: 1; }
+        100% { transform: scale(1); opacity: 1; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Instant Inlined Inside Logo Animation (Appears the millisecond index.html opens) -->
+      <div class="pre-splash">
+        <div class="pre-center">
+          <h1 class="pre-title">Smart Expense</h1>
+          <div class="pre-swoosh">
+            <svg viewBox="0 0 460 48" fill="none">
+              <defs>
+                <linearGradient id="preSwooshGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#00b894" />
+                  <stop offset="100%" stop-color="#00d68f" />
+                </linearGradient>
+              </defs>
+              <path d="M 12 22 C 145 42, 315 42, 438 12" stroke="url(#preSwooshGrad)" stroke-width="5.5" stroke-linecap="round" class="pre-swoosh-path" />
+              <circle cx="441" cy="11" r="6.5" fill="#00d68f" class="pre-swoosh-dot" />
+            </svg>
+          </div>
+          <div class="pre-subtitle">
+            <span>T</span><span>R</span><span>A</span><span>C</span><span>K</span><span>E</span><span>R</span>
+          </div>
+          <p class="pre-tagline">Know where every rupee goes.</p>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
