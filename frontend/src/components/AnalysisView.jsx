@@ -755,7 +755,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
   // Global empty state check removed to ensure filter controls remain accessible
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+    <div className="analysis-view-container" style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '1rem' : '1.5rem', width: '100%' }}>
       
       {/* Sub-Navigation Pills */}
       <div className="analysis-sub-nav" style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
@@ -799,7 +799,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
 
       {/* SPENDING ANALYSIS */}
       {activeAnalysisTab === 'spending' && (
-      <div className="data-card glass animate-fade-in" style={{ position: 'relative' }}>
+      <div className="data-card analysis-data-card glass animate-fade-in" style={{ position: 'relative', width: '100%', overflow: 'hidden' }}>
         <div className="data-header">
           <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <PieChartIcon size={20} className="text-danger" />
@@ -1121,6 +1121,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                     className="custom-scrollbar"
                     style={{
                       flex: 1,
+                      width: '100%',
                       minWidth: 0,
                       height: '220px',
                       overflowY: 'auto',
@@ -1239,7 +1240,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
 
       {/* INCOME ANALYSIS */}
       {activeAnalysisTab === 'income' && (
-      <div className="data-card glass animate-fade-in" style={{ position: 'relative' }}>
+      <div className="data-card analysis-data-card glass animate-fade-in" style={{ position: 'relative', width: '100%', overflow: 'hidden' }}>
         <div className="data-header">
           <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <TrendingUp size={20} className="text-success" />
@@ -1551,6 +1552,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                   className="custom-scrollbar"
                   style={{
                     flex: 1,
+                    width: '100%',
                     minWidth: 0,
                     height: '220px',
                     overflowY: 'auto',
@@ -1668,7 +1670,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
 
       {/* MONTHLY CASH FLOW */}
       {activeAnalysisTab === 'cashflow' && (
-      <div className="data-card glass animate-fade-in" style={{ position: 'relative' }}>
+      <div className="data-card analysis-data-card glass animate-fade-in" style={{ position: 'relative', width: '100%', overflow: 'hidden' }}>
         <div className="data-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div>
             <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
@@ -1701,7 +1703,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
             </span>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', width: isMobile ? '100%' : 'auto' }}>
+          <div className="flow-filter-controls" style={{ display: 'flex', gap: '0.45rem', alignItems: 'center', flexWrap: 'wrap', width: isMobile ? '100%' : 'auto' }}>
             <DateHierarchyFilter
               filterType={flowFilterType}
               filterValue={flowFilterValue}
@@ -1716,17 +1718,18 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
 
             {/* Wallet Flow Mode Filter Dropdown */}
             <select
-              className="form-control"
+              className="form-control filter-pill-select"
               style={{
                 width: isMobile ? '100%' : 'auto',
-                padding: '0.35rem 0.75rem',
-                fontSize: isMobile ? '0.85rem' : '0.875rem',
+                padding: '0.35rem 1.6rem 0.35rem 0.65rem',
+                fontSize: isMobile ? '0.78rem' : '0.85rem',
                 fontWeight: 600,
                 background: 'var(--empty-state-bg)',
                 color: 'var(--text-primary)',
                 borderColor: 'var(--card-border)',
                 borderRadius: '8px',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                height: '34px'
               }}
               value={flowWalletFilter}
               onChange={(e) => setFlowWalletFilter(e.target.value)}
@@ -1749,59 +1752,89 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
             <p style={{ color: 'var(--text-secondary)' }}>No cash flow data for this period.</p>
           </div>
         ) : (
-          <div className="chart-wrapper" style={{ padding: '1rem' }}>
-            <h4 style={{ textAlign: 'center', marginBottom: '1rem', color: 'var(--text-secondary)' }}>
-              {flowWalletFilter === 'all' && 'Combined Income vs Spending Over Time'}
-              {flowWalletFilter === 'Cash' && 'Cash Inflow vs Outflow Over Time'}
-              {flowWalletFilter === 'UPI' && 'UPI & Bank Inflow vs Outflow Over Time'}
-            </h4>
-            <div className="chart-container" style={{ height: '350px' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyFlowData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
-                  <XAxis dataKey="name" stroke="var(--text-secondary)" />
-                  <YAxis stroke="var(--text-secondary)" />
-                  <Tooltip 
-                    cursor={{ fill: 'var(--hover-bg)' }}
-                    content={<CustomFlowTooltip />}
-                  />
-                  <Legend />
-                  <Bar
-                    dataKey="income"
-                    name={flowWalletFilter === 'Cash' ? 'Cash Inflow' : flowWalletFilter === 'UPI' ? 'UPI Inflow' : 'Income'}
-                    fill="#10b981"
-                    radius={[4, 4, 0, 0]}
-                  />
-                  <Bar
-                    dataKey="spend"
-                    name={flowWalletFilter === 'Cash' ? 'Cash Outflow' : flowWalletFilter === 'UPI' ? 'UPI Outflow' : 'Spend'}
-                    fill="#ef4444"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+          <div className="analysis-charts-container" style={{ padding: isMobile ? '0.75rem 0.85rem' : '1.5rem', width: '100%', boxSizing: 'border-box' }}>
+            {/* Chart Wrapper Card */}
+            <div className="chart-wrapper" style={{
+              width: '100%',
+              background: 'var(--bg-card-subtle)',
+              border: '1px solid var(--card-border)',
+              borderRadius: '14px',
+              padding: isMobile ? '0.85rem 0.65rem' : '1.25rem',
+              boxSizing: 'border-box'
+            }}>
+              <h4 style={{ textAlign: 'center', marginBottom: '0.85rem', color: 'var(--text-secondary)', fontSize: isMobile ? '0.92rem' : '1.02rem', fontWeight: 600 }}>
+                {flowWalletFilter === 'all' && 'Combined Income vs Spending Over Time'}
+                {flowWalletFilter === 'Cash' && 'Cash Inflow vs Outflow Over Time'}
+                {flowWalletFilter === 'UPI' && 'UPI & Bank Inflow vs Outflow Over Time'}
+              </h4>
+              <div className="chart-container" style={{ height: isMobile ? '260px' : '330px', width: '100%' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={monthlyFlowData}
+                    margin={{
+                      top: 15,
+                      right: isMobile ? 8 : 20,
+                      left: isMobile ? -18 : 10,
+                      bottom: 5
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
+                    <XAxis
+                      dataKey="name"
+                      stroke="var(--text-secondary)"
+                      tick={{ fontSize: isMobile ? 10 : 12 }}
+                    />
+                    <YAxis
+                      stroke="var(--text-secondary)"
+                      tick={{ fontSize: isMobile ? 10 : 11 }}
+                      width={isMobile ? 38 : 45}
+                      tickFormatter={(v) => v >= 100000 ? `${(v / 100000).toFixed(1)}L` : v >= 1000 ? `${Math.round(v / 1000)}k` : v}
+                    />
+                    <Tooltip 
+                      cursor={{ fill: 'var(--hover-bg)' }}
+                      content={<CustomFlowTooltip />}
+                    />
+                    <Legend
+                      wrapperStyle={{
+                        fontSize: isMobile ? '0.75rem' : '0.85rem',
+                        paddingTop: '6px'
+                      }}
+                    />
+                    <Bar
+                      dataKey="income"
+                      name={flowWalletFilter === 'Cash' ? 'Cash Inflow' : flowWalletFilter === 'UPI' ? 'UPI Inflow' : 'Income'}
+                      fill="#10b981"
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={isMobile ? 30 : 45}
+                    />
+                    <Bar
+                      dataKey="spend"
+                      name={flowWalletFilter === 'Cash' ? 'Cash Outflow' : flowWalletFilter === 'UPI' ? 'UPI Outflow' : 'Spend'}
+                      fill="#ef4444"
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={isMobile ? 30 : 45}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
 
             {/* 4-Card Complete Ledger Flow */}
-            <div className="cashflow-ledger-grid" style={{
-              marginTop: '1.5rem',
-              display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '1rem'
-            }}>
+            <div className="cashflow-ledger-grid" style={{ marginTop: '1.25rem' }}>
               {/* Card 1: Opening Balance */}
-              <div style={{
+              <div className="flow-ledger-card flow-card-opening" style={{
                 background: 'rgba(99, 102, 241, 0.08)',
                 border: '1px solid rgba(99, 102, 241, 0.25)',
                 borderRadius: '12px',
-                padding: '1rem',
+                padding: isMobile ? '0.85rem 0.95rem' : '1rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.85rem'
+                gap: '0.85rem',
+                minWidth: 0
               }}>
                 <div style={{
-                  width: 40,
-                  height: 40,
+                  width: isMobile ? 36 : 40,
+                  height: isMobile ? 36 : 40,
                   borderRadius: '10px',
                   background: 'rgba(99, 102, 241, 0.15)',
                   color: '#6366f1',
@@ -1810,36 +1843,37 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                   justifyContent: 'center',
                   flexShrink: 0
                 }}>
-                  <Landmark size={20} />
+                  <Landmark size={isMobile ? 18 : 20} />
                 </div>
-                <div>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block' }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <span style={{ fontSize: isMobile ? '0.72rem' : '0.78rem', color: 'var(--text-secondary)', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {flowWalletFilter === 'all' && 'Opening Balance (Combined)'}
                     {flowWalletFilter === 'Cash' && 'Cash Opening Balance'}
                     {flowWalletFilter === 'UPI' && 'Bank Opening Balance'}
                   </span>
-                  <strong style={{ fontSize: '1.2rem', color: '#6366f1' }}>
+                  <strong style={{ fontSize: isMobile ? '1.1rem' : '1.25rem', color: '#6366f1', display: 'block', whiteSpace: 'nowrap' }}>
                     {getCurrency()}{formatAmt(displayOpeningBalance)}
                   </strong>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px', whiteSpace: 'nowrap' }}>
                     Start of selected period
                   </span>
                 </div>
               </div>
 
               {/* Card 2: Total Inflow (+) */}
-              <div style={{
+              <div className="flow-ledger-card flow-card-inflow" style={{
                 background: 'rgba(16, 185, 129, 0.08)',
                 border: '1px solid rgba(16, 185, 129, 0.25)',
                 borderRadius: '12px',
-                padding: '1rem',
+                padding: isMobile ? '0.85rem 0.95rem' : '1rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.85rem'
+                gap: '0.85rem',
+                minWidth: 0
               }}>
                 <div style={{
-                  width: 40,
-                  height: 40,
+                  width: isMobile ? 36 : 40,
+                  height: isMobile ? 36 : 40,
                   borderRadius: '10px',
                   background: 'rgba(16, 185, 129, 0.15)',
                   color: '#10b981',
@@ -1848,36 +1882,37 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                   justifyContent: 'center',
                   flexShrink: 0
                 }}>
-                  <ArrowDownLeft size={20} />
+                  <ArrowDownLeft size={isMobile ? 18 : 20} />
                 </div>
-                <div>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block' }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <span style={{ fontSize: isMobile ? '0.72rem' : '0.78rem', color: 'var(--text-secondary)', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {flowWalletFilter === 'all' && 'Total Inflow (Combined)'}
                     {flowWalletFilter === 'Cash' && 'Cash Inflow'}
                     {flowWalletFilter === 'UPI' && 'UPI Inflow'}
                   </span>
-                  <strong style={{ fontSize: '1.2rem', color: '#10b981', whiteSpace: 'nowrap' }}>
+                  <strong style={{ fontSize: isMobile ? '1.1rem' : '1.25rem', color: '#10b981', display: 'block', whiteSpace: 'nowrap' }}>
                     +{getCurrency()}{formatAmt(activeLedger.inflow)}
                   </strong>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px', whiteSpace: 'nowrap' }}>
                     Deposits & incoming funds
                   </span>
                 </div>
               </div>
 
               {/* Card 3: Total Outflow (-) */}
-              <div style={{
+              <div className="flow-ledger-card flow-card-outflow" style={{
                 background: 'rgba(239, 68, 68, 0.08)',
                 border: '1px solid rgba(239, 68, 68, 0.25)',
                 borderRadius: '12px',
-                padding: '1rem',
+                padding: isMobile ? '0.85rem 0.95rem' : '1rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.85rem'
+                gap: '0.85rem',
+                minWidth: 0
               }}>
                 <div style={{
-                  width: 40,
-                  height: 40,
+                  width: isMobile ? 36 : 40,
+                  height: isMobile ? 36 : 40,
                   borderRadius: '10px',
                   background: 'rgba(239, 68, 68, 0.15)',
                   color: '#ef4444',
@@ -1886,36 +1921,37 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                   justifyContent: 'center',
                   flexShrink: 0
                 }}>
-                  <ArrowUpRight size={20} />
+                  <ArrowUpRight size={isMobile ? 18 : 20} />
                 </div>
-                <div>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block' }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <span style={{ fontSize: isMobile ? '0.72rem' : '0.78rem', color: 'var(--text-secondary)', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {flowWalletFilter === 'all' && 'Total Outflow (Combined)'}
                     {flowWalletFilter === 'Cash' && 'Cash Outflow'}
                     {flowWalletFilter === 'UPI' && 'UPI Outflow'}
                   </span>
-                  <strong style={{ fontSize: '1.2rem', color: '#ef4444', whiteSpace: 'nowrap' }}>
+                  <strong style={{ fontSize: isMobile ? '1.1rem' : '1.25rem', color: '#ef4444', display: 'block', whiteSpace: 'nowrap' }}>
                     -{getCurrency()}{formatAmt(activeLedger.outflow)}
                   </strong>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px', whiteSpace: 'nowrap' }}>
                     Payments & spent money
                   </span>
                 </div>
               </div>
 
               {/* Card 4: Ending / Available Balance */}
-              <div style={{
+              <div className="flow-ledger-card flow-card-balance" style={{
                 background: displayClosingBalance >= 0 ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
                 border: `1px solid ${displayClosingBalance >= 0 ? 'rgba(16, 185, 129, 0.35)' : 'rgba(239, 68, 68, 0.35)'}`,
                 borderRadius: '12px',
-                padding: '1rem',
+                padding: isMobile ? '0.85rem 0.95rem' : '1rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.85rem'
+                gap: '0.85rem',
+                minWidth: 0
               }}>
                 <div style={{
-                  width: 40,
-                  height: 40,
+                  width: isMobile ? 36 : 40,
+                  height: isMobile ? 36 : 40,
                   borderRadius: '10px',
                   background: displayClosingBalance >= 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
                   color: displayClosingBalance >= 0 ? '#10b981' : '#ef4444',
@@ -1924,18 +1960,18 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                   justifyContent: 'center',
                   flexShrink: 0
                 }}>
-                  <Wallet size={20} />
+                  <Wallet size={isMobile ? 18 : 20} />
                 </div>
-                <div>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block' }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <span style={{ fontSize: isMobile ? '0.72rem' : '0.78rem', color: 'var(--text-secondary)', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {flowWalletFilter === 'all' && (flowFilterType === 'all' ? 'Current Available Balance' : 'Ending Balance (Combined)')}
                     {flowWalletFilter === 'Cash' && (flowFilterType === 'all' ? 'Cash Available Balance' : 'Cash Ending Balance')}
                     {flowWalletFilter === 'UPI' && (flowFilterType === 'all' ? 'Current Bank Balance' : 'Bank Ending Balance')}
                   </span>
-                  <strong style={{ fontSize: '1.25rem', color: displayClosingBalance >= 0 ? '#10b981' : '#ef4444' }}>
+                  <strong style={{ fontSize: isMobile ? '1.15rem' : '1.25rem', color: displayClosingBalance >= 0 ? '#10b981' : '#ef4444', display: 'block', whiteSpace: 'nowrap' }}>
                     {getCurrency()}{formatAmt(displayClosingBalance)}
                   </strong>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px', whiteSpace: 'nowrap' }}>
                     {flowFilterType === 'all' ? 'Present account balance' : 'End of selected period'}
                   </span>
                 </div>
@@ -1945,7 +1981,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
             {/* Period Cash Flow & Net Performance Bar */}
             <div style={{
               marginTop: '1rem',
-              padding: '0.85rem 1.25rem',
+              padding: isMobile ? '0.75rem 0.85rem' : '0.85rem 1.25rem',
               borderRadius: '12px',
               background: 'var(--empty-state-bg)',
               border: '1px solid var(--card-border)',
@@ -1953,11 +1989,14 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
               flexWrap: 'wrap',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '0.65rem',
-              fontSize: '0.88rem'
+              gap: isMobile ? '0.45rem' : '0.65rem',
+              fontSize: isMobile ? '0.82rem' : '0.88rem',
+              textAlign: 'center',
+              width: '100%',
+              boxSizing: 'border-box'
             }}>
               <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Period Net Cash Flow:</span>
-              <strong style={{ color: (activeLedger.inflow - activeLedger.outflow) >= 0 ? '#10b981' : '#ef4444', fontSize: '1.05rem', whiteSpace: 'nowrap' }}>
+              <strong style={{ color: (activeLedger.inflow - activeLedger.outflow) >= 0 ? '#10b981' : '#ef4444', fontSize: isMobile ? '0.98rem' : '1.05rem', whiteSpace: 'nowrap' }}>
                 {(activeLedger.inflow - activeLedger.outflow) >= 0 ? '+' : '-'}{getCurrency()}{formatAmt(Math.abs(activeLedger.inflow - activeLedger.outflow))}
               </strong>
               <span style={{
@@ -1967,7 +2006,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                 padding: '2px 8px',
                 borderRadius: '6px',
                 fontWeight: 600,
-                fontSize: '0.8rem'
+                fontSize: isMobile ? '0.75rem' : '0.8rem'
               }}>
                 {(activeLedger.inflow - activeLedger.outflow) >= 0 ? 'Net Saved' : 'Net Spend'}
               </span>
@@ -1976,25 +2015,32 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
             {/* Wallet Sub-breakdown Banner when Combined Flow is active */}
             {flowWalletFilter === 'all' && (
               <div style={{
-                marginTop: '1rem',
-                padding: '0.75rem 1.25rem',
+                marginTop: '0.85rem',
+                padding: isMobile ? '0.75rem 0.85rem' : '0.75rem 1.25rem',
                 borderRadius: '10px',
                 background: 'var(--empty-state-bg)',
                 border: '1px solid var(--card-border)',
-                fontSize: '0.85rem',
+                fontSize: isMobile ? '0.78rem' : '0.85rem',
                 display: 'flex',
-                justifyContent: 'space-around',
+                flexDirection: isMobile ? 'column' : 'row',
+                justifyContent: isMobile ? 'center' : 'space-around',
                 alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: '1rem',
-                color: 'var(--text-secondary)'
+                gap: isMobile ? '0.5rem' : '1rem',
+                color: 'var(--text-secondary)',
+                width: '100%',
+                boxSizing: 'border-box'
               }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                   <Coins size={15} className="text-accent-primary" />
                   <strong style={{ color: 'var(--text-primary)' }}>Cash Flow:</strong> In <span style={{ color: '#10b981', fontWeight: 600, whiteSpace: 'nowrap' }}>+{getCurrency()}{flowTotals.cashIn.toFixed(2)}</span> | Out <span style={{ color: '#ef4444', fontWeight: 600, whiteSpace: 'nowrap' }}>-{getCurrency()}{flowTotals.cashOut.toFixed(2)}</span>
                 </div>
-                <div style={{ height: '16px', width: '1px', background: 'var(--card-border)' }} />
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                {!isMobile && (
+                  <div style={{ height: '16px', width: '1px', background: 'var(--card-border)' }} />
+                )}
+                {isMobile && (
+                  <div style={{ width: '100%', height: '1px', background: 'var(--card-border)', opacity: 0.5 }} />
+                )}
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                   <CreditCard size={15} className="text-accent-primary" />
                   <strong style={{ color: 'var(--text-primary)' }}>UPI Flow:</strong> In <span style={{ color: '#10b981', fontWeight: 600, whiteSpace: 'nowrap' }}>+{getCurrency()}{flowTotals.upiIn.toFixed(2)}</span> | Out <span style={{ color: '#ef4444', fontWeight: 600, whiteSpace: 'nowrap' }}>-{getCurrency()}{flowTotals.upiOut.toFixed(2)}</span>
                 </div>

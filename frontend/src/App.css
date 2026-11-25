@@ -577,6 +577,21 @@ tr:hover td {
   width: 100%;
 }
 
+.cashflow-ledger-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1024px) {
+  .cashflow-ledger-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.85rem;
+  }
+}
+
 /* Remove click/focus outline box on charts, SVGs, and sectors */
 .recharts-wrapper,
 .recharts-wrapper *,
@@ -1428,9 +1443,14 @@ path:focus-visible {
   }
 
   /* Analysis View Responsive */
+  .analysis-view-container {
+    gap: 1rem !important;
+    width: 100% !important;
+  }
+
   .analysis-sub-nav {
     display: flex !important;
-    gap: 0.35rem !important;
+    gap: 0.45rem !important;
     width: 100% !important;
     margin-bottom: 0.85rem !important;
   }
@@ -1438,15 +1458,22 @@ path:focus-visible {
   .analysis-nav-btn {
     flex: 1 1 0 !important;
     min-width: 0 !important;
-    padding: 0.55rem 0.35rem !important;
-    font-size: 0.78rem !important;
+    padding: 0.6rem 0.35rem !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    display: inline-flex !important;
+    align-items: center !important;
     justify-content: center !important;
+    gap: 0.35rem !important;
     text-align: center !important;
     border-radius: 10px !important;
+    white-space: nowrap !important;
   }
 
   .analysis-charts-container {
-    padding: 0.65rem 0.75rem !important;
+    padding: 0.75rem 0.85rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .analysis-charts-grid, .charts-grid {
@@ -1457,7 +1484,7 @@ path:focus-visible {
   }
 
   .chart-wrapper {
-    padding: 0.85rem !important;
+    padding: 0.85rem 0.75rem !important;
     border-radius: 12px !important;
     box-sizing: border-box !important;
     width: 100% !important;
@@ -1475,6 +1502,12 @@ path:focus-visible {
     grid-template-columns: 1fr !important;
     gap: 0.75rem !important;
     width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .flow-ledger-card {
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .main-content {
@@ -1507,9 +1540,16 @@ path:focus-visible {
     margin-top: 0.65rem !important;
   }
 
-  .form-card, .data-card {
+  .form-card {
     padding: 0.9rem 1rem !important;
     border-radius: 12px !important;
+  }
+
+  .data-card.analysis-data-card,
+  .activity-card.data-card {
+    padding: 0 !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
   }
 
   .form-card h3 {
