@@ -852,43 +852,62 @@ path:focus-visible {
   padding-left: 1px;
 }
 
-/* Header Mobile Brand */
+/* Header Mobile Brand — Option 2: Sleek Low-Profile Horizontal Layout */
 .header-mobile-brand {
   display: none;
-  flex-direction: column;
-  align-items: flex-start;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.55rem;
   cursor: pointer;
   user-select: none;
 }
 
+.header-mobile-brand-icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.header-mobile-brand-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.header-mobile-brand-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.15;
+}
+
 .header-mobile-brand-title {
-  font-size: 1.15rem;
+  font-size: 1.02rem;
   font-weight: 800;
   color: var(--text-primary);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
   line-height: 1.1;
   margin: 0;
 }
 
-.header-mobile-brand-swoosh {
-  width: 110px;
-  margin-top: 0.1rem;
-  margin-bottom: 0.15rem;
-}
-
 .header-mobile-brand-tracker {
-  display: flex;
-  gap: 0.35rem;
-  font-size: 0.48rem;
+  font-size: 0.52rem;
   font-weight: 700;
-  letter-spacing: 0.35em;
-  color: var(--text-secondary);
+  letter-spacing: 0.28em;
+  color: #00d084;
   text-transform: uppercase;
+  margin-top: 1px;
 }
 
 @media (max-width: 768px) {
   .header-mobile-brand {
-    display: flex;
+    display: flex !important;
   }
 }
 
@@ -1200,13 +1219,13 @@ path:focus-visible {
     overflow-x: hidden !important;
   }
 
-  /* Header on Mobile */
+  /* Header on Mobile — Sleek, Low-Profile */
   .header {
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
-    margin-bottom: 1.25rem !important;
-    padding-bottom: 0.65rem !important;
+    margin-bottom: 0.85rem !important;
+    padding-bottom: 0.5rem !important;
     border-bottom: 1px solid var(--border) !important;
     gap: 0.5rem !important;
     width: 100% !important;
@@ -1231,46 +1250,47 @@ path:focus-visible {
   .header-actions {
     display: flex !important;
     align-items: center !important;
-    gap: 0.45rem !important;
+    gap: 0.35rem !important;
     flex-shrink: 0 !important;
   }
 
   .icon-btn, .logout-btn {
-    width: 36px !important;
-    height: 36px !important;
+    width: 33px !important;
+    height: 33px !important;
   }
 
   .profile-avatar {
-    width: 38px !important;
-    height: 38px !important;
-    font-size: 0.95rem !important;
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 0.86rem !important;
     cursor: pointer !important;
     -webkit-tap-highlight-color: transparent !important;
   }
 
-  /* Balance Cards on Mobile (Stacked full-width, clean and legible) */
+  /* Balance Cards on Mobile (Stacked full-width, clean and sleek) */
   .balance-grid, .dashboard-grid {
     grid-template-columns: 1fr !important;
-    gap: 0.85rem !important;
-    margin-bottom: 1.25rem !important;
+    gap: 0.75rem !important;
+    margin-bottom: 1rem !important;
     width: 100% !important;
     box-sizing: border-box !important;
   }
 
   .card, .balance-card {
-    padding: 1.15rem 1.25rem !important;
-    border-radius: 14px !important;
+    padding: 0.95rem 1.05rem !important;
+    border-radius: 12px !important;
     width: 100% !important;
     box-sizing: border-box !important;
   }
 
   .card-top {
-    margin-bottom: 0.65rem !important;
+    margin-bottom: 0.45rem !important;
   }
 
   .card-amount {
-    font-size: 1.85rem !important;
-    margin-bottom: 0.6rem !important;
+    font-size: 1.45rem !important;
+    margin-bottom: 0.4rem !important;
+    letter-spacing: -0.02em !important;
   }
 
   /* Transactions & Ledger Feeds */
@@ -1281,8 +1301,22 @@ path:focus-visible {
   .mobile-tx-feed, .mobile-ledger-feed {
     display: flex !important;
     flex-direction: column !important;
-    gap: 0.75rem !important;
-    padding: 0.5rem 0 !important;
+    gap: 0.65rem !important;
+    padding: 0.4rem 0 !important;
+  }
+
+  .mobile-tx-card {
+    padding: 0.75rem 0.85rem !important;
+    border-radius: 10px !important;
+    gap: 0.45rem !important;
+  }
+
+  .mobile-tx-payee {
+    font-size: 0.9rem !important;
+  }
+
+  .mobile-tx-amount {
+    font-size: 0.98rem !important;
   }
 
   .pagination-bar {
@@ -1297,12 +1331,12 @@ path:focus-visible {
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
-    padding: 0.85rem 1rem !important;
-    gap: 0.75rem !important;
+    padding: 0.75rem 0.85rem !important;
+    gap: 0.65rem !important;
   }
 
   .data-header h3 {
-    font-size: 1.1rem !important;
+    font-size: 0.98rem !important;
   }
 
   /* Date Hierarchy Filter on Mobile */
@@ -1834,6 +1868,36 @@ path:focus-visible {
     transform: translate(-50%, 0) scale(1);
   }
 }
+
+/* Extra-compact Mobile Refinements (Phones <= 480px) */
+@media (max-width: 480px) {
+  .header-mobile-brand-icon {
+    width: 28px !important;
+    height: 28px !important;
+  }
+  .header-mobile-brand-title {
+    font-size: 0.95rem !important;
+  }
+  .header-mobile-brand-tracker {
+    font-size: 0.48rem !important;
+    letter-spacing: 0.22em !important;
+  }
+  .card-amount {
+    font-size: 1.35rem !important;
+  }
+  .card, .balance-card {
+    padding: 0.85rem 0.95rem !important;
+  }
+  .icon-btn, .logout-btn {
+    width: 30px !important;
+    height: 30px !important;
+  }
+  .profile-avatar {
+    width: 32px !important;
+    height: 32px !important;
+  }
+}
+
 
 
 
