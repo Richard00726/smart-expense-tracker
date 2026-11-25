@@ -732,12 +732,6 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
     return Number(activeLedger.opening ?? 208.47);
   }, [flowFilterType, flowFilterValue, activeLedger.opening]);
 
-  const reconciliationAdjustment = useMemo(() => {
-    const calculated = displayOpeningBalance + activeLedger.inflow - activeLedger.outflow;
-    const diff = displayClosingBalance - calculated;
-    return Math.abs(diff) > 0.01 ? diff : 0;
-  }, [displayClosingBalance, displayOpeningBalance, activeLedger.inflow, activeLedger.outflow]);
-
   const hasSpendingData = categoryData.length > 0 || walletSpendingData.length > 0;
   const totalIncomeCategory = incomeCategoryData.reduce((acc, curr) => acc + (Number(curr.value) || 0), 0);
   const hasIncomeData = walletIncomeData.length > 0 || incomeCategoryData.length > 0;
@@ -1948,7 +1942,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
               </div>
             </div>
 
-            {/* Complete Balance Reconciliation Equation */}
+            {/* Period Cash Flow & Net Performance Bar */}
             <div style={{
               marginTop: '1rem',
               padding: '0.85rem 1.25rem',
@@ -1962,46 +1956,31 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
               gap: '1rem',
               fontSize: '0.88rem'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
-                <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Ledger Reconciliation:</span>
-                <span style={{ fontWeight: 600, color: '#6366f1' }}>
-                  {getCurrency()}{formatAmt(displayOpeningBalance)}
-                </span>
-                <span style={{ color: 'var(--text-muted)' }}>+</span>
-                <span style={{ fontWeight: 600, color: '#10b981' }}>
-                  {getCurrency()}{formatAmt(activeLedger.inflow)}
-                </span>
-                <span style={{ color: 'var(--text-muted)' }}>-</span>
-                <span style={{ fontWeight: 600, color: '#ef4444' }}>
-                  {getCurrency()}{formatAmt(activeLedger.outflow)}
-                </span>
-                {reconciliationAdjustment !== 0 && (
-                  <>
-                    <span style={{ color: 'var(--text-muted)' }}>{reconciliationAdjustment > 0 ? '+' : '-'}</span>
-                    <span style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.82rem' }} title="Bank statement reconciliation adjustments">
-                      {getCurrency()}{formatAmt(Math.abs(reconciliationAdjustment))} (Bank Adjustments)
-                    </span>
-                  </>
-                )}
-                <span style={{ color: 'var(--text-muted)' }}>=</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Period Net Cash Flow:</span>
+                <strong style={{ color: (activeLedger.inflow - activeLedger.outflow) >= 0 ? '#10b981' : '#ef4444', fontSize: '1rem', whiteSpace: 'nowrap' }}>
+                  {(activeLedger.inflow - activeLedger.outflow) >= 0 ? '+' : '-'}{getCurrency()}{formatAmt(Math.abs(activeLedger.inflow - activeLedger.outflow))}
+                </strong>
                 <span style={{
-                  fontWeight: 700,
-                  color: displayClosingBalance >= 0 ? '#10b981' : '#ef4444',
-                  background: displayClosingBalance >= 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                  color: (activeLedger.inflow - activeLedger.outflow) >= 0 ? '#10b981' : '#ef4444',
+                  background: (activeLedger.inflow - activeLedger.outflow) >= 0 ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                  border: `1px solid ${(activeLedger.inflow - activeLedger.outflow) >= 0 ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`,
                   padding: '2px 8px',
                   borderRadius: '6px',
-                  border: `1px solid ${displayClosingBalance >= 0 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`
+                  fontWeight: 600,
+                  fontSize: '0.8rem'
                 }}>
-                  {getCurrency()}{formatAmt(displayClosingBalance)}
+                  {(activeLedger.inflow - activeLedger.outflow) >= 0 ? 'Net Saved' : 'Net Spend'}
                 </span>
               </div>
 
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                Period Net Change: <strong style={{ color: (activeLedger.inflow - activeLedger.outflow) >= 0 ? '#10b981' : '#ef4444', whiteSpace: 'nowrap' }}>
-                  {(activeLedger.inflow - activeLedger.outflow) >= 0 ? '+' : '-'}{getCurrency()}{formatAmt(Math.abs(activeLedger.inflow - activeLedger.outflow))}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                <span>Verified Balance:</span>
+                <strong style={{ color: displayClosingBalance >= 0 ? '#10b981' : '#ef4444', fontWeight: 700 }}>
+                  {getCurrency()}{formatAmt(displayClosingBalance)}
                 </strong>
-                <span style={{ color: (activeLedger.inflow - activeLedger.outflow) >= 0 ? '#10b981' : '#ef4444', marginLeft: '6px', fontWeight: 600 }}>
-                  {(activeLedger.inflow - activeLedger.outflow) >= 0 ? '(Net Saved)' : '(Net Spend)'}
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  ({flowWalletFilter === 'all' ? 'UPI + Cash' : flowWalletFilter})
                 </span>
               </div>
             </div>
