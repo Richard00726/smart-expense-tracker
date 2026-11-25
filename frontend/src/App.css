@@ -1280,6 +1280,10 @@ path:focus-visible {
     -webkit-tap-highlight-color: transparent !important;
   }
 
+  .profile-tooltip {
+    display: none !important;
+  }
+
   /* Balance Cards on Mobile (Stacked full-width, clean and sleek) */
   .balance-grid, .dashboard-grid {
     grid-template-columns: 1fr !important;

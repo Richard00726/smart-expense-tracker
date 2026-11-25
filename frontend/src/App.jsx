@@ -13,7 +13,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import SystemStatusOverlay from './components/SystemStatusOverlay';
 import IntroSplash from './components/IntroSplash';
-import { Wallet as WalletIcon, Home, PieChart, Activity, Sun, Moon, LogOut, User, Target, Smartphone, Coins, CreditCard } from 'lucide-react';
+import { Wallet as WalletIcon, Home, PieChart, Activity, Sun, Moon, LogOut, User, Target, Smartphone, Coins, CreditCard, Settings } from 'lucide-react';
 import { App as CapApp } from '@capacitor/app';
 import './index.css';
 import './App.css';
@@ -21,9 +21,16 @@ import './App.css';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
   const [currentUser, setCurrentUser] = useState(() => JSON.parse(localStorage.getItem('user') || '{}'));
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
   const [showSplash, setShowSplash] = useState(false);
   const [hasSessionSplashShown, setHasSessionSplashShown] = useState(true);
   const [showProfileTooltip, setShowProfileTooltip] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [balances, setBalances] = useState(() => {
     try {
       const cached = localStorage.getItem('cached_balances');
@@ -607,7 +614,7 @@ function App() {
           onClick={() => setActiveTab('account')}
         >
           <User size={20} />
-          <span>My Account</span>
+          <span>Account & Settings</span>
         </div>
       </aside>
 
@@ -643,7 +650,7 @@ function App() {
               {activeTab === 'upi' && 'UPI Transactions'}
               {activeTab === 'budget' && 'Budget & Savings'}
               {activeTab === 'analysis' && 'Analysis & Insights'}
-              {activeTab === 'account' && 'My Account'}
+              {activeTab === 'account' && 'Account & Settings'}
             </h1>
           </div>
           <div className="header-actions">
@@ -657,13 +664,18 @@ function App() {
 
             <div 
               style={{ position: 'relative', display: 'flex', alignItems: 'center' }}
-              onMouseEnter={() => setShowProfileTooltip(true)}
+              onMouseEnter={() => {
+                if (!isMobile) setShowProfileTooltip(true);
+              }}
               onMouseLeave={() => setShowProfileTooltip(false)}
             >
               <div 
                 className={`profile-avatar ${activeTab === 'account' ? 'active' : ''}`}
-                onClick={() => setActiveTab('account')}
-                title={currentUser.username || currentUser.name || 'User Profile & Settings'}
+                onClick={() => {
+                  setActiveTab('account');
+                  setShowProfileTooltip(false);
+                }}
+                title={isMobile ? undefined : 'Account & Settings'}
                 role="button"
                 tabIndex={0}
               >
@@ -673,15 +685,36 @@ function App() {
                   (currentUser.username || currentUser.name || currentUser.email || 'L').charAt(0).toUpperCase()
                 )}
               </div>
-              {showProfileTooltip && (
-                <div className="glass animate-fade-in" style={{
-                  position: 'absolute', top: '120%', right: '50%', transform: 'translateX(50%)',
-                  padding: '0.75rem 1rem', borderRadius: '8px', zIndex: 1000,
-                  whiteSpace: 'nowrap', textAlign: 'center', border: '1px solid var(--border)',
-                  boxShadow: 'var(--card-shadow)', background: 'var(--bg-card)'
-                }}>
-                  <p style={{ margin: '0 0 0.25rem 0', fontWeight: '600', color: 'var(--text-primary)' }}>{currentUser.username || currentUser.name || 'User'}</p>
-                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{currentUser.email}</p>
+              {!isMobile && showProfileTooltip && (
+                <div 
+                  className="profile-tooltip glass animate-fade-in" 
+                  onClick={() => {
+                    setActiveTab('account');
+                    setShowProfileTooltip(false);
+                  }}
+                  style={{
+                    position: 'absolute', top: '120%', right: '50%', transform: 'translateX(50%)',
+                    padding: '0.85rem 1.1rem', borderRadius: '12px', zIndex: 1000,
+                    whiteSpace: 'nowrap', textAlign: 'center', border: '1px solid var(--border)',
+                    boxShadow: 'var(--card-shadow)', background: 'var(--bg-card)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <p style={{ margin: '0 0 0.2rem 0', fontWeight: '600', color: 'var(--text-primary)', fontSize: '0.92rem' }}>
+                    {currentUser.username || currentUser.name || 'User'}
+                  </p>
+                  <p style={{ margin: '0 0 0.6rem 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    {currentUser.email}
+                  </p>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
+                    padding: '0.35rem 0.75rem', borderRadius: '8px',
+                    background: 'var(--empty-state-bg)', border: '1px solid var(--card-border)',
+                    fontSize: '0.78rem', fontWeight: 600, color: 'var(--accent-primary)'
+                  }}>
+                    <Settings size={13} />
+                    <span>Account & Settings</span>
+                  </div>
                 </div>
               )}
             </div>
