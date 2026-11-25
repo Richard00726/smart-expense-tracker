@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { getSummary, getCurrency } from '../services/api';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
-import { PieChart as PieChartIcon, BarChart2, TrendingUp, Activity, ArrowDownLeft, ArrowUpRight, Wallet, Landmark } from 'lucide-react';
+import { PieChart as PieChartIcon, BarChart2, TrendingUp, Activity, ArrowDownLeft, ArrowUpRight, Wallet, Landmark, Coins, CreditCard } from 'lucide-react';
 import DateHierarchyFilter from './DateHierarchyFilter';
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899'];
@@ -1601,29 +1601,7 @@ const AnalysisView = ({ refreshTrigger }) => {
             </span>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-            {/* Wallet Flow Mode Filter Dropdown */}
-            <select
-              className="form-control"
-              style={{
-                width: 'auto',
-                padding: '0.3rem 0.75rem',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                background: 'var(--empty-state-bg)',
-                color: 'var(--text-primary)',
-                borderColor: 'var(--accent-primary)',
-                cursor: 'pointer'
-              }}
-              value={flowWalletFilter}
-              onChange={(e) => setFlowWalletFilter(e.target.value)}
-              title="Filter Cash Flow by Wallet Mode"
-            >
-              <option value="all">⚡ Combined Flow (Cash + UPI)</option>
-              <option value="Cash">💵 Cash Flow (Cash Only)</option>
-              <option value="UPI">💳 UPI Flow (UPI Only)</option>
-            </select>
-
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', width: isMobile ? '100%' : 'auto' }}>
             <DateHierarchyFilter
               filterType={flowFilterType}
               filterValue={flowFilterValue}
@@ -1635,6 +1613,29 @@ const AnalysisView = ({ refreshTrigger }) => {
               transactions={refreshTrigger}
               defaultMonthWithData={latestMonthWithData}
             />
+
+            {/* Wallet Flow Mode Filter Dropdown */}
+            <select
+              className="form-control"
+              style={{
+                width: isMobile ? '100%' : 'auto',
+                padding: '0.35rem 0.75rem',
+                fontSize: isMobile ? '0.85rem' : '0.875rem',
+                fontWeight: 600,
+                background: 'var(--empty-state-bg)',
+                color: 'var(--text-primary)',
+                borderColor: 'var(--card-border)',
+                borderRadius: '8px',
+                cursor: 'pointer'
+              }}
+              value={flowWalletFilter}
+              onChange={(e) => setFlowWalletFilter(e.target.value)}
+              title="Filter Cash Flow by Wallet Mode"
+            >
+              <option value="all">Combined Flow (Cash + UPI)</option>
+              <option value="Cash">Cash Flow (Cash Only)</option>
+              <option value="UPI">UPI Flow (UPI Only)</option>
+            </select>
           </div>
         </div>
 
@@ -1908,12 +1909,14 @@ const AnalysisView = ({ refreshTrigger }) => {
                 gap: '1rem',
                 color: 'var(--text-secondary)'
               }}>
-                <div>
-                  💵 <strong style={{ color: 'var(--text-primary)' }}>Cash Flow:</strong> In <span style={{ color: '#10b981', fontWeight: 600, whiteSpace: 'nowrap' }}>+{getCurrency()}{flowTotals.cashIn.toFixed(2)}</span> | Out <span style={{ color: '#ef4444', fontWeight: 600, whiteSpace: 'nowrap' }}>-{getCurrency()}{flowTotals.cashOut.toFixed(2)}</span>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Coins size={15} className="text-accent-primary" />
+                  <strong style={{ color: 'var(--text-primary)' }}>Cash Flow:</strong> In <span style={{ color: '#10b981', fontWeight: 600, whiteSpace: 'nowrap' }}>+{getCurrency()}{flowTotals.cashIn.toFixed(2)}</span> | Out <span style={{ color: '#ef4444', fontWeight: 600, whiteSpace: 'nowrap' }}>-{getCurrency()}{flowTotals.cashOut.toFixed(2)}</span>
                 </div>
                 <div style={{ height: '16px', width: '1px', background: 'var(--card-border)' }} />
-                <div>
-                  💳 <strong style={{ color: 'var(--text-primary)' }}>UPI Flow:</strong> In <span style={{ color: '#10b981', fontWeight: 600, whiteSpace: 'nowrap' }}>+{getCurrency()}{flowTotals.upiIn.toFixed(2)}</span> | Out <span style={{ color: '#ef4444', fontWeight: 600, whiteSpace: 'nowrap' }}>-{getCurrency()}{flowTotals.upiOut.toFixed(2)}</span>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <CreditCard size={15} className="text-accent-primary" />
+                  <strong style={{ color: 'var(--text-primary)' }}>UPI Flow:</strong> In <span style={{ color: '#10b981', fontWeight: 600, whiteSpace: 'nowrap' }}>+{getCurrency()}{flowTotals.upiIn.toFixed(2)}</span> | Out <span style={{ color: '#ef4444', fontWeight: 600, whiteSpace: 'nowrap' }}>-{getCurrency()}{flowTotals.upiOut.toFixed(2)}</span>
                 </div>
               </div>
             )}

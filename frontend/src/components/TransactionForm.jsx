@@ -148,7 +148,7 @@ const TransactionForm = ({ onTransactionComplete, type, onTypeChange, hideToggle
 
       // Show toast
       setToast({
-        message: editData ? 'Transaction updated! ✨' : (type === 'credit' ? 'Awesome! Money in! 🎉' : 'Expense recorded! 💸'),
+        message: editData ? 'Transaction updated successfully' : (type === 'credit' ? 'Money added successfully' : 'Expense recorded successfully'),
         type: editData ? 'success' : (type === 'credit' ? 'success' : 'expense')
       });
       setTimeout(() => setToast(null), 3500);
