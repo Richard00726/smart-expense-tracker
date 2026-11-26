@@ -217,35 +217,16 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
 
   const fileInputRef = useRef(null);
   const hasAutoSyncedRef = useRef(false);
-  const upperRowRef = useRef(null);
-  const [upperRowWidth, setUpperRowWidth] = useState(null);
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
 
   useEffect(() => {
-    const measure = () => {
-      const mobile = window.innerWidth <= 768;
-      setIsMobile(mobile);
-      if (upperRowRef.current && !mobile) {
-        const w = upperRowRef.current.scrollWidth || upperRowRef.current.offsetWidth;
-        if (w > 200) setUpperRowWidth(w);
-      } else {
-        setUpperRowWidth(null);
-      }
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
     };
-    measure();
-    const timer = setTimeout(measure, 100);
-    window.addEventListener('resize', measure);
-    let ro = null;
-    if (typeof ResizeObserver !== 'undefined' && upperRowRef.current) {
-      ro = new ResizeObserver(measure);
-      ro.observe(upperRowRef.current);
-    }
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('resize', measure);
-      if (ro) ro.disconnect();
-    };
-  }, [bankOverview, lastSyncTime, googleTokenExpired, hasGoogleAuth, syncingGmail]);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Hardware back button interception for open modals and drop panels
   useEffect(() => {
@@ -1917,7 +1898,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                       whiteSpace: 'nowrap'
                     }}
                   >
-                    <span>Daily Ledger</span>
+                    <span>Daily Statement</span>
                   </button>
 
                   <button
@@ -1947,268 +1928,269 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                 </div>
               </div>
             ) : (
-              /* ─── DESKTOP SINGLE SYNCHRONIZED ROW (Width strictly locked) ─── */
+              /* ─── DESKTOP FULL-WIDTH SYNCHRONIZED CARD (Space-Between & Centered) ─── */
               <div className="data-card glass animate-fade-in" style={{
-                padding: '0.85rem 1.25rem',
+                padding: '1rem 1.5rem',
                 borderRadius: '14px',
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center',
                 justifyContent: 'center',
-                gap: '0.75rem',
+                gap: '0.85rem',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
                 width: '100%',
-                textAlign: 'center'
+                boxSizing: 'border-box'
               }}>
                 <div
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '0.75rem',
-                    width: 'fit-content',
-                    maxWidth: '100%',
-                    margin: '0 auto'
+                    gap: '0.85rem',
+                    width: '100%'
                   }}
                 >
-                  {/* Row 1: Status Badges */}
+                  {/* Row 1: Status Badges (Left) & Last Sync (Right) with Space-Between */}
                   <div
-                    ref={upperRowRef}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.45rem',
-                      flexWrap: 'nowrap',
-                      overflowX: 'auto',
-                      scrollbarWidth: 'none',
-                      msOverflowStyle: 'none',
-                      WebkitOverflowScrolling: 'touch',
-                      paddingBottom: '2px',
-                      width: 'fit-content',
-                      maxWidth: '100%'
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      gap: '1rem',
+                      flexWrap: 'wrap'
                     }}
                   >
-                    {/* 1. Main Bank Sync Status Indicator */}
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                      <span
-                        className={(!googleTokenExpired && hasGoogleAuth) ? "pulse-dot-green" : "pulse-dot-orange"}
-                        style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: '50%',
-                          background: (!googleTokenExpired && hasGoogleAuth) ? '#10b981' : '#f59e0b',
-                          flexShrink: 0
-                        }}
-                      />
-                      <strong style={{ fontSize: '0.88rem', color: 'var(--text-primary)' }}>
-                        {googleTokenExpired
-                          ? 'Gmail Session Expired'
-                          : hasGoogleAuth
-                            ? 'TMB Bank Auto-Sync Active'
-                            : hasGoogleCredentials
-                              ? 'Google Credentials Saved'
-                              : 'TMB Bank Statement Active'}
-                      </strong>
-                    </div>
+                    {/* Left Group: Bank Status & Account Badges */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.65rem',
+                      flexWrap: 'wrap'
+                    }}>
+                      {/* 1. Main Bank Sync Status Indicator */}
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                        <span
+                          className={(!googleTokenExpired && hasGoogleAuth) ? "pulse-dot-green" : "pulse-dot-orange"}
+                          style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            background: (!googleTokenExpired && hasGoogleAuth) ? '#10b981' : '#f59e0b',
+                            flexShrink: 0
+                          }}
+                        />
+                        <strong style={{ fontSize: '0.88rem', color: 'var(--text-primary)' }}>
+                          {googleTokenExpired
+                            ? 'Gmail Session Expired'
+                            : hasGoogleAuth
+                              ? 'TMB Bank Auto-Sync Active'
+                              : hasGoogleCredentials
+                                ? 'Google Credentials Saved'
+                                : 'TMB Bank Statement Active'}
+                        </strong>
+                      </div>
 
-                    {/* 2. Connection Health Indicator Badge */}
-                    {googleTokenExpired ? (
-                      <button
-                        onClick={handleConnectGmail}
-                        className="btn"
-                        style={{
-                          fontSize: '0.74rem',
-                          background: 'linear-gradient(135deg, #ef4444, #dc2626)',
-                          color: '#fff',
-                          padding: '0.2rem 0.65rem',
-                          borderRadius: '20px',
-                          border: 'none',
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.3rem',
-                          fontWeight: 600,
-                          whiteSpace: 'nowrap',
-                          flexShrink: 0,
-                          boxShadow: '0 2px 8px rgba(239,68,68,0.3)'
-                        }}
-                        title="Google refresh token expired after 7-day limit in test mode. Click to re-authorize and resume sync."
-                      >
-                        <AlertCircle size={11} />
-                        Session Expired – Re-link Gmail →
-                      </button>
-                    ) : (hasGoogleAuth && !googleTokenExpired) ? (
-                      <span
-                        style={{
-                          fontSize: '0.74rem',
-                          background: 'rgba(16, 185, 129, 0.12)',
-                          color: '#10b981',
-                          border: '1px solid rgba(16, 185, 129, 0.25)',
-                          padding: '0.16rem 0.5rem',
-                          borderRadius: '20px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.3rem',
-                          fontWeight: 600,
-                          whiteSpace: 'nowrap',
-                          flexShrink: 0
-                        }}
-                        title="Google Cloud OAuth authorization is active and verified"
-                      >
-                        <CheckCircle2 size={11} />
-                        Gmail Linked
-                      </span>
-                    ) : hasGoogleCredentials ? (
-                      <button
-                        onClick={handleConnectGmail}
-                        className="btn"
-                        style={{
-                          fontSize: '0.74rem',
-                          background: 'linear-gradient(135deg, #4285f4, #2563eb)',
-                          color: '#fff',
-                          padding: '0.2rem 0.65rem',
-                          borderRadius: '20px',
-                          border: 'none',
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.3rem',
-                          fontWeight: 600,
-                          whiteSpace: 'nowrap',
-                          flexShrink: 0,
-                          boxShadow: '0 2px 8px rgba(66,133,244,0.3)'
-                        }}
-                        title="Click to authorize with Google so statements can be read from Gmail"
-                      >
-                        <ExternalLink size={11} />
-                        Click to Authorize Gmail →
-                      </button>
-                    ) : null}
-
-                    {/* 3. Connected Bank Email Badge */}
-                    {(googleEmail || targetBankEmail) && (
-                      <span
-                        style={{
-                          fontSize: '0.74rem',
-                          background: 'rgba(59,130,246,0.1)',
-                          color: '#3b82f6',
-                          padding: '0.16rem 0.5rem',
-                          borderRadius: '20px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.3rem',
-                          whiteSpace: 'nowrap',
-                          maxWidth: '150px',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          flexShrink: 1
-                        }}
-                        title={`Bank registered email: ${googleEmail || targetBankEmail}`}
-                      >
-                        <Mail size={11} style={{ flexShrink: 0 }} />
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {googleEmail || targetBankEmail}
+                      {/* 2. Connection Health Indicator Badge */}
+                      {googleTokenExpired ? (
+                        <button
+                          onClick={handleConnectGmail}
+                          className="btn"
+                          style={{
+                            fontSize: '0.74rem',
+                            background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                            color: '#fff',
+                            padding: '0.2rem 0.65rem',
+                            borderRadius: '20px',
+                            border: 'none',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.3rem',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0,
+                            boxShadow: '0 2px 8px rgba(239,68,68,0.3)'
+                          }}
+                          title="Google refresh token expired after 7-day limit in test mode. Click to re-authorize and resume sync."
+                        >
+                          <AlertCircle size={11} />
+                          Session Expired – Re-link Gmail →
+                        </button>
+                      ) : (hasGoogleAuth && !googleTokenExpired) ? (
+                        <span
+                          style={{
+                            fontSize: '0.74rem',
+                            background: 'rgba(16, 185, 129, 0.12)',
+                            color: '#10b981',
+                            border: '1px solid rgba(16, 185, 129, 0.25)',
+                            padding: '0.16rem 0.5rem',
+                            borderRadius: '20px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.3rem',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0
+                          }}
+                          title="Google Cloud OAuth authorization is active and verified"
+                        >
+                          <CheckCircle2 size={11} />
+                          Gmail Linked
                         </span>
-                      </span>
-                    )}
+                      ) : hasGoogleCredentials ? (
+                        <button
+                          onClick={handleConnectGmail}
+                          className="btn"
+                          style={{
+                            fontSize: '0.74rem',
+                            background: 'linear-gradient(135deg, #4285f4, #2563eb)',
+                            color: '#fff',
+                            padding: '0.2rem 0.65rem',
+                            borderRadius: '20px',
+                            border: 'none',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.3rem',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0,
+                            boxShadow: '0 2px 8px rgba(66,133,244,0.3)'
+                          }}
+                          title="Click to authorize with Google so statements can be read from Gmail"
+                        >
+                          <ExternalLink size={11} />
+                          Click to Authorize Gmail →
+                        </button>
+                      ) : null}
 
-                    {/* 4. Masked Bank Account Number */}
-                    {bankOverview?.accountNo && (
+                      {/* 3. Connected Bank Email Badge */}
+                      {(googleEmail || targetBankEmail) && (
+                        <span
+                          style={{
+                            fontSize: '0.74rem',
+                            background: 'rgba(59,130,246,0.1)',
+                            color: '#3b82f6',
+                            padding: '0.16rem 0.5rem',
+                            borderRadius: '20px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.3rem',
+                            whiteSpace: 'nowrap',
+                            maxWidth: '150px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            flexShrink: 1
+                          }}
+                          title={`Bank registered email: ${googleEmail || targetBankEmail}`}
+                        >
+                          <Mail size={11} style={{ flexShrink: 0 }} />
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {googleEmail || targetBankEmail}
+                          </span>
+                        </span>
+                      )}
+
+                      {/* 4. Masked Bank Account Number */}
+                      {bankOverview?.accountNo && (
+                        <span
+                          style={{
+                            fontSize: '0.74rem',
+                            background: 'rgba(99, 102, 241, 0.1)',
+                            color: '#818cf8',
+                            border: '1px solid rgba(99, 102, 241, 0.25)',
+                            padding: '0.16rem 0.5rem',
+                            borderRadius: '20px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.3rem',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0
+                          }}
+                          title="Masked TMB Savings Account Number"
+                        >
+                          <Building2 size={11} />
+                          A/C •••• {bankOverview.accountNo.replace(/^X+/, '') || bankOverview.accountNo.slice(-5)}
+                        </span>
+                      )}
+
+                      {/* 5. Live Statement Closing Balance */}
                       <span
                         style={{
-                          fontSize: '0.74rem',
-                          background: 'rgba(99, 102, 241, 0.1)',
-                          color: '#818cf8',
-                          border: '1px solid rgba(99, 102, 241, 0.25)',
-                          padding: '0.16rem 0.5rem',
-                          borderRadius: '20px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.3rem',
-                          fontWeight: 600,
-                          whiteSpace: 'nowrap',
-                          flexShrink: 0
-                        }}
-                        title="Masked TMB Savings Account Number"
-                      >
-                        <Building2 size={11} />
-                        A/C •••• {bankOverview.accountNo.replace(/^X+/, '') || bankOverview.accountNo.slice(-5)}
-                      </span>
-                    )}
-
-                    {/* 5. Live Statement Closing Balance */}
-                    <span
-                      style={{
-                        fontSize: '0.76rem',
-                        background: 'rgba(56, 189, 248, 0.12)',
-                        color: '#38bdf8',
-                        border: '1px solid rgba(56, 189, 248, 0.25)',
-                        padding: '0.16rem 0.55rem',
-                        borderRadius: '20px',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.3rem',
-                        fontWeight: 700,
-                        whiteSpace: 'nowrap',
-                        flexShrink: 0
-                      }}
-                      title="Live statement Closing Balance synchronized with wallet"
-                    >
-                      💰 Balance: ₹{effectiveLiveBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
-
-                    {/* 6. Timestamp strictly locked next to balance */}
-                    {lastSyncTime && (
-                      <span
-                        style={{
-                          fontSize: '0.74rem',
-                          background: 'rgba(16, 185, 129, 0.08)',
-                          border: '1px solid rgba(16, 185, 129, 0.22)',
-                          color: 'var(--text-secondary)',
+                          fontSize: '0.76rem',
+                          background: 'rgba(56, 189, 248, 0.12)',
+                          color: '#38bdf8',
+                          border: '1px solid rgba(56, 189, 248, 0.25)',
                           padding: '0.16rem 0.55rem',
                           borderRadius: '20px',
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '0.35rem',
+                          gap: '0.3rem',
+                          fontWeight: 700,
                           whiteSpace: 'nowrap',
                           flexShrink: 0
                         }}
-                        title="Last time bank statements were checked"
+                        title="Live statement Closing Balance synchronized with wallet"
                       >
-                        <Clock size={11} style={{ color: '#10b981', flexShrink: 0 }} />
-                        <span>
-                          Last sync: {lastSyncTime.toLocaleDateString() === new Date().toLocaleDateString() ? 'Today' : lastSyncTime.toLocaleDateString()} at {lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                        <button
-                          onClick={() => {
-                            if (googleTokenExpired || !hasGoogleAuth) {
-                              handleConnectGmail();
-                            } else {
-                              handleSyncGmailNow({ fullSync: false });
-                            }
-                          }}
-                          disabled={syncingGmail}
+                        💰 Balance: ₹{effectiveLiveBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
+
+                    {/* Right Group: Timestamp strictly locked on the right edge */}
+                    {lastSyncTime && (
+                      <div style={{ flexShrink: 0 }}>
+                        <span
                           style={{
-                            background: (googleTokenExpired || !hasGoogleAuth) ? 'rgba(239, 68, 68, 0.15)' : 'rgba(56, 189, 248, 0.12)',
-                            border: 'none',
-                            color: (googleTokenExpired || !hasGoogleAuth) ? '#ef4444' : '#38bdf8',
-                            cursor: syncingGmail ? 'not-allowed' : 'pointer',
-                            padding: '2px 4px',
+                            fontSize: '0.74rem',
+                            background: 'rgba(16, 185, 129, 0.08)',
+                            border: '1px solid rgba(16, 185, 129, 0.22)',
+                            color: 'var(--text-secondary)',
+                            padding: '0.2rem 0.6rem',
+                            borderRadius: '20px',
                             display: 'inline-flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            borderRadius: '4px',
-                            transition: 'all 0.2s ease',
-                            marginLeft: '0.15rem'
+                            gap: '0.35rem',
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0
                           }}
-                          title={googleTokenExpired ? "Gmail authorization expired. Click to re-link." : "Check Gmail for new statements now"}
+                          title="Last time bank statements were checked"
                         >
-                          <RefreshCw size={11} style={{ animation: syncingGmail ? 'spin 1s linear infinite' : 'none' }} />
-                        </button>
-                      </span>
+                          <Clock size={11} style={{ color: '#10b981', flexShrink: 0 }} />
+                          <span>
+                            Last sync: {lastSyncTime.toLocaleDateString() === new Date().toLocaleDateString() ? 'Today' : lastSyncTime.toLocaleDateString()} at {lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          <button
+                            onClick={() => {
+                              if (googleTokenExpired || !hasGoogleAuth) {
+                                handleConnectGmail();
+                              } else {
+                                handleSyncGmailNow({ fullSync: false });
+                              }
+                            }}
+                            disabled={syncingGmail}
+                            style={{
+                              background: (googleTokenExpired || !hasGoogleAuth) ? 'rgba(239, 68, 68, 0.15)' : 'rgba(56, 189, 248, 0.12)',
+                              border: 'none',
+                              color: (googleTokenExpired || !hasGoogleAuth) ? '#ef4444' : '#38bdf8',
+                              cursor: syncingGmail ? 'not-allowed' : 'pointer',
+                              padding: '2px 4px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderRadius: '4px',
+                              transition: 'all 0.2s ease',
+                              marginLeft: '0.15rem'
+                            }}
+                            title={googleTokenExpired ? "Gmail authorization expired. Click to re-link." : "Check Gmail for new statements now"}
+                          >
+                            <RefreshCw size={11} style={{ animation: syncingGmail ? 'spin 1s linear infinite' : 'none' }} />
+                          </button>
+                        </span>
+                      </div>
                     )}
                   </div>
 
-                  {/* Row 2: Action Buttons & Swift Bar Switcher (Desktop space-between) */}
+                  {/* Row 2: Action Buttons & Swift Bar Switcher (Spans full width with space-between) */}
                   <div
                     style={{
                       display: 'flex',
@@ -2216,8 +2198,8 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                       justifyContent: 'space-between',
                       flexDirection: 'row',
                       gap: '1rem',
-                      width: upperRowWidth ? `${upperRowWidth}px` : '100%',
-                      maxWidth: '100%',
+                      width: '100%',
+                      flexWrap: 'wrap',
                       marginTop: '0.25rem'
                     }}
                   >
@@ -2325,7 +2307,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                           boxShadow: bankViewMode === 'ledger' ? '0 1px 4px rgba(37, 99, 235, 0.25)' : 'none'
                         }}
                       >
-                        <span>Daily Statement Ledger</span>
+                        <span>Daily Statement</span>
                       </button>
 
                       <button
@@ -2348,7 +2330,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                           boxShadow: bankViewMode === 'transactions' ? '0 1px 4px rgba(37, 99, 235, 0.25)' : 'none'
                         }}
                       >
-                        <span>Auto-Tracked Transactions</span>
+                        <span>All Transactions</span>
                       </button>
                     </div>
                   </div>
@@ -3123,7 +3105,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                       <div className="activity-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <FileText size={18} style={{ color: '#10b981' }} />
                         <span style={{ fontSize: isMobile ? '0.92rem' : '1.05rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                          {isMobile ? 'Daily Statement Ledger' : 'Daily Statement Ledger (Day-by-Day Reconciliation)'}
+                          {isMobile ? 'Daily Statement' : 'Daily Statement (Day-by-Day Reconciliation)'}
                         </span>
                       </div>
                       <span className="activity-badge">
@@ -3346,10 +3328,10 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                 </div>
               )}
 
-              {/* 4. STATEMENT TRANSACTIONS TABLE (Shown when Auto-Tracked mode active) */}
+              {/* 4. STATEMENT TRANSACTIONS TABLE (Shown when All Transactions mode active) */}
               {bankViewMode === 'transactions' && (
                 <TransactionsTable
-                  title="Auto-Tracked Bank & UPI Transactions"
+                  title="All Bank & UPI Transactions"
                   badge={`Showing ${displayedAutoTransactions.length} transaction(s)`}
                   transactions={displayedAutoTransactions}
                   loading={txLoading}
