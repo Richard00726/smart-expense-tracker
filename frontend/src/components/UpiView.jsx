@@ -3101,14 +3101,15 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
               {/* 2. DAILY STATEMENT RECONCILIATION TABLE (Shown when Ledger mode active) */}
               {bankViewMode === 'ledger' && bankOverview?.dailySummaries && bankOverview.dailySummaries.length > 0 && (
                 <div
-                  className="data-card glass animate-fade-in"
+                  className="activity-card data-card glass animate-fade-in"
                   style={{
-                    padding: '1.25rem',
+                    padding: 0,
+                    overflow: 'hidden',
                     border: '1px solid var(--card-border)',
                     borderRadius: '14px'
                   }}
                 >
-                  <div className="activity-header data-header" style={{ padding: 0, marginBottom: '1rem' }}>
+                  <div className="activity-header data-header">
                     <div className="activity-title-group" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
                       <div className="activity-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <FileText size={18} style={{ color: '#10b981' }} />
@@ -3246,7 +3247,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                         flexWrap: 'wrap',
                         gap: '0.75rem',
                         background: 'var(--card-bg-subtle, transparent)',
-                        marginTop: '0.5rem'
+                        margin: 0
                       }}
                     >
                       <div style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>
