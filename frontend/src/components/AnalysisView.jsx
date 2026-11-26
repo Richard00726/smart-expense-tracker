@@ -820,17 +820,19 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
               </span>
             )}
           </h3>
-          <DateHierarchyFilter
-            filterType={spendingFilterType}
-            filterValue={spendingFilterValue}
-            onFilterChange={(newType, newValue) => {
-              setUserChangedSpendingMonth(true);
-              setSpendingFilterType(newType);
-              setSpendingFilterValue(newValue);
-            }}
-            transactions={refreshTrigger}
-            defaultMonthWithData={latestMonthWithData}
-          />
+          <div className="filter-wrapper" style={{ width: isMobile ? '100%' : 'auto' }}>
+            <DateHierarchyFilter
+              filterType={spendingFilterType}
+              filterValue={spendingFilterValue}
+              onFilterChange={(newType, newValue) => {
+                setUserChangedSpendingMonth(true);
+                setSpendingFilterType(newType);
+                setSpendingFilterValue(newValue);
+              }}
+              transactions={refreshTrigger}
+              defaultMonthWithData={latestMonthWithData}
+            />
+          </div>
         </div>
 
 
@@ -844,7 +846,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
             <p style={{ color: 'var(--text-secondary)' }}>No spending recorded for this period.</p>
           </div>
         ) : (
-          <div className="analysis-charts-container" style={{ padding: '24px' }}>
+          <div className="analysis-charts-container" style={{ padding: isMobile ? '0.75rem 0.85rem' : '1.5rem', width: '100%', boxSizing: 'border-box' }}>
             <div
               className="charts-grid analysis-charts-grid"
               style={{
@@ -1261,17 +1263,19 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
               </span>
             )}
           </h3>
-          <DateHierarchyFilter
-            filterType={incomeFilterType}
-            filterValue={incomeFilterValue}
-            onFilterChange={(newType, newValue) => {
-              setUserChangedIncomeMonth(true);
-              setIncomeFilterType(newType);
-              setIncomeFilterValue(newValue);
-            }}
-            transactions={refreshTrigger}
-            defaultMonthWithData={latestMonthWithData}
-          />
+          <div className="filter-wrapper" style={{ width: isMobile ? '100%' : 'auto' }}>
+            <DateHierarchyFilter
+              filterType={incomeFilterType}
+              filterValue={incomeFilterValue}
+              onFilterChange={(newType, newValue) => {
+                setUserChangedIncomeMonth(true);
+                setIncomeFilterType(newType);
+                setIncomeFilterValue(newValue);
+              }}
+              transactions={refreshTrigger}
+              defaultMonthWithData={latestMonthWithData}
+            />
+          </div>
         </div>
 
 
@@ -1285,7 +1289,8 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
             <p style={{ color: 'var(--text-secondary)' }}>No income recorded for this period.</p>
           </div>
         ) : (
-          <div className="charts-grid">
+          <div className="analysis-charts-container" style={{ padding: isMobile ? '0.75rem 0.85rem' : '1.5rem', width: '100%', boxSizing: 'border-box' }}>
+            <div className="charts-grid">
             {/* 1. CASH VS UPI INCOME - LEFT CARD (16px internal padding) */}
             <div
               className="chart-wrapper"
@@ -1663,6 +1668,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                 </div>
               </div>
             </div>
+            </div>
           </div>
         )}
       </div>
@@ -1703,24 +1709,34 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
             </span>
           </div>
 
-          <div className="flow-filter-controls" style={{ display: 'flex', gap: '0.45rem', alignItems: 'center', flexWrap: 'wrap', width: isMobile ? '100%' : 'auto' }}>
-            <DateHierarchyFilter
-              filterType={flowFilterType}
-              filterValue={flowFilterValue}
-              onFilterChange={(newType, newValue) => {
-                setUserChangedFlowMonth(true);
-                setFlowFilterType(newType);
-                setFlowFilterValue(newValue);
-              }}
-              transactions={refreshTrigger}
-              defaultMonthWithData={latestMonthWithData}
-            />
+          <div className="flow-filter-controls" style={{
+            display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            gap: isMobile ? '0.5rem' : '0.45rem',
+            alignItems: isMobile ? 'stretch' : 'center',
+            flexWrap: 'wrap',
+            width: isMobile ? '100%' : 'auto'
+          }}>
+            <div className="filter-wrapper" style={{ width: isMobile ? '100%' : 'auto' }}>
+              <DateHierarchyFilter
+                filterType={flowFilterType}
+                filterValue={flowFilterValue}
+                onFilterChange={(newType, newValue) => {
+                  setUserChangedFlowMonth(true);
+                  setFlowFilterType(newType);
+                  setFlowFilterValue(newValue);
+                }}
+                transactions={refreshTrigger}
+                defaultMonthWithData={latestMonthWithData}
+              />
+            </div>
 
             {/* Wallet Flow Mode Filter Dropdown */}
             <select
-              className="form-control filter-pill-select"
+              className="form-control"
               style={{
                 width: isMobile ? '100%' : 'auto',
+                flex: isMobile ? '1 1 100%' : 'none',
                 padding: '0.35rem 1.6rem 0.35rem 0.65rem',
                 fontSize: isMobile ? '0.78rem' : '0.85rem',
                 fontWeight: 600,
@@ -1729,7 +1745,8 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                 borderColor: 'var(--card-border)',
                 borderRadius: '8px',
                 cursor: 'pointer',
-                height: '34px'
+                height: '34px',
+                boxSizing: 'border-box'
               }}
               value={flowWalletFilter}
               onChange={(e) => setFlowWalletFilter(e.target.value)}
