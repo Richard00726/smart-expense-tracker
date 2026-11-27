@@ -8,7 +8,7 @@ import {
   ChevronDown, ChevronUp, LogOut, Check, ArrowRight, ArrowLeft,
   ExternalLink, Building2, Lock, Sparkles, Clock, Settings, Copy, Download, Trash2,
   Receipt, ChevronLeft, ChevronRight, Calendar, Info, Edit3,
-  X, ArrowDownLeft, ArrowUpRight, Wallet, User
+  X, ArrowDownLeft, ArrowUpRight, Wallet, User, Link2, CreditCard
 } from 'lucide-react';
 import {
   getBankSyncSettings,
@@ -1925,7 +1925,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                     gap: '0.25rem',
                     background: 'var(--empty-state-bg, rgba(255, 255, 255, 0.05))',
                     padding: '3px',
-                    borderRadius: '10px',
+                    borderRadius: '25px',
                     border: '1px solid var(--card-border, rgba(255, 255, 255, 0.1))',
                     width: '100%',
                     boxSizing: 'border-box'
@@ -1941,13 +1941,13 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                       justifyContent: 'center',
                       textAlign: 'center',
                       padding: '0.55rem 0.5rem',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '0.82rem',
                       fontWeight: 600,
                       cursor: 'pointer',
                       border: 'none',
                       transition: 'all 0.2s ease',
-                      background: bankViewMode === 'ledger' ? 'var(--primary, #2563eb)' : 'transparent',
+                      background: bankViewMode === 'ledger' ? '#2563eb' : 'transparent',
                       color: bankViewMode === 'ledger' ? '#ffffff' : 'var(--text-secondary)',
                       boxShadow: bankViewMode === 'ledger' ? '0 1px 4px rgba(37, 99, 235, 0.25)' : 'none',
                       whiteSpace: 'nowrap'
@@ -1966,13 +1966,13 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                       justifyContent: 'center',
                       textAlign: 'center',
                       padding: '0.55rem 0.5rem',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '0.82rem',
                       fontWeight: 600,
                       cursor: 'pointer',
                       border: 'none',
                       transition: 'all 0.2s ease',
-                      background: bankViewMode === 'transactions' ? 'var(--primary, #2563eb)' : 'transparent',
+                      background: bankViewMode === 'transactions' ? '#2563eb' : 'transparent',
                       color: bankViewMode === 'transactions' ? '#ffffff' : 'var(--text-secondary)',
                       boxShadow: bankViewMode === 'transactions' ? '0 1px 4px rgba(37, 99, 235, 0.25)' : 'none',
                       whiteSpace: 'nowrap'
@@ -1985,13 +1985,13 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
             ) : (
               /* ─── DESKTOP FULL-WIDTH SYNCHRONIZED CARD (Space-Between & Centered) ─── */
               <div className="data-card glass animate-fade-in" style={{
-                padding: '1rem 1.5rem',
-                borderRadius: '14px',
+                padding: '1.1rem 1.6rem',
+                borderRadius: '16px',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'center',
-                gap: '0.85rem',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                gap: '0.9rem',
+                boxShadow: '0 2px 14px rgba(0,0,0,0.04)',
                 width: '100%',
                 boxSizing: 'border-box'
               }}>
@@ -1999,7 +1999,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '0.85rem',
+                    gap: '0.9rem',
                     width: '100%'
                   }}
                 >
@@ -2076,22 +2076,22 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                       ) : (hasGoogleAuth && !googleTokenExpired) ? (
                         <span
                           style={{
-                            fontSize: '0.74rem',
+                            fontSize: '0.76rem',
                             background: 'rgba(16, 185, 129, 0.12)',
                             color: '#10b981',
                             border: '1px solid rgba(16, 185, 129, 0.25)',
-                            padding: '0.16rem 0.5rem',
+                            padding: '0.22rem 0.65rem',
                             borderRadius: '20px',
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '0.3rem',
+                            gap: '0.35rem',
                             fontWeight: 600,
                             whiteSpace: 'nowrap',
                             flexShrink: 0
                           }}
                           title="Google Cloud OAuth authorization is active and verified"
                         >
-                          <CheckCircle2 size={11} />
+                          <Link2 size={12} style={{ flexShrink: 0 }} />
                           Gmail Linked
                         </span>
                       ) : hasGoogleCredentials ? (
@@ -2125,23 +2125,25 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                       {(googleEmail || targetBankEmail) && (
                         <span
                           style={{
-                            fontSize: '0.74rem',
+                            fontSize: '0.76rem',
                             background: 'rgba(59,130,246,0.1)',
                             color: '#3b82f6',
-                            padding: '0.16rem 0.5rem',
+                            border: '1px solid rgba(59, 130, 246, 0.22)',
+                            padding: '0.22rem 0.65rem',
                             borderRadius: '20px',
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '0.3rem',
+                            gap: '0.35rem',
                             whiteSpace: 'nowrap',
-                            maxWidth: '140px',
+                            maxWidth: '160px',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
-                            flexShrink: 1
+                            flexShrink: 1,
+                            fontWeight: 500
                           }}
                           title={`Bank registered email: ${googleEmail || targetBankEmail}`}
                         >
-                          <Mail size={11} style={{ flexShrink: 0 }} />
+                          <Mail size={12} style={{ flexShrink: 0 }} />
                           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {googleEmail || targetBankEmail}
                           </span>
@@ -2152,22 +2154,22 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                       {bankOverview?.accountNo && (
                         <span
                           style={{
-                            fontSize: '0.74rem',
+                            fontSize: '0.76rem',
                             background: 'rgba(99, 102, 241, 0.1)',
                             color: '#818cf8',
                             border: '1px solid rgba(99, 102, 241, 0.25)',
-                            padding: '0.16rem 0.5rem',
+                            padding: '0.22rem 0.65rem',
                             borderRadius: '20px',
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '0.3rem',
+                            gap: '0.35rem',
                             fontWeight: 600,
                             whiteSpace: 'nowrap',
                             flexShrink: 0
                           }}
                           title="Masked TMB Savings Account Number"
                         >
-                          <Building2 size={11} />
+                          <CreditCard size={12} style={{ flexShrink: 0 }} />
                           A/C •••• {bankOverview.accountNo.replace(/^X+/, '') || bankOverview.accountNo.slice(-5)}
                         </span>
                       )}
@@ -2177,13 +2179,13 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                         style={{
                           fontSize: '0.76rem',
                           background: 'rgba(56, 189, 248, 0.12)',
-                          color: '#38bdf8',
+                          color: '#0284c7',
                           border: '1px solid rgba(56, 189, 248, 0.25)',
-                          padding: '0.16rem 0.55rem',
+                          padding: '0.22rem 0.65rem',
                           borderRadius: '20px',
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '0.3rem',
+                          gap: '0.35rem',
                           fontWeight: 700,
                           whiteSpace: 'nowrap',
                           flexShrink: 0
@@ -2200,21 +2202,21 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                       <div style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
                         <span
                           style={{
-                            fontSize: '0.74rem',
+                            fontSize: '0.76rem',
                             background: 'rgba(16, 185, 129, 0.08)',
                             border: '1px solid rgba(16, 185, 129, 0.22)',
                             color: 'var(--text-secondary)',
-                            padding: '0.2rem 0.6rem',
+                            padding: '0.22rem 0.75rem',
                             borderRadius: '20px',
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '0.35rem',
+                            gap: '0.45rem',
                             whiteSpace: 'nowrap',
                             flexShrink: 0
                           }}
                           title="Last time bank statements were checked"
                         >
-                          <Clock size={11} style={{ color: '#10b981', flexShrink: 0 }} />
+                          <Clock size={12} style={{ color: '#10b981', flexShrink: 0 }} />
                           <span>
                             Last sync: {lastSyncTime.toLocaleDateString() === new Date().toLocaleDateString() ? 'Today' : lastSyncTime.toLocaleDateString()} at {lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
@@ -2228,11 +2230,11 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                             }}
                             disabled={syncingGmail}
                             style={{
-                              background: (googleTokenExpired || !hasGoogleAuth) ? 'rgba(239, 68, 68, 0.15)' : 'rgba(56, 189, 248, 0.12)',
+                              background: 'transparent',
                               border: 'none',
-                              color: (googleTokenExpired || !hasGoogleAuth) ? '#ef4444' : '#38bdf8',
+                              color: (googleTokenExpired || !hasGoogleAuth) ? '#ef4444' : '#10b981',
                               cursor: syncingGmail ? 'not-allowed' : 'pointer',
-                              padding: '2px 4px',
+                              padding: '2px',
                               display: 'inline-flex',
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -2242,7 +2244,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                             }}
                             title={googleTokenExpired ? "Gmail authorization expired. Click to re-link." : "Check Gmail for new statements now"}
                           >
-                            <RefreshCw size={11} style={{ animation: syncingGmail ? 'spin 1s linear infinite' : 'none' }} />
+                            <RefreshCw size={12} style={{ animation: syncingGmail ? 'spin 1s linear infinite' : 'none' }} />
                           </button>
                         </span>
                       </div>
@@ -2258,8 +2260,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                       flexDirection: 'row',
                       gap: '1rem',
                       width: '100%',
-                      flexWrap: 'wrap',
-                      marginTop: '0.35rem'
+                      flexWrap: 'wrap'
                     }}
                   >
                     {/* Left Group: Action Buttons */}
@@ -2277,12 +2278,13 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                             fontSize: '0.78rem',
                             background: 'rgba(16, 185, 129, 0.1)',
                             color: '#10b981',
-                            padding: '0.25rem 0.65rem',
+                            border: '1px solid rgba(16, 185, 129, 0.25)',
+                            padding: '0.35rem 0.75rem',
                             borderRadius: '20px',
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '0.35rem',
-                            fontWeight: 500,
+                            fontWeight: 600,
                             flexShrink: 0
                           }}
                           title="Automatically syncing daily bank statements in background"
@@ -2292,26 +2294,30 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                         </span>
                       )}
 
-                      {bankOverview?.customerDetails && (
+                      {(bankOverview?.customerDetails || isConfigured) && (
                         <button
                           onClick={() => setShowBankDetails(b => !b)}
                           className="btn"
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '0.4rem',
-                            background: showBankDetails ? 'var(--accent-primary)' : 'var(--empty-state-bg)',
-                            border: '1px solid var(--card-border)',
+                            gap: '0.45rem',
+                            background: showBankDetails ? 'var(--accent-primary, #2563eb)' : 'var(--empty-state-bg, #f8fafc)',
+                            border: '1px solid var(--card-border, #e2e8f0)',
                             color: showBankDetails ? '#fff' : 'var(--text-primary)',
-                            padding: '0.45rem 0.85rem',
-                            borderRadius: '8px',
+                            padding: '0.45rem 1.1rem',
+                            borderRadius: '20px',
                             fontSize: '0.82rem',
+                            fontWeight: 600,
                             whiteSpace: 'nowrap',
-                            flexShrink: 0
+                            flexShrink: 0,
+                            cursor: 'pointer',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
                           }}
                         >
-                          <Building2 size={13} />
-                          {showBankDetails ? 'Hide Bank Details ▴' : 'Bank & Branch Details ▾'}
+                          <Building2 size={14} style={{ color: showBankDetails ? '#fff' : 'var(--text-secondary)' }} />
+                          <span>Bank & Branch Details</span>
+                          <ChevronDown size={13} style={{ color: showBankDetails ? '#fff' : 'var(--text-secondary)', transform: showBankDetails ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
                         </button>
                       )}
 
@@ -2321,19 +2327,22 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '0.4rem',
-                          background: showDropzone ? 'var(--accent-primary)' : 'var(--empty-state-bg)',
-                          border: '1px solid var(--card-border)',
+                          gap: '0.45rem',
+                          background: showDropzone ? 'var(--accent-primary, #2563eb)' : 'var(--empty-state-bg, #f8fafc)',
+                          border: '1px solid var(--card-border, #e2e8f0)',
                           color: showDropzone ? '#fff' : 'var(--text-primary)',
-                          padding: '0.45rem 0.85rem',
-                          borderRadius: '8px',
+                          padding: '0.45rem 1.1rem',
+                          borderRadius: '20px',
                           fontSize: '0.82rem',
+                          fontWeight: 600,
                           whiteSpace: 'nowrap',
-                          flexShrink: 0
+                          flexShrink: 0,
+                          cursor: 'pointer',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
                         }}
                       >
-                        <UploadCloud size={13} />
-                        {showDropzone ? 'Close PDF Drop' : 'Drop Statement'}
+                        <UploadCloud size={14} style={{ color: showDropzone ? '#fff' : 'var(--text-secondary)' }} />
+                        <span>{showDropzone ? 'Close PDF Drop' : 'Drop Statement'}</span>
                       </button>
                     </div>
 
@@ -2344,10 +2353,10 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '0.25rem',
-                        background: 'var(--empty-state-bg, rgba(255, 255, 255, 0.05))',
+                        background: 'var(--empty-state-bg, #f1f5f9)',
                         padding: '3px',
-                        borderRadius: '10px',
-                        border: '1px solid var(--card-border, rgba(255, 255, 255, 0.1))',
+                        borderRadius: '25px',
+                        border: '1px solid var(--card-border, #e2e8f0)',
                         flexShrink: 0
                       }}
                     >
@@ -2359,16 +2368,17 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                           alignItems: 'center',
                           justifyContent: 'center',
                           textAlign: 'center',
-                          padding: '0.45rem 1rem',
-                          borderRadius: '7px',
+                          padding: '0.45rem 1.35rem',
+                          borderRadius: '20px',
                           fontSize: '0.82rem',
                           fontWeight: 600,
                           cursor: 'pointer',
                           border: 'none',
                           transition: 'all 0.2s ease',
-                          background: bankViewMode === 'ledger' ? 'var(--primary, #2563eb)' : 'transparent',
-                          color: bankViewMode === 'ledger' ? '#ffffff' : 'var(--text-secondary)',
-                          boxShadow: bankViewMode === 'ledger' ? '0 1px 4px rgba(37, 99, 235, 0.25)' : 'none'
+                          background: bankViewMode === 'ledger' ? '#2563eb' : 'transparent',
+                          color: bankViewMode === 'ledger' ? '#ffffff' : 'var(--text-secondary, #64748b)',
+                          boxShadow: bankViewMode === 'ledger' ? '0 1px 4px rgba(37, 99, 235, 0.25)' : 'none',
+                          whiteSpace: 'nowrap'
                         }}
                       >
                         <span>Daily Statement</span>
@@ -2382,16 +2392,17 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                           alignItems: 'center',
                           justifyContent: 'center',
                           textAlign: 'center',
-                          padding: '0.45rem 1rem',
-                          borderRadius: '7px',
+                          padding: '0.45rem 1.35rem',
+                          borderRadius: '20px',
                           fontSize: '0.82rem',
                           fontWeight: 600,
                           cursor: 'pointer',
                           border: 'none',
                           transition: 'all 0.2s ease',
-                          background: bankViewMode === 'transactions' ? 'var(--primary, #2563eb)' : 'transparent',
-                          color: bankViewMode === 'transactions' ? '#ffffff' : 'var(--text-secondary)',
-                          boxShadow: bankViewMode === 'transactions' ? '0 1px 4px rgba(37, 99, 235, 0.25)' : 'none'
+                          background: bankViewMode === 'transactions' ? '#2563eb' : 'transparent',
+                          color: bankViewMode === 'transactions' ? '#ffffff' : 'var(--text-secondary, #64748b)',
+                          boxShadow: bankViewMode === 'transactions' ? '0 1px 4px rgba(37, 99, 235, 0.25)' : 'none',
+                          whiteSpace: 'nowrap'
                         }}
                       >
                         <span>All Transactions</span>
