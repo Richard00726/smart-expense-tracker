@@ -95,6 +95,8 @@ const buildTimelineData = (txList, filterType, filterValue) => {
       label: m,
       fullDate: `${m} ${y}`,
       amount: 0,
+      cash: 0,
+      upi: 0,
       count: 0
     }));
     txList.forEach(t => {
@@ -102,8 +104,11 @@ const buildTimelineData = (txList, filterType, filterValue) => {
       if (!d) return;
       const mIdx = d.getMonth();
       if (mIdx >= 0 && mIdx < 12) {
-        buckets[mIdx].amount += Number(t.amount || 0);
+        const amt = Number(t.amount || 0);
+        buckets[mIdx].amount += amt;
         buckets[mIdx].count += 1;
+        if (t.wallet === 'Cash') buckets[mIdx].cash += amt;
+        else buckets[mIdx].upi += amt;
       }
     });
     return buckets;
@@ -125,11 +130,14 @@ const buildTimelineData = (txList, filterType, filterValue) => {
           const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
           const label = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
           if (!map.has(k)) {
-            map.set(k, { key: k, label, fullDate: label, amount: 0, count: 0 });
+            map.set(k, { key: k, label, fullDate: label, amount: 0, cash: 0, upi: 0, count: 0 });
           }
           const item = map.get(k);
-          item.amount += Number(t.amount || 0);
+          const amt = Number(t.amount || 0);
+          item.amount += amt;
           item.count += 1;
+          if (t.wallet === 'Cash') item.cash += amt;
+          else item.upi += amt;
         });
         return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0])).map(e => e[1]);
       } else {
@@ -152,6 +160,8 @@ const buildTimelineData = (txList, filterType, filterValue) => {
       label: dStr,
       fullDate: `${d} ${monthName}`,
       amount: 0,
+      cash: 0,
+      upi: 0,
       count: 0
     });
   }
@@ -161,8 +171,11 @@ const buildTimelineData = (txList, filterType, filterValue) => {
     if (!dObj) return;
     const dayNum = dObj.getDate();
     if (dayNum >= 1 && dayNum <= daysInMonth) {
-      days[dayNum - 1].amount += Number(t.amount || 0);
+      const amt = Number(t.amount || 0);
+      days[dayNum - 1].amount += amt;
       days[dayNum - 1].count += 1;
+      if (t.wallet === 'Cash') days[dayNum - 1].cash += amt;
+      else days[dayNum - 1].upi += amt;
     }
   });
 
@@ -171,13 +184,13 @@ const buildTimelineData = (txList, filterType, filterValue) => {
 
 const buildWeekdayData = (txList) => {
   const days = [
-    { day: 'Mon', fullName: 'Monday', amount: 0, count: 0, isWeekend: false },
-    { day: 'Tue', fullName: 'Tuesday', amount: 0, count: 0, isWeekend: false },
-    { day: 'Wed', fullName: 'Wednesday', amount: 0, count: 0, isWeekend: false },
-    { day: 'Thu', fullName: 'Thursday', amount: 0, count: 0, isWeekend: false },
-    { day: 'Fri', fullName: 'Friday', amount: 0, count: 0, isWeekend: false },
-    { day: 'Sat', fullName: 'Saturday', amount: 0, count: 0, isWeekend: true },
-    { day: 'Sun', fullName: 'Sunday', amount: 0, count: 0, isWeekend: true }
+    { day: 'Mon', fullName: 'Monday', amount: 0, cash: 0, upi: 0, count: 0, isWeekend: false },
+    { day: 'Tue', fullName: 'Tuesday', amount: 0, cash: 0, upi: 0, count: 0, isWeekend: false },
+    { day: 'Wed', fullName: 'Wednesday', amount: 0, cash: 0, upi: 0, count: 0, isWeekend: false },
+    { day: 'Thu', fullName: 'Thursday', amount: 0, cash: 0, upi: 0, count: 0, isWeekend: false },
+    { day: 'Fri', fullName: 'Friday', amount: 0, cash: 0, upi: 0, count: 0, isWeekend: false },
+    { day: 'Sat', fullName: 'Saturday', amount: 0, cash: 0, upi: 0, count: 0, isWeekend: true },
+    { day: 'Sun', fullName: 'Sunday', amount: 0, cash: 0, upi: 0, count: 0, isWeekend: true }
   ];
   const dayIndexMap = { 1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 0: 6 };
 
@@ -188,8 +201,11 @@ const buildWeekdayData = (txList) => {
       const dayOfWeek = d.getDay();
       const idx = dayIndexMap[dayOfWeek];
       if (idx !== undefined) {
-        days[idx].amount += Number(t.amount || 0);
+        const amt = Number(t.amount || 0);
+        days[idx].amount += amt;
         days[idx].count += 1;
+        if (t.wallet === 'Cash') days[idx].cash += amt;
+        else days[idx].upi += amt;
       }
     });
   }
@@ -202,6 +218,10 @@ const buildWeekdayData = (txList) => {
 
   const weekdayTotal = enriched.filter(d => !d.isWeekend).reduce((sum, d) => sum + d.amount, 0);
   const weekendTotal = enriched.filter(d => d.isWeekend).reduce((sum, d) => sum + d.amount, 0);
+  const weekdayCash = enriched.filter(d => !d.isWeekend).reduce((sum, d) => sum + d.cash, 0);
+  const weekdayUpi = enriched.filter(d => !d.isWeekend).reduce((sum, d) => sum + d.upi, 0);
+  const weekendCash = enriched.filter(d => d.isWeekend).reduce((sum, d) => sum + d.cash, 0);
+  const weekendUpi = enriched.filter(d => d.isWeekend).reduce((sum, d) => sum + d.upi, 0);
   const weekendPct = total > 0 ? ((weekendTotal / total) * 100).toFixed(0) : '0';
   const weekdayPct = total > 0 ? ((weekdayTotal / total) * 100).toFixed(0) : '0';
   
@@ -212,6 +232,10 @@ const buildWeekdayData = (txList) => {
     total,
     weekdayTotal,
     weekendTotal,
+    weekdayCash,
+    weekdayUpi,
+    weekendCash,
+    weekendUpi,
     weekendPct,
     weekdayPct,
     peakDay
@@ -225,13 +249,22 @@ const buildCumulativeData = (timelineData) => {
   const uniformDailyPace = n > 0 ? (total / n) : 0;
 
   let runningTotal = 0;
+  let runningCash = 0;
+  let runningUpi = 0;
   return timelineData.map((d, index) => {
     runningTotal += d.amount;
+    runningCash += (d.cash || 0);
+    runningUpi += (d.upi || 0);
     const paceTarget = Math.round(uniformDailyPace * (index + 1));
     return {
       label: d.label,
       fullDate: d.fullDate,
       actual: runningTotal,
+      actualCash: runningCash,
+      actualUpi: runningUpi,
+      dayAmount: d.amount,
+      dayCash: d.cash || 0,
+      dayUpi: d.upi || 0,
       pace: paceTarget,
       diff: runningTotal - paceTarget
     };
@@ -417,6 +450,10 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
   const [hoveredCategory, setHoveredCategory] = useState(null);
   const [incomeCategoryWalletFilter, setIncomeCategoryWalletFilter] = useState('all'); // 'all' (Both), 'UPI', 'Cash'
   const [hoveredIncomeCategory, setHoveredIncomeCategory] = useState(null);
+  const [spendingTimelineHover, setSpendingTimelineHover] = useState(null);
+  const [incomeTimelineHover, setIncomeTimelineHover] = useState(null);
+  const [spendingTimelineMode, setSpendingTimelineMode] = useState('total'); // 'total', 'stacked', 'upi', 'cash'
+  const [incomeTimelineMode, setIncomeTimelineMode] = useState('total');
 
   const [userChangedSpendingMonth, setUserChangedSpendingMonth] = useState(false);
   const [userChangedIncomeMonth, setUserChangedIncomeMonth] = useState(false);
@@ -984,11 +1021,13 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
 
   const spendingTimelineStats = useMemo(() => {
     const total = spendingTimelineData.reduce((sum, d) => sum + d.amount, 0);
+    const totalCash = spendingTimelineData.reduce((sum, d) => sum + (d.cash || 0), 0);
+    const totalUpi = spendingTimelineData.reduce((sum, d) => sum + (d.upi || 0), 0);
     const count = spendingTimelineData.length;
     const avg = count > 0 ? (total / count) : 0;
     const peak = spendingTimelineData.reduce((max, d) => d.amount > max.amount ? d : max, { amount: 0, label: '-' });
     const activeDays = spendingTimelineData.filter(d => d.amount > 0).length;
-    return { total, avg, peak, activeDays };
+    return { total, totalCash, totalUpi, avg, peak, activeDays };
   }, [spendingTimelineData]);
 
   const spendingWeekdayData = useMemo(() => {
@@ -1006,11 +1045,13 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
 
   const incomeTimelineStats = useMemo(() => {
     const total = incomeTimelineData.reduce((sum, d) => sum + d.amount, 0);
+    const totalCash = incomeTimelineData.reduce((sum, d) => sum + (d.cash || 0), 0);
+    const totalUpi = incomeTimelineData.reduce((sum, d) => sum + (d.upi || 0), 0);
     const count = incomeTimelineData.length;
     const avg = count > 0 ? (total / count) : 0;
     const peak = incomeTimelineData.reduce((max, d) => d.amount > max.amount ? d : max, { amount: 0, label: '-' });
     const activeDays = incomeTimelineData.filter(d => d.amount > 0).length;
-    return { total, avg, peak, activeDays };
+    return { total, totalCash, totalUpi, avg, peak, activeDays };
   }, [incomeTimelineData]);
 
   const incomeWeekdayData = useMemo(() => {
@@ -1025,41 +1066,120 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
   const CustomTimelineTooltip = ({ active, payload, isSpend, avg }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
-      const amount = Number(data.amount || 0);
-      const diff = avg > 0 ? (amount - avg) : 0;
+      const totalAmount = Number(data.amount || 0);
+      const cashAmount = Number(data.cash || 0);
+      const upiAmount = Number(data.upi || 0);
+      const diff = avg > 0 ? (totalAmount - avg) : 0;
       const isAbove = diff > 0;
+      const cashPct = totalAmount > 0 ? Math.round((cashAmount / totalAmount) * 100) : 0;
+      const upiPct = totalAmount > 0 ? Math.round((upiAmount / totalAmount) * 100) : 0;
+
       return (
         <div style={{
           backgroundColor: 'var(--card-bg, #fff)',
           border: '1px solid var(--card-border, #e2e8f0)',
-          borderRadius: '10px',
-          padding: '0.65rem 0.85rem',
-          boxShadow: 'var(--card-shadow, 0 4px 12px rgba(0,0,0,0.1))',
-          fontSize: '0.82rem'
+          borderRadius: '12px',
+          padding: '0.75rem 0.95rem',
+          boxShadow: 'var(--card-shadow, 0 8px 24px rgba(0,0,0,0.12))',
+          fontSize: '0.82rem',
+          minWidth: '200px',
+          animation: 'tooltipPop 0.15s ease-out'
         }}>
-          <p style={{ margin: '0 0 0.35rem 0', fontWeight: 700, color: 'var(--text-primary)' }}>{data.fullDate || data.label}</p>
-          <p style={{ margin: '0 0 0.25rem 0', color: isSpend ? 'var(--danger)' : 'var(--success)', display: 'flex', justifyContent: 'space-between', gap: '1.25rem' }}>
-            <span>{isSpend ? 'Spent :' : 'Received :'}</span>
-            <span style={{ fontWeight: 700 }}>{getCurrency()}{formatAmt(amount)}</span>
-          </p>
-          {data.count > 0 && (
-            <p style={{ margin: '0 0 0.25rem 0', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'space-between', gap: '1.25rem' }}>
-              <span>Transactions :</span>
-              <span style={{ fontWeight: 600 }}>{data.count}</span>
-            </p>
-          )}
-          {avg > 0 && amount > 0 && (
+          {/* Header: Date + Txn count */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.45rem',
+            paddingBottom: '0.35rem',
+            borderBottom: '1px solid var(--card-border)'
+          }}>
+            <span style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '0.88rem' }}>
+              {data.fullDate || data.label}
+            </span>
+            <span style={{
+              fontSize: '0.72rem',
+              fontWeight: 600,
+              padding: '1px 6px',
+              borderRadius: '10px',
+              background: 'var(--empty-state-bg)',
+              color: 'var(--text-muted)'
+            }}>
+              {data.count || 0} {data.count === 1 ? 'txn' : 'txns'}
+            </span>
+          </div>
+
+          {/* 1. TOTAL SPEND / RECEIVED */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.45rem',
+            padding: '0.3rem 0.5rem',
+            borderRadius: '6px',
+            background: isSpend ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)'
+          }}>
+            <span style={{ fontWeight: 700, color: isSpend ? 'var(--danger)' : 'var(--success)' }}>
+              {isSpend ? 'Total Spend :' : 'Total Income :'}
+            </span>
+            <span style={{ fontWeight: 800, fontSize: '0.92rem', color: isSpend ? 'var(--danger)' : 'var(--success)' }}>
+              {getCurrency()}{formatAmt(totalAmount)}
+            </span>
+          </div>
+
+          {/* 2. CASH SPEND / RECEIVED */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.25rem',
+            padding: '0.15rem 0.4rem',
+            fontSize: '0.78rem'
+          }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#f59e0b', display: 'inline-block' }} />
+              Cash {isSpend ? 'Spend :' : 'Income :'}
+            </span>
+            <span style={{ fontWeight: 700, color: '#f59e0b' }}>
+              {getCurrency()}{formatAmt(cashAmount)}
+              {totalAmount > 0 && <span style={{ fontSize: '0.7rem', opacity: 0.8, marginLeft: '4px' }}>({cashPct}%)</span>}
+            </span>
+          </div>
+
+          {/* 3. UPI SPEND / RECEIVED */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.35rem',
+            padding: '0.15rem 0.4rem',
+            fontSize: '0.78rem'
+          }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: isSpend ? 'var(--danger)' : '#3b82f6', display: 'inline-block' }} />
+              UPI {isSpend ? 'Spend :' : 'Income :'}
+            </span>
+            <span style={{ fontWeight: 700, color: isSpend ? 'var(--danger)' : '#3b82f6' }}>
+              {getCurrency()}{formatAmt(upiAmount)}
+              {totalAmount > 0 && <span style={{ fontSize: '0.7rem', opacity: 0.8, marginLeft: '4px' }}>({upiPct}%)</span>}
+            </span>
+          </div>
+
+          {/* 4. vs Daily Avg */}
+          {avg > 0 && totalAmount > 0 && (
             <div style={{
               borderTop: '1px solid var(--card-border, #e2e8f0)',
               paddingTop: '0.35rem',
               display: 'flex',
               justifyContent: 'space-between',
-              gap: '1.25rem',
-              fontSize: '0.75rem',
+              alignItems: 'center',
+              fontSize: '0.74rem',
               color: isAbove ? (isSpend ? 'var(--danger)' : 'var(--success)') : 'var(--text-muted)'
             }}>
               <span>vs Daily Avg :</span>
-              <span style={{ fontWeight: 600 }}>{isAbove ? '+' : '-'}{getCurrency()}{formatAmt(Math.abs(diff))}</span>
+              <span style={{ fontWeight: 700 }}>
+                {isAbove ? '+' : '-'}{getCurrency()}{formatAmt(Math.abs(diff))}
+              </span>
             </div>
           )}
         </div>
@@ -1071,30 +1191,92 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
   const CustomWeekdayTooltip = ({ active, payload, isSpend }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
+      const totalAmt = Number(data.amount || 0);
+      const cashAmt = Number(data.cash || 0);
+      const upiAmt = Number(data.upi || 0);
       return (
         <div style={{
           backgroundColor: 'var(--card-bg, #fff)',
           border: '1px solid var(--card-border, #e2e8f0)',
-          borderRadius: '10px',
-          padding: '0.65rem 0.85rem',
-          boxShadow: 'var(--card-shadow, 0 4px 12px rgba(0,0,0,0.1))',
-          fontSize: '0.82rem'
+          borderRadius: '12px',
+          padding: '0.75rem 0.95rem',
+          boxShadow: 'var(--card-shadow, 0 8px 24px rgba(0,0,0,0.12))',
+          fontSize: '0.82rem',
+          minWidth: '190px',
+          animation: 'tooltipPop 0.15s ease-out'
         }}>
-          <p style={{ margin: '0 0 0.35rem 0', fontWeight: 700, color: 'var(--text-primary)' }}>
-            {data.fullName || data.day} {data.isWeekend ? '(Weekend)' : '(Weekday)'}
-          </p>
-          <p style={{ margin: '0 0 0.25rem 0', color: isSpend ? 'var(--danger)' : 'var(--success)', display: 'flex', justifyContent: 'space-between', gap: '1.25rem' }}>
-            <span>Total :</span>
-            <span style={{ fontWeight: 700 }}>{getCurrency()}{formatAmt(data.amount)}</span>
-          </p>
-          <p style={{ margin: '0 0 0.25rem 0', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'space-between', gap: '1.25rem' }}>
-            <span>Share :</span>
-            <span style={{ fontWeight: 600 }}>{data.pct}% of period</span>
-          </p>
-          <p style={{ margin: 0, color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', gap: '1.25rem', fontSize: '0.75rem' }}>
-            <span>Txn Count :</span>
-            <span>{data.count} txns</span>
-          </p>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.45rem',
+            paddingBottom: '0.35rem',
+            borderBottom: '1px solid var(--card-border)'
+          }}>
+            <span style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '0.88rem' }}>
+              {data.fullName || data.day}
+            </span>
+            <span style={{
+              fontSize: '0.72rem',
+              fontWeight: 600,
+              padding: '1px 6px',
+              borderRadius: '10px',
+              background: data.isWeekend ? 'rgba(239, 68, 68, 0.1)' : 'var(--empty-state-bg)',
+              color: data.isWeekend ? 'var(--danger)' : 'var(--text-muted)'
+            }}>
+              {data.isWeekend ? 'Weekend' : 'Weekday'}
+            </span>
+          </div>
+
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.45rem',
+            padding: '0.3rem 0.5rem',
+            borderRadius: '6px',
+            background: isSpend ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)'
+          }}>
+            <span style={{ fontWeight: 700, color: isSpend ? 'var(--danger)' : 'var(--success)' }}>
+              {isSpend ? 'Total Spend :' : 'Total Income :'}
+            </span>
+            <span style={{ fontWeight: 800, fontSize: '0.92rem', color: isSpend ? 'var(--danger)' : 'var(--success)' }}>
+              {getCurrency()}{formatAmt(totalAmt)}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem', padding: '0.15rem 0.4rem', fontSize: '0.78rem' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#f59e0b', display: 'inline-block' }} />
+              Cash {isSpend ? 'Spend :' : 'Income :'}
+            </span>
+            <span style={{ fontWeight: 700, color: '#f59e0b' }}>
+              {getCurrency()}{formatAmt(cashAmt)}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem', padding: '0.15rem 0.4rem', fontSize: '0.78rem' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: isSpend ? 'var(--danger)' : '#3b82f6', display: 'inline-block' }} />
+              UPI {isSpend ? 'Spend :' : 'Income :'}
+            </span>
+            <span style={{ fontWeight: 700, color: isSpend ? 'var(--danger)' : '#3b82f6' }}>
+              {getCurrency()}{formatAmt(upiAmt)}
+            </span>
+          </div>
+
+          <div style={{
+            borderTop: '1px solid var(--card-border, #e2e8f0)',
+            paddingTop: '0.35rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: '1.25rem',
+            fontSize: '0.74rem',
+            color: 'var(--text-secondary)'
+          }}>
+            <span>Share & Count :</span>
+            <span style={{ fontWeight: 600 }}>{data.pct}% ({data.count} txns)</span>
+          </div>
         </div>
       );
     }
@@ -1104,37 +1286,98 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
   const CustomCumulativeTooltip = ({ active, payload, isSpend }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
+      const totalActual = Number(data.actual || 0);
+      const cashActual = Number(data.actualCash || 0);
+      const upiActual = Number(data.actualUpi || 0);
       const diff = data.diff || 0;
       const isAhead = diff > 0;
       return (
         <div style={{
           backgroundColor: 'var(--card-bg, #fff)',
           border: '1px solid var(--card-border, #e2e8f0)',
-          borderRadius: '10px',
-          padding: '0.65rem 0.85rem',
-          boxShadow: 'var(--card-shadow, 0 4px 12px rgba(0,0,0,0.1))',
-          fontSize: '0.82rem'
+          borderRadius: '12px',
+          padding: '0.75rem 0.95rem',
+          boxShadow: 'var(--card-shadow, 0 8px 24px rgba(0,0,0,0.12))',
+          fontSize: '0.82rem',
+          minWidth: '200px',
+          animation: 'tooltipPop 0.15s ease-out'
         }}>
-          <p style={{ margin: '0 0 0.35rem 0', fontWeight: 700, color: 'var(--text-primary)' }}>{data.fullDate || data.label}</p>
-          <p style={{ margin: '0 0 0.25rem 0', color: isSpend ? 'var(--danger)' : 'var(--success)', display: 'flex', justifyContent: 'space-between', gap: '1.25rem' }}>
-            <span>Actual Cumulative :</span>
-            <span style={{ fontWeight: 700 }}>{getCurrency()}{formatAmt(data.actual)}</span>
-          </p>
-          <p style={{ margin: '0 0 0.25rem 0', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', gap: '1.25rem' }}>
-            <span>Steady Pace Target :</span>
-            <span style={{ fontWeight: 600 }}>{getCurrency()}{formatAmt(data.pace)}</span>
-          </p>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.45rem',
+            paddingBottom: '0.35rem',
+            borderBottom: '1px solid var(--card-border)'
+          }}>
+            <span style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '0.88rem' }}>
+              {data.fullDate || data.label}
+            </span>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+              Cumulative
+            </span>
+          </div>
+
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.45rem',
+            padding: '0.3rem 0.5rem',
+            borderRadius: '6px',
+            background: isSpend ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)'
+          }}>
+            <span style={{ fontWeight: 700, color: isSpend ? 'var(--danger)' : 'var(--success)' }}>
+              {isSpend ? 'Total Spent :' : 'Total Income :'}
+            </span>
+            <span style={{ fontWeight: 800, fontSize: '0.92rem', color: isSpend ? 'var(--danger)' : 'var(--success)' }}>
+              {getCurrency()}{formatAmt(totalActual)}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem', padding: '0.15rem 0.4rem', fontSize: '0.78rem' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#f59e0b', display: 'inline-block' }} />
+              Cash Cumulative :
+            </span>
+            <span style={{ fontWeight: 700, color: '#f59e0b' }}>
+              {getCurrency()}{formatAmt(cashActual)}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem', padding: '0.15rem 0.4rem', fontSize: '0.78rem' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: isSpend ? 'var(--danger)' : '#3b82f6', display: 'inline-block' }} />
+              UPI Cumulative :
+            </span>
+            <span style={{ fontWeight: 700, color: isSpend ? 'var(--danger)' : '#3b82f6' }}>
+              {getCurrency()}{formatAmt(upiActual)}
+            </span>
+          </div>
+
           <div style={{
             borderTop: '1px solid var(--card-border, #e2e8f0)',
             paddingTop: '0.35rem',
             display: 'flex',
             justifyContent: 'space-between',
-            gap: '1.25rem',
-            fontSize: '0.75rem',
-            color: isAhead ? (isSpend ? 'var(--danger)' : 'var(--success)') : 'var(--text-muted)'
+            alignItems: 'center',
+            fontSize: '0.74rem',
+            color: 'var(--text-muted)'
+          }}>
+            <span>Steady Pace Target :</span>
+            <span style={{ fontWeight: 600 }}>{getCurrency()}{formatAmt(data.pace)}</span>
+          </div>
+
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontSize: '0.74rem',
+            color: isAhead ? (isSpend ? 'var(--danger)' : 'var(--success)') : 'var(--text-muted)',
+            marginTop: '2px'
           }}>
             <span>Variance :</span>
-            <span style={{ fontWeight: 600 }}>{isAhead ? '+' : '-'}{getCurrency()}{formatAmt(Math.abs(diff))}</span>
+            <span style={{ fontWeight: 700 }}>{isAhead ? '+' : '-'}{getCurrency()}{formatAmt(Math.abs(diff))}</span>
           </div>
         </div>
       );
@@ -1272,31 +1515,143 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                     <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.02rem', fontWeight: 600 }}>
                       Daily Spending Pulse
                     </h4>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
-                    <span style={{
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      padding: '2px 8px',
-                      borderRadius: '12px',
-                      background: 'var(--empty-state-bg)',
-                      border: '1px solid var(--card-border)',
-                      color: 'var(--text-muted)'
-                    }}>
-                      Avg: {getCurrency()}{formatCompactAmt(spendingTimelineStats.avg)}/day
+                    <span className="live-pulse-badge">
+                      <span className="live-pulse-dot" /> LIVE
                     </span>
-                    {spendingTimelineStats.peak?.amount > 0 && (
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                    {/* Wallet Stream Mode Selector: Total | Stacked | UPI | Cash */}
+                    <div style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      background: 'var(--card-bg)',
+                      border: '1px solid var(--card-border)',
+                      borderRadius: '20px',
+                      padding: '2px',
+                      gap: '2px'
+                    }}>
+                      <button
+                        type="button"
+                        onClick={() => setSpendingTimelineMode('total')}
+                        style={{
+                          border: 'none',
+                          outline: 'none',
+                          cursor: 'pointer',
+                          padding: '2px 8px',
+                          borderRadius: '16px',
+                          fontSize: '0.72rem',
+                          fontWeight: spendingTimelineMode === 'total' ? 700 : 500,
+                          background: spendingTimelineMode === 'total' ? 'var(--danger)' : 'transparent',
+                          color: spendingTimelineMode === 'total' ? '#fff' : 'var(--text-secondary)',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        Total
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSpendingTimelineMode('stacked')}
+                        style={{
+                          border: 'none',
+                          outline: 'none',
+                          cursor: 'pointer',
+                          padding: '2px 8px',
+                          borderRadius: '16px',
+                          fontSize: '0.72rem',
+                          fontWeight: spendingTimelineMode === 'stacked' ? 700 : 500,
+                          background: spendingTimelineMode === 'stacked' ? 'var(--text-primary)' : 'transparent',
+                          color: spendingTimelineMode === 'stacked' ? 'var(--bg-main, #fff)' : 'var(--text-secondary)',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        Stacked (Cash+UPI)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSpendingTimelineMode('upi')}
+                        style={{
+                          border: 'none',
+                          outline: 'none',
+                          cursor: 'pointer',
+                          padding: '2px 8px',
+                          borderRadius: '16px',
+                          fontSize: '0.72rem',
+                          fontWeight: spendingTimelineMode === 'upi' ? 700 : 500,
+                          background: spendingTimelineMode === 'upi' ? 'var(--accent-primary, #3b82f6)' : 'transparent',
+                          color: spendingTimelineMode === 'upi' ? '#fff' : 'var(--text-secondary)',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        UPI
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSpendingTimelineMode('cash')}
+                        style={{
+                          border: 'none',
+                          outline: 'none',
+                          cursor: 'pointer',
+                          padding: '2px 8px',
+                          borderRadius: '16px',
+                          fontSize: '0.72rem',
+                          fontWeight: spendingTimelineMode === 'cash' ? 700 : 500,
+                          background: spendingTimelineMode === 'cash' ? '#f59e0b' : 'transparent',
+                          color: spendingTimelineMode === 'cash' ? '#fff' : 'var(--text-secondary)',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        Cash
+                      </button>
+                    </div>
+
+                    {/* Live Hover Stat or Peak Badge */}
+                    {spendingTimelineHover ? (
                       <span style={{
                         fontSize: '0.75rem',
-                        fontWeight: 600,
+                        fontWeight: 700,
                         padding: '2px 8px',
                         borderRadius: '12px',
                         background: 'rgba(239, 68, 68, 0.1)',
-                        border: '1px solid rgba(239, 68, 68, 0.25)',
-                        color: 'var(--danger)'
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                        color: 'var(--danger)',
+                        animation: 'tooltipPop 0.15s ease-out',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
                       }}>
-                        Peak: {getCurrency()}{formatCompactAmt(spendingTimelineStats.peak.amount)} ({spendingTimelineStats.peak.label})
+                        <span>{spendingTimelineHover.fullDate || spendingTimelineHover.label}:</span>
+                        <span>Total {getCurrency()}{formatCompactAmt(spendingTimelineHover.amount)}</span>
+                        <span style={{ color: '#f59e0b' }}>Cash {getCurrency()}{formatCompactAmt(spendingTimelineHover.cash || 0)}</span>
+                        <span style={{ color: 'var(--danger)' }}>UPI {getCurrency()}{formatCompactAmt(spendingTimelineHover.upi || 0)}</span>
                       </span>
+                    ) : (
+                      <>
+                        <span style={{
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          padding: '2px 8px',
+                          borderRadius: '12px',
+                          background: 'var(--empty-state-bg)',
+                          border: '1px solid var(--card-border)',
+                          color: 'var(--text-muted)'
+                        }}>
+                          Avg: {getCurrency()}{formatCompactAmt(spendingTimelineStats.avg)}/day
+                        </span>
+                        {spendingTimelineStats.peak?.amount > 0 && (
+                          <span style={{
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            padding: '2px 8px',
+                            borderRadius: '12px',
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            border: '1px solid rgba(239, 68, 68, 0.25)',
+                            color: 'var(--danger)'
+                          }}>
+                            Peak: {getCurrency()}{formatCompactAmt(spendingTimelineStats.peak.amount)} ({spendingTimelineStats.peak.label})
+                          </span>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -1304,10 +1659,27 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                 {/* AreaChart */}
                 <div style={{ height: isMobile ? '180px' : '200px', width: '100%' }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={spendingTimelineData} margin={{ top: 10, right: 15, left: -5, bottom: 0 }}>
+                    <AreaChart 
+                      data={spendingTimelineData} 
+                      margin={{ top: 10, right: 15, left: -5, bottom: 0 }}
+                      onMouseMove={(e) => {
+                        if (e && e.activePayload && e.activePayload.length) {
+                          setSpendingTimelineHover(e.activePayload[0].payload);
+                        }
+                      }}
+                      onMouseLeave={() => setSpendingTimelineHover(null)}
+                    >
                       <defs>
                         <linearGradient id="spendPulseGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4} />
+                          <stop offset="5%" stopColor="#ef4444" stopOpacity={0.45} />
+                          <stop offset="95%" stopColor="#ef4444" stopOpacity={0.02} />
+                        </linearGradient>
+                        <linearGradient id="spendCashGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.45} />
+                          <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.02} />
+                        </linearGradient>
+                        <linearGradient id="spendUpiGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#ef4444" stopOpacity={0.45} />
                           <stop offset="95%" stopColor="#ef4444" stopOpacity={0.02} />
                         </linearGradient>
                       </defs>
@@ -1324,8 +1696,11 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                         width={42}
                         tickFormatter={(v) => v >= 100000 ? `${(v / 100000).toFixed(1)}L` : v >= 1000 ? `${Math.round(v / 1000)}k` : v}
                       />
-                      <Tooltip content={<CustomTimelineTooltip isSpend={true} avg={spendingTimelineStats.avg} />} />
-                      {spendingTimelineStats.avg > 0 && (
+                      <Tooltip 
+                        content={<CustomTimelineTooltip isSpend={true} avg={spendingTimelineStats.avg} />} 
+                        cursor={{ stroke: 'rgba(239, 68, 68, 0.4)', strokeWidth: 1.5, strokeDasharray: '4 4' }}
+                      />
+                      {spendingTimelineStats.avg > 0 && spendingTimelineMode === 'total' && (
                         <ReferenceLine 
                           y={spendingTimelineStats.avg} 
                           stroke="#ef4444" 
@@ -1334,14 +1709,82 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                           opacity={0.65} 
                         />
                       )}
-                      <Area 
-                        type="monotone" 
-                        dataKey="amount" 
-                        stroke="#ef4444" 
-                        strokeWidth={2}
-                        fillOpacity={1} 
-                        fill="url(#spendPulseGrad)" 
-                      />
+                      {spendingTimelineMode === 'total' && (
+                        <Area 
+                          type="monotone" 
+                          dataKey="amount" 
+                          stroke="#ef4444" 
+                          strokeWidth={2.5}
+                          fillOpacity={1} 
+                          fill="url(#spendPulseGrad)"
+                          isAnimationActive={true}
+                          animationDuration={1300}
+                          animationEasing="ease-out"
+                          activeDot={{ r: 6, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#ef4444' }}
+                        />
+                      )}
+                      {spendingTimelineMode === 'stacked' && (
+                        <>
+                          <Area 
+                            type="monotone" 
+                            dataKey="cash" 
+                            stackId="spendStack"
+                            stroke="#f59e0b" 
+                            strokeWidth={2}
+                            fillOpacity={1} 
+                            fill="url(#spendCashGrad)" 
+                            name="Cash Spend"
+                            isAnimationActive={true}
+                            animationDuration={1300}
+                            animationEasing="ease-out"
+                            activeDot={{ r: 5, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#f59e0b' }}
+                          />
+                          <Area 
+                            type="monotone" 
+                            dataKey="upi" 
+                            stackId="spendStack"
+                            stroke="#ef4444" 
+                            strokeWidth={2}
+                            fillOpacity={1} 
+                            fill="url(#spendUpiGrad)" 
+                            name="UPI Spend"
+                            isAnimationActive={true}
+                            animationDuration={1300}
+                            animationEasing="ease-out"
+                            activeDot={{ r: 5, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#ef4444' }}
+                          />
+                        </>
+                      )}
+                      {spendingTimelineMode === 'upi' && (
+                        <Area 
+                          type="monotone" 
+                          dataKey="upi" 
+                          stroke="#ef4444" 
+                          strokeWidth={2.5}
+                          fillOpacity={1} 
+                          fill="url(#spendUpiGrad)" 
+                          name="UPI Spend"
+                          isAnimationActive={true}
+                          animationDuration={1300}
+                          animationEasing="ease-out"
+                          activeDot={{ r: 6, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#ef4444' }}
+                        />
+                      )}
+                      {spendingTimelineMode === 'cash' && (
+                        <Area 
+                          type="monotone" 
+                          dataKey="cash" 
+                          stroke="#f59e0b" 
+                          strokeWidth={2.5}
+                          fillOpacity={1} 
+                          fill="url(#spendCashGrad)" 
+                          name="Cash Spend"
+                          isAnimationActive={true}
+                          animationDuration={1300}
+                          animationEasing="ease-out"
+                          activeDot={{ r: 6, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#f59e0b' }}
+                        />
+                      )}
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
@@ -1363,11 +1806,17 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                   gap: '0.45rem',
                   width: '100%'
                 }}>
-                  <span>Total Volume: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{formatAmt(spendingTimelineStats.total)}</strong></span>
+                  <span>Total Spend: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{formatAmt(spendingTimelineStats.total)}</strong></span>
+                  <span style={{ opacity: 0.4 }}>|</span>
+                  <span style={{ color: '#f59e0b', fontWeight: '600' }}>
+                    Cash: {getCurrency()}{formatAmt(cashSpend)} ({cashPct}%)
+                  </span>
+                  <span style={{ opacity: 0.4 }}>|</span>
+                  <span style={{ color: 'var(--danger)', fontWeight: '600' }}>
+                    UPI: {getCurrency()}{formatAmt(upiSpend)} ({upiPct}%)
+                  </span>
                   <span style={{ opacity: 0.4 }}>|</span>
                   <span>Daily Avg: <strong style={{ color: 'var(--danger)' }}>{getCurrency()}{formatAmt(spendingTimelineStats.avg)}</strong></span>
-                  <span style={{ opacity: 0.4 }}>|</span>
-                  <span>Active Days: <strong style={{ color: 'var(--text-primary)' }}>{spendingTimelineStats.activeDays} of {spendingTimelineData.length}</strong></span>
                 </div>
               </div>
 
@@ -2031,31 +2480,143 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                     <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.02rem', fontWeight: 600 }}>
                       Daily Income Pulse
                     </h4>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
-                    <span style={{
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      padding: '2px 8px',
-                      borderRadius: '12px',
-                      background: 'var(--empty-state-bg)',
-                      border: '1px solid var(--card-border)',
-                      color: 'var(--text-muted)'
-                    }}>
-                      Avg: {getCurrency()}{formatCompactAmt(incomeTimelineStats.avg)}/day
+                    <span className="live-pulse-badge live-pulse-badge-success">
+                      <span className="live-pulse-dot live-pulse-dot-success" /> LIVE
                     </span>
-                    {incomeTimelineStats.peak?.amount > 0 && (
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                    {/* Wallet Stream Mode Selector: Total | Stacked | UPI | Cash */}
+                    <div style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      background: 'var(--card-bg)',
+                      border: '1px solid var(--card-border)',
+                      borderRadius: '20px',
+                      padding: '2px',
+                      gap: '2px'
+                    }}>
+                      <button
+                        type="button"
+                        onClick={() => setIncomeTimelineMode('total')}
+                        style={{
+                          border: 'none',
+                          outline: 'none',
+                          cursor: 'pointer',
+                          padding: '2px 8px',
+                          borderRadius: '16px',
+                          fontSize: '0.72rem',
+                          fontWeight: incomeTimelineMode === 'total' ? 700 : 500,
+                          background: incomeTimelineMode === 'total' ? 'var(--success)' : 'transparent',
+                          color: incomeTimelineMode === 'total' ? '#fff' : 'var(--text-secondary)',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        Total
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIncomeTimelineMode('stacked')}
+                        style={{
+                          border: 'none',
+                          outline: 'none',
+                          cursor: 'pointer',
+                          padding: '2px 8px',
+                          borderRadius: '16px',
+                          fontSize: '0.72rem',
+                          fontWeight: incomeTimelineMode === 'stacked' ? 700 : 500,
+                          background: incomeTimelineMode === 'stacked' ? 'var(--text-primary)' : 'transparent',
+                          color: incomeTimelineMode === 'stacked' ? 'var(--bg-main, #fff)' : 'var(--text-secondary)',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        Stacked (Cash+UPI)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIncomeTimelineMode('upi')}
+                        style={{
+                          border: 'none',
+                          outline: 'none',
+                          cursor: 'pointer',
+                          padding: '2px 8px',
+                          borderRadius: '16px',
+                          fontSize: '0.72rem',
+                          fontWeight: incomeTimelineMode === 'upi' ? 700 : 500,
+                          background: incomeTimelineMode === 'upi' ? 'var(--accent-primary, #3b82f6)' : 'transparent',
+                          color: incomeTimelineMode === 'upi' ? '#fff' : 'var(--text-secondary)',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        UPI
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIncomeTimelineMode('cash')}
+                        style={{
+                          border: 'none',
+                          outline: 'none',
+                          cursor: 'pointer',
+                          padding: '2px 8px',
+                          borderRadius: '16px',
+                          fontSize: '0.72rem',
+                          fontWeight: incomeTimelineMode === 'cash' ? 700 : 500,
+                          background: incomeTimelineMode === 'cash' ? '#10b981' : 'transparent',
+                          color: incomeTimelineMode === 'cash' ? '#fff' : 'var(--text-secondary)',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        Cash
+                      </button>
+                    </div>
+
+                    {/* Live Hover Stat or Peak Badge */}
+                    {incomeTimelineHover ? (
                       <span style={{
                         fontSize: '0.75rem',
-                        fontWeight: 600,
+                        fontWeight: 700,
                         padding: '2px 8px',
                         borderRadius: '12px',
                         background: 'rgba(16, 185, 129, 0.1)',
-                        border: '1px solid rgba(16, 185, 129, 0.25)',
-                        color: 'var(--success)'
+                        border: '1px solid rgba(16, 185, 129, 0.3)',
+                        color: 'var(--success)',
+                        animation: 'tooltipPop 0.15s ease-out',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
                       }}>
-                        Peak: {getCurrency()}{formatCompactAmt(incomeTimelineStats.peak.amount)} ({incomeTimelineStats.peak.label})
+                        <span>{incomeTimelineHover.fullDate || incomeTimelineHover.label}:</span>
+                        <span>Total {getCurrency()}{formatCompactAmt(incomeTimelineHover.amount)}</span>
+                        <span style={{ color: '#f59e0b' }}>Cash {getCurrency()}{formatCompactAmt(incomeTimelineHover.cash || 0)}</span>
+                        <span style={{ color: '#10b981' }}>UPI {getCurrency()}{formatCompactAmt(incomeTimelineHover.upi || 0)}</span>
                       </span>
+                    ) : (
+                      <>
+                        <span style={{
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          padding: '2px 8px',
+                          borderRadius: '12px',
+                          background: 'var(--empty-state-bg)',
+                          border: '1px solid var(--card-border)',
+                          color: 'var(--text-muted)'
+                        }}>
+                          Avg: {getCurrency()}{formatCompactAmt(incomeTimelineStats.avg)}/day
+                        </span>
+                        {incomeTimelineStats.peak?.amount > 0 && (
+                          <span style={{
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            padding: '2px 8px',
+                            borderRadius: '12px',
+                            background: 'rgba(16, 185, 129, 0.1)',
+                            border: '1px solid rgba(16, 185, 129, 0.25)',
+                            color: 'var(--success)'
+                          }}>
+                            Peak: {getCurrency()}{formatCompactAmt(incomeTimelineStats.peak.amount)} ({incomeTimelineStats.peak.label})
+                          </span>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -2063,10 +2624,27 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                 {/* AreaChart */}
                 <div style={{ height: isMobile ? '180px' : '200px', width: '100%' }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={incomeTimelineData} margin={{ top: 10, right: 15, left: -5, bottom: 0 }}>
+                    <AreaChart 
+                      data={incomeTimelineData} 
+                      margin={{ top: 10, right: 15, left: -5, bottom: 0 }}
+                      onMouseMove={(e) => {
+                        if (e && e.activePayload && e.activePayload.length) {
+                          setIncomeTimelineHover(e.activePayload[0].payload);
+                        }
+                      }}
+                      onMouseLeave={() => setIncomeTimelineHover(null)}
+                    >
                       <defs>
                         <linearGradient id="incomePulseGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.45} />
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0.02} />
+                        </linearGradient>
+                        <linearGradient id="incomeCashGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.45} />
+                          <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.02} />
+                        </linearGradient>
+                        <linearGradient id="incomeUpiGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.45} />
                           <stop offset="95%" stopColor="#10b981" stopOpacity={0.02} />
                         </linearGradient>
                       </defs>
@@ -2083,8 +2661,11 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                         width={42}
                         tickFormatter={(v) => v >= 100000 ? `${(v / 100000).toFixed(1)}L` : v >= 1000 ? `${Math.round(v / 1000)}k` : v}
                       />
-                      <Tooltip content={<CustomTimelineTooltip isSpend={false} avg={incomeTimelineStats.avg} />} />
-                      {incomeTimelineStats.avg > 0 && (
+                      <Tooltip 
+                        content={<CustomTimelineTooltip isSpend={false} avg={incomeTimelineStats.avg} />} 
+                        cursor={{ stroke: 'rgba(16, 185, 129, 0.4)', strokeWidth: 1.5, strokeDasharray: '4 4' }}
+                      />
+                      {incomeTimelineStats.avg > 0 && incomeTimelineMode === 'total' && (
                         <ReferenceLine 
                           y={incomeTimelineStats.avg} 
                           stroke="#10b981" 
@@ -2093,14 +2674,82 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                           opacity={0.65} 
                         />
                       )}
-                      <Area 
-                        type="monotone" 
-                        dataKey="amount" 
-                        stroke="#10b981" 
-                        strokeWidth={2}
-                        fillOpacity={1} 
-                        fill="url(#incomePulseGrad)" 
-                      />
+                      {incomeTimelineMode === 'total' && (
+                        <Area 
+                          type="monotone" 
+                          dataKey="amount" 
+                          stroke="#10b981" 
+                          strokeWidth={2.5}
+                          fillOpacity={1} 
+                          fill="url(#incomePulseGrad)"
+                          isAnimationActive={true}
+                          animationDuration={1300}
+                          animationEasing="ease-out"
+                          activeDot={{ r: 6, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#10b981' }}
+                        />
+                      )}
+                      {incomeTimelineMode === 'stacked' && (
+                        <>
+                          <Area 
+                            type="monotone" 
+                            dataKey="cash" 
+                            stackId="incomeStack"
+                            stroke="#f59e0b" 
+                            strokeWidth={2}
+                            fillOpacity={1} 
+                            fill="url(#incomeCashGrad)" 
+                            name="Cash Income"
+                            isAnimationActive={true}
+                            animationDuration={1300}
+                            animationEasing="ease-out"
+                            activeDot={{ r: 5, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#f59e0b' }}
+                          />
+                          <Area 
+                            type="monotone" 
+                            dataKey="upi" 
+                            stackId="incomeStack"
+                            stroke="#10b981" 
+                            strokeWidth={2}
+                            fillOpacity={1} 
+                            fill="url(#incomeUpiGrad)" 
+                            name="UPI Income"
+                            isAnimationActive={true}
+                            animationDuration={1300}
+                            animationEasing="ease-out"
+                            activeDot={{ r: 5, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#10b981' }}
+                          />
+                        </>
+                      )}
+                      {incomeTimelineMode === 'upi' && (
+                        <Area 
+                          type="monotone" 
+                          dataKey="upi" 
+                          stroke="#10b981" 
+                          strokeWidth={2.5}
+                          fillOpacity={1} 
+                          fill="url(#incomeUpiGrad)" 
+                          name="UPI Income"
+                          isAnimationActive={true}
+                          animationDuration={1300}
+                          animationEasing="ease-out"
+                          activeDot={{ r: 6, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#10b981' }}
+                        />
+                      )}
+                      {incomeTimelineMode === 'cash' && (
+                        <Area 
+                          type="monotone" 
+                          dataKey="cash" 
+                          stroke="#f59e0b" 
+                          strokeWidth={2.5}
+                          fillOpacity={1} 
+                          fill="url(#incomeCashGrad)" 
+                          name="Cash Income"
+                          isAnimationActive={true}
+                          animationDuration={1300}
+                          animationEasing="ease-out"
+                          activeDot={{ r: 6, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#f59e0b' }}
+                        />
+                      )}
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
@@ -2122,11 +2771,17 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                   gap: '0.45rem',
                   width: '100%'
                 }}>
-                  <span>Total Volume: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{formatAmt(incomeTimelineStats.total)}</strong></span>
+                  <span>Total Income: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{formatAmt(incomeTimelineStats.total)}</strong></span>
+                  <span style={{ opacity: 0.4 }}>|</span>
+                  <span style={{ color: '#10b981', fontWeight: '600' }}>
+                    Cash: {getCurrency()}{formatAmt(cashIncome)} ({cashIncomePct}%)
+                  </span>
+                  <span style={{ opacity: 0.4 }}>|</span>
+                  <span style={{ color: '#3b82f6', fontWeight: '600' }}>
+                    UPI: {getCurrency()}{formatAmt(upiIncome)} ({upiIncomePct}%)
+                  </span>
                   <span style={{ opacity: 0.4 }}>|</span>
                   <span>Daily Avg: <strong style={{ color: 'var(--success)' }}>{getCurrency()}{formatAmt(incomeTimelineStats.avg)}</strong></span>
-                  <span style={{ opacity: 0.4 }}>|</span>
-                  <span>Active Days: <strong style={{ color: 'var(--text-primary)' }}>{incomeTimelineStats.activeDays} of {incomeTimelineData.length}</strong></span>
                 </div>
               </div>
 
