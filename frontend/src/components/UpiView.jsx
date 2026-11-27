@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import TransactionForm from './TransactionForm';
-import TransactionsTable from './TransactionsTable';
+import TransactionsTable, { getCleanPayee, getRefNo, getDisplayTime } from './TransactionsTable';
 import DateHierarchyFilter from './DateHierarchyFilter';
 import {
   Smartphone, FileText, UploadCloud, CheckCircle2, AlertCircle,
   RefreshCw, Eye, EyeOff, ShieldCheck, Mail, Key, HelpCircle,
   ChevronDown, ChevronUp, LogOut, Check, ArrowRight, ArrowLeft,
   ExternalLink, Building2, Lock, Sparkles, Clock, Settings, Copy, Download, Trash2,
-  Receipt, ChevronLeft, ChevronRight, Calendar, Info, Edit3
+  Receipt, ChevronLeft, ChevronRight, Calendar, Info, Edit3,
+  X, ArrowDownLeft, ArrowUpRight, Wallet, User
 } from 'lucide-react';
 import {
   getBankSyncSettings,
@@ -228,10 +229,27 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Selected daily statement for Option 2 centered dialog inspection
+  const [selectedStatement, setSelectedStatement] = useState(null);
+
+  // Dismiss modal dialog on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setSelectedStatement(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Hardware back button interception for open modals and drop panels
   useEffect(() => {
     const handleBack = (e) => {
-      if (showConsentModal) {
+      if (selectedStatement) {
+        e.preventDefault();
+        setSelectedStatement(null);
+      } else if (showConsentModal) {
         e.preventDefault();
         setShowConsentModal(false);
       } else if (showBankDetails) {
@@ -247,7 +265,7 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
     };
     window.addEventListener('hardwareBackPress', handleBack);
     return () => window.removeEventListener('hardwareBackPress', handleBack);
-  }, [showConsentModal, showBankDetails, showDropzone, showGuide]);
+  }, [selectedStatement, showConsentModal, showBankDetails, showDropzone, showGuide]);
 
   const [copiedKey, setCopiedKey] = useState(null);
 
@@ -1044,6 +1062,43 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
     return null;
   };
 
+  // Helper to extract DD-MM-YYYY string from a transaction date
+  const parseTxDateParts = (t) => {
+    if (!t) return null;
+    const raw = t.date || t.txnDate;
+    if (!raw) return null;
+    const mDmy = String(raw).match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+    if (mDmy) {
+      return `${mDmy[1].padStart(2, '0')}-${mDmy[2].padStart(2, '0')}-${mDmy[3]}`;
+    }
+    const mYmd = String(raw).match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+    if (mYmd) {
+      return `${mYmd[3].padStart(2, '0')}-${mYmd[2].padStart(2, '0')}-${mYmd[1]}`;
+    }
+    const d = new Date(raw);
+    if (!isNaN(d.getTime())) {
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = String(d.getFullYear());
+      return `${day}-${month}-${year}`;
+    }
+    return null;
+  };
+
+  // Filtered transactions for the currently clicked statement row (Option 2 dialog)
+  const selectedStatementTxns = useMemo(() => {
+    if (!selectedStatement) return [];
+    const parts = parseSummaryDateParts(selectedStatement);
+    if (!parts) return [];
+    const all = transactions || upiTransactions || [];
+    return all.filter(t => {
+      if (t.wallet && t.wallet !== 'UPI' && t.source !== 'bank_sync' && t.source !== 'statement_import') {
+        return false;
+      }
+      return parseTxDateParts(t) === parts.dmyStr;
+    });
+  }, [selectedStatement, transactions, upiTransactions]);
+
   // Comprehensive Daily Summaries: merges bank overview dailySummaries with transactions so no day is ever omitted
   const effectiveDailySummaries = useMemo(() => {
     const list = Array.isArray(bankOverview?.dailySummaries) ? [...bankOverview.dailySummaries] : [];
@@ -1405,8 +1460,8 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
           {/* Left: Customer Details */}
           <div style={{ background: 'var(--empty-state-bg)', padding: '1rem', borderRadius: '10px', border: '1px solid var(--card-border)' }}>
-            <div style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--accent-secondary, #7c3aed)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.75rem' }}>
-              👤 Customer Account Details
+            <div style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--accent-secondary, #7c3aed)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <User size={14} /> Customer Account Details
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.82rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -1439,8 +1494,8 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
           {/* Right: Branch Details */}
           {bankOverview.branchDetails && (
             <div style={{ background: 'var(--empty-state-bg)', padding: '1rem', borderRadius: '10px', border: '1px solid var(--card-border)' }}>
-              <div style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--accent-primary, #2563eb)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.75rem' }}>
-                🏛️ Home Branch Information
+              <div style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--accent-primary, #2563eb)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Building2 size={14} /> Home Branch Information
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.82rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -2135,7 +2190,8 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                         }}
                         title="Live statement Closing Balance synchronized with wallet"
                       >
-                        💰 Balance: ₹{effectiveLiveBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        <Wallet size={12} style={{ flexShrink: 0 }} />
+                        Balance: ₹{effectiveLiveBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     </div>
 
@@ -3139,54 +3195,78 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                         </tr>
                       </thead>
                       <tbody>
-                        {paginatedDailySummaries.map((summary, idx) => (
-                          <tr key={summary.period || idx}>
-                            <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
-                              {summary.statementDate || summary.period}
-                            </td>
-                            <td style={{ textAlign: 'right', color: 'var(--text-secondary)', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
-                              ₹{Number(summary.openingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </td>
-                            <td style={{ textAlign: 'right', fontWeight: '600', color: '#10b981', whiteSpace: 'nowrap' }}>
-                              {summary.totalDeposits > 0 
-                                ? `+₹${Number(summary.totalDeposits).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
-                                : '—'}
-                            </td>
-                            <td style={{ textAlign: 'right', fontWeight: '600', color: summary.totalWithdrawals > 0 ? '#ef4444' : 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
-                              {summary.totalWithdrawals > 0 
-                                ? `-₹${Number(summary.totalWithdrawals).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
-                                : '—'}
-                            </td>
-                            <td style={{ textAlign: 'right', fontWeight: '700', color: '#38bdf8', fontSize: '13.5px', whiteSpace: 'nowrap' }}>
-                              ₹{Number(summary.closingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </td>
-                            <td style={{ textAlign: 'center' }}>
-                              <span
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '0.25rem',
-                                  fontSize: '10.5px',
-                                  fontWeight: '600',
-                                  color: '#10b981',
-                                  background: 'rgba(16, 185, 129, 0.1)',
-                                  padding: '2px 6px',
-                                  borderRadius: '12px'
-                                }}
-                              >
-                                <CheckCircle2 size={10} /> Synced
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
+                        {paginatedDailySummaries.map((summary, idx) => {
+                          const isSelected = selectedStatement && (selectedStatement.statementDate || selectedStatement.period) === (summary.statementDate || summary.period);
+                          return (
+                            <tr
+                              key={summary.period || idx}
+                              onClick={() => setSelectedStatement(summary)}
+                              className="statement-row-clickable"
+                              style={{
+                                cursor: 'pointer',
+                                background: isSelected ? 'rgba(59, 130, 246, 0.12)' : undefined,
+                                transition: 'background 0.15s ease'
+                              }}
+                              title="Click to view statement transaction breakdown"
+                            >
+                              <td style={{ fontWeight: '600', color: isSelected ? 'var(--accent-primary, #3b82f6)' : 'var(--text-primary)' }}>
+                                {summary.statementDate || summary.period}
+                              </td>
+                              <td style={{ textAlign: 'right', color: 'var(--text-secondary)', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+                                ₹{Number(summary.openingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </td>
+                              <td style={{ textAlign: 'right', fontWeight: '600', color: '#10b981', whiteSpace: 'nowrap' }}>
+                                {summary.totalDeposits > 0 
+                                  ? `+₹${Number(summary.totalDeposits).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
+                                  : '—'}
+                              </td>
+                              <td style={{ textAlign: 'right', fontWeight: '600', color: summary.totalWithdrawals > 0 ? '#ef4444' : 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                                {summary.totalWithdrawals > 0 
+                                  ? `-₹${Number(summary.totalWithdrawals).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
+                                  : '—'}
+                              </td>
+                              <td style={{ textAlign: 'right', fontWeight: '700', color: '#38bdf8', fontSize: '13.5px', whiteSpace: 'nowrap' }}>
+                                ₹{Number(summary.closingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </td>
+                              <td style={{ textAlign: 'center' }}>
+                                <span
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.25rem',
+                                    fontSize: '10.5px',
+                                    fontWeight: '600',
+                                    color: '#10b981',
+                                    background: 'rgba(16, 185, 129, 0.1)',
+                                    padding: '2px 6px',
+                                    borderRadius: '12px'
+                                  }}
+                                >
+                                  <CheckCircle2 size={10} /> Synced
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
 
                   {/* Mobile Touch-Friendly Daily Statement Ledger Feed */}
                   <div className="mobile-ledger-feed">
-                    {paginatedDailySummaries.map((summary, idx) => (
-                      <div key={summary.period || idx} className="mobile-ledger-card animate-fade-in">
+                    {paginatedDailySummaries.map((summary, idx) => {
+                      const isSelected = selectedStatement && (selectedStatement.statementDate || selectedStatement.period) === (summary.statementDate || summary.period);
+                      return (
+                        <div
+                          key={summary.period || idx}
+                          onClick={() => setSelectedStatement(summary)}
+                          className="mobile-ledger-card statement-card-clickable animate-fade-in"
+                          style={{
+                            cursor: 'pointer',
+                            borderColor: isSelected ? 'var(--accent-primary, #3b82f6)' : undefined,
+                            boxShadow: isSelected ? '0 0 0 1.5px var(--accent-primary, #3b82f6)' : undefined
+                          }}
+                        >
                         <div className="mobile-ledger-card-header">
                           <div className="mobile-ledger-date">
                             <Calendar size={14} style={{ color: 'var(--accent-primary)' }} />
@@ -3229,7 +3309,8 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
                           </div>
                         </div>
                       </div>
-                    ))}
+                    );
+                  })}
                   </div>
 
                   {/* Daily Statement Ledger Pagination */}
@@ -3610,8 +3691,368 @@ const UpiView = ({ refreshAllData, transactions, txLoading, handleDeleteTransact
               </div>
             </div>
 
-            <div style={{ marginTop: '1.25rem', fontSize: '0.78rem', color: '#10b981', fontWeight: 600 }}>
-              ⚡ Redirecting to live statement view...
+            <div style={{ marginTop: '1.25rem', fontSize: '0.78rem', color: '#10b981', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+              <Sparkles size={13} /> Redirecting to live statement view...
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════
+          OPTION 2: CENTERED STATEMENT DETAILS POPUP MODAL (Zero Emojis)
+          Focused deep dive into the selected statement date's transactions
+      ══════════════════════════════════════════════════════════════ */}
+      {selectedStatement && (
+        <div
+          className="statement-modal-backdrop animate-fade-in"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedStatement(null);
+          }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.65)',
+            backdropFilter: 'blur(6px)',
+            WebkitBackdropFilter: 'blur(6px)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem'
+          }}
+        >
+          <div
+            className="statement-modal-card animate-scale-up"
+            style={{
+              background: 'var(--card-bg, #1e293b)',
+              border: '1px solid var(--card-border, rgba(255, 255, 255, 0.12))',
+              borderRadius: '16px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+              maxWidth: '540px',
+              width: '100%',
+              maxHeight: '88vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden'
+            }}
+          >
+            {/* 1. Modal Header */}
+            <div
+              style={{
+                padding: '1.1rem 1.25rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                borderBottom: '1px solid var(--border)',
+                gap: '0.75rem',
+                background: 'var(--card-bg-subtle, rgba(255, 255, 255, 0.02))'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0 }}>
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: '10px',
+                    background: 'rgba(59, 130, 246, 0.12)',
+                    border: '1px solid rgba(59, 130, 246, 0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}
+                >
+                  <FileText size={18} style={{ color: '#3b82f6' }} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+                      {selectedStatement.statementDate || selectedStatement.period}
+                    </span>
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: '#10b981',
+                        background: 'rgba(16, 185, 129, 0.1)',
+                        padding: '2px 7px',
+                        borderRadius: '12px'
+                      }}
+                    >
+                      <CheckCircle2 size={11} /> Synced
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                    {selectedStatementTxns.length} {selectedStatementTxns.length === 1 ? 'Transaction' : 'Transactions'} Recorded
+                  </span>
+                </div>
+              </div>
+
+              {/* Dismiss Button */}
+              <button
+                type="button"
+                onClick={() => setSelectedStatement(null)}
+                style={{
+                  background: 'var(--border, rgba(255, 255, 255, 0.08))',
+                  border: 'none',
+                  borderRadius: '8px',
+                  color: 'var(--text-secondary)',
+                  width: 32,
+                  height: 32,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  transition: 'all 0.15s ease'
+                }}
+                title="Close dialog (Esc)"
+                aria-label="Close"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* 2. One-Line Financial Strip */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                padding: '0.75rem 1.25rem',
+                background: 'var(--table-header, rgba(255, 255, 255, 0.02))',
+                borderBottom: '1px solid var(--border)',
+                gap: '0.5rem',
+                fontSize: '0.82rem',
+                textAlign: 'center'
+              }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Deposits</span>
+                <span style={{ fontWeight: 700, color: '#10b981' }}>
+                  {selectedStatement.totalDeposits > 0 
+                    ? `+₹${Number(selectedStatement.totalDeposits).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
+                    : '₹0.00'}
+                </span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', borderLeft: '1px solid var(--border)', borderRight: '1px solid var(--border)' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Withdrawals</span>
+                <span style={{ fontWeight: 700, color: selectedStatement.totalWithdrawals > 0 ? '#ef4444' : 'var(--text-secondary)' }}>
+                  {selectedStatement.totalWithdrawals > 0 
+                    ? `-₹${Number(selectedStatement.totalWithdrawals).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
+                    : '₹0.00'}
+                </span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Closing Balance</span>
+                <span style={{ fontWeight: 800, color: '#38bdf8' }}>
+                  ₹{Number(selectedStatement.closingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+            </div>
+
+            {/* 3. Transaction Items Feed */}
+            <div
+              style={{
+                padding: '1rem 1.25rem',
+                overflowY: 'auto',
+                maxHeight: '400px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.65rem'
+              }}
+            >
+              {selectedStatementTxns.length > 0 ? (
+                selectedStatementTxns.map((tx, idx) => {
+                  const isIncome = (tx.type === 'income' || tx.type === 'deposit' || tx.type === 'credit');
+                  const cleanTitle = getCleanPayee(tx);
+                  const timeStr = getDisplayTime(tx);
+                  const refNumber = getRefNo(tx);
+                  return (
+                    <div
+                      key={tx._id || tx.id || idx}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '0.75rem 0.9rem',
+                        borderRadius: '10px',
+                        background: 'var(--card-bg-subtle, rgba(255, 255, 255, 0.02))',
+                        border: '1px solid var(--border)',
+                        gap: '0.75rem'
+                      }}
+                    >
+                      {/* Left Side: Icon & Details */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0, flex: 1 }}>
+                        <div
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: '50%',
+                            background: isIncome ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                            border: `1px solid ${isIncome ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}
+                        >
+                          {isIncome ? (
+                            <ArrowDownLeft size={16} style={{ color: '#10b981' }} />
+                          ) : (
+                            <ArrowUpRight size={16} style={{ color: '#ef4444' }} />
+                          )}
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, gap: '2px' }}>
+                          <span
+                            style={{
+                              fontWeight: 600,
+                              fontSize: '0.88rem',
+                              color: 'var(--text-primary)',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}
+                            title={cleanTitle}
+                          >
+                            {cleanTitle}
+                          </span>
+
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.45rem',
+                              fontSize: '0.75rem',
+                              color: 'var(--text-secondary)',
+                              flexWrap: 'wrap'
+                            }}
+                          >
+                            {timeStr && (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                                <Clock size={11} /> {timeStr}
+                              </span>
+                            )}
+                            {refNumber && (
+                              <span>• Ref: {refNumber}</span>
+                            )}
+                            {tx.category && (
+                              <span
+                                style={{
+                                  fontSize: '10px',
+                                  padding: '1px 5px',
+                                  borderRadius: '4px',
+                                  background: 'rgba(255, 255, 255, 0.06)',
+                                  color: 'var(--text-secondary)'
+                                }}
+                              >
+                                {tx.category}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right Side: Amount & Post-Transaction Balance */}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0, gap: '2px' }}>
+                        <span
+                          style={{
+                            fontWeight: 700,
+                            fontSize: '0.95rem',
+                            color: isIncome ? '#10b981' : '#ef4444',
+                            fontFamily: 'monospace'
+                          }}
+                        >
+                          {isIncome ? '+' : '-'}₹{Number(tx.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                        {(tx.balance !== undefined && tx.balance !== null && !isNaN(tx.balance)) && (
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>
+                            Bal: ₹{Number(tx.balance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                /* Reconciled Summary Card when no raw transactions exist for this date */
+                <div
+                  style={{
+                    padding: '1.75rem 1.25rem',
+                    textAlign: 'center',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '0.6rem',
+                    background: 'var(--empty-state-bg, rgba(255, 255, 255, 0.01))',
+                    border: '1px dashed var(--border)',
+                    borderRadius: '12px'
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 42,
+                      height: 42,
+                      borderRadius: '50%',
+                      background: 'rgba(16, 185, 129, 0.1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#10b981'
+                    }}
+                  >
+                    <CheckCircle2 size={22} />
+                  </div>
+                  <strong style={{ fontSize: '0.92rem', color: 'var(--text-primary)' }}>
+                    Reconciled Daily Statement Record
+                  </strong>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0, maxWidth: '380px', lineHeight: 1.5 }}>
+                    Opening balance was ₹{Number(selectedStatement.openingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} and reconciled to ₹{Number(selectedStatement.closingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} closing balance via bank PDF sync.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* 4. Modal Footer */}
+            <div
+              style={{
+                padding: '0.85rem 1.25rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                borderTop: '1px solid var(--border)',
+                background: 'var(--card-bg-subtle, rgba(255, 255, 255, 0.02))',
+                gap: '0.75rem'
+              }}
+            >
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                <Building2 size={13} style={{ color: '#818cf8', flexShrink: 0 }} />
+                <span>TMB Bank Account •••• {bankOverview?.accountNo ? (bankOverview.accountNo.replace(/^X+/, '') || bankOverview.accountNo.slice(-5)) : '300005'}</span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedStatement(null)}
+                className="btn"
+                style={{
+                  padding: '0.35rem 1.15rem',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  borderRadius: '8px',
+                  background: 'var(--border, rgba(255, 255, 255, 0.1))',
+                  color: 'var(--text-primary)',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                Done
+              </button>
             </div>
           </div>
         </div>

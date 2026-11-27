@@ -105,7 +105,7 @@ const cleanPayeeString = (str) => {
   return s;
 };
 
-const getCleanPayee = (tx) => {
+export const getCleanPayee = (tx) => {
   if (tx.counterparty && !tx.counterparty.startsWith('Loan Coll.') && !tx.counterparty.startsWith('MBank/')) {
     return cleanPayeeString(tx.counterparty);
   }
@@ -305,14 +305,14 @@ const getCategoryStyle = (category) => {
   };
 };
 
-const getRefNo = (tx) => {
+export const getRefNo = (tx) => {
   if (tx.refNo) return tx.refNo;
   if (!tx.note) return null;
   const match = tx.note.match(/UPI\/(\d+)\//i);
   return match ? match[1] : null;
 };
 
-const getDisplayTime = (tx) => {
+export const getDisplayTime = (tx) => {
   if (!tx || !tx.date) return null;
   const d = new Date(tx.date || tx.txnDate);
   if (isNaN(d.getTime())) return null;

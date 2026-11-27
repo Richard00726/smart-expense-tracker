@@ -1138,6 +1138,24 @@ path:focus-visible {
   display: none;
 }
 
+.statement-row-clickable {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.statement-row-clickable:hover {
+  background-color: var(--table-hover, rgba(59, 130, 246, 0.08)) !important;
+}
+
+.statement-card-clickable {
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.statement-card-clickable:active {
+  transform: scale(0.985);
+}
+
 .mobile-ledger-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
