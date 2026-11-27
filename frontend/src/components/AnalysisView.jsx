@@ -452,8 +452,6 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
   const [hoveredIncomeCategory, setHoveredIncomeCategory] = useState(null);
   const [spendingTimelineHover, setSpendingTimelineHover] = useState(null);
   const [incomeTimelineHover, setIncomeTimelineHover] = useState(null);
-  const [spendingTimelineMode, setSpendingTimelineMode] = useState('stacked'); // 'total', 'stacked', 'upi', 'cash'
-  const [incomeTimelineMode, setIncomeTimelineMode] = useState('stacked');
 
   const [userChangedSpendingMonth, setUserChangedSpendingMonth] = useState(false);
   const [userChangedIncomeMonth, setUserChangedIncomeMonth] = useState(false);
@@ -564,11 +562,11 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
     return promise;
   };
 
-  const loadSpending = async () => {
+  const loadSpending = async (force = false) => {
     try {
       // Only show spinner if no data is currently cached/visible
       if (!spendingSummary) setSpendingLoading(true);
-      const data = await fetchSummaryCached(spendingFilterType, spendingFilterValue);
+      const data = await fetchSummaryCached(spendingFilterType, spendingFilterValue, force);
       setSpendingSummary(data);
     } catch (e) { 
       console.error(e); 
@@ -577,10 +575,10 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
     }
   };
 
-  const loadIncome = async () => {
+  const loadIncome = async (force = false) => {
     try {
       if (!incomeSummary) setIncomeLoading(true);
-      const data = await fetchSummaryCached(incomeFilterType, incomeFilterValue);
+      const data = await fetchSummaryCached(incomeFilterType, incomeFilterValue, force);
       setIncomeSummary(data);
     } catch (e) { 
       console.error(e); 
@@ -589,10 +587,10 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
     }
   };
 
-  const loadFlow = async () => {
+  const loadFlow = async (force = false) => {
     try {
       if (!flowSummary) setFlowLoading(true);
-      const data = await fetchSummaryCached(flowFilterType, flowFilterValue);
+      const data = await fetchSummaryCached(flowFilterType, flowFilterValue, force);
       setFlowSummary(data);
     } catch (e) { 
       console.error(e); 
@@ -601,9 +599,20 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
     }
   };
 
-  useEffect(() => { loadSpending(); }, [spendingFilterType, spendingFilterValue, refreshTrigger]);
-  useEffect(() => { loadIncome(); }, [incomeFilterType, incomeFilterValue, refreshTrigger]);
-  useEffect(() => { loadFlow(); }, [flowFilterType, flowFilterValue, refreshTrigger]);
+  useEffect(() => { 
+    globalSummaryCache.clear();
+    loadSpending(true); 
+  }, [spendingFilterType, spendingFilterValue, refreshTrigger]);
+
+  useEffect(() => { 
+    globalSummaryCache.clear();
+    loadIncome(true); 
+  }, [incomeFilterType, incomeFilterValue, refreshTrigger]);
+
+  useEffect(() => { 
+    globalSummaryCache.clear();
+    loadFlow(true); 
+  }, [flowFilterType, flowFilterValue, refreshTrigger]);
 
   // Calculate Cash vs UPI breakdown for categories from transactions if not present in summary payload
   const categoryWalletBreakdownFromTx = useMemo(() => {
@@ -672,25 +681,76 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
       .sort((a, b) => b.value - a.value);
   }, [spendingSummary?.categorySpending, categoryWalletFilter, categoryWalletBreakdownFromTx]);
 
+  // Live wallet totals directly from transactions array for instant zero-latency updates
+  const spendingWalletTotalsFromTx = useMemo(() => {
+    if (!Array.isArray(allTx) || allTx.length === 0) return { cash: 0, upi: 0 };
+    const filterObj = getFilterObj(spendingFilterType, spendingFilterValue);
+    const start = filterObj.startDate ? new Date(filterObj.startDate).getTime() : null;
+    const end = filterObj.endDate ? new Date(filterObj.endDate).getTime() : null;
+
+    let cash = 0, upi = 0;
+    allTx.forEach(t => {
+      const isDebit = t.type === 'debit' || t.type === 'expense';
+      if (!isDebit) return;
+      const d = parseTxDate(t.date || t.txnDate);
+      if (d && (start || end)) {
+        const time = d.getTime();
+        if (start && time < start) return;
+        if (end && time > end) return;
+      }
+      const amt = Number(t.amount || 0);
+      if (t.wallet === 'Cash') cash += amt;
+      else if (t.wallet === 'UPI') upi += amt;
+    });
+    return { cash, upi };
+  }, [allTx, spendingFilterType, spendingFilterValue]);
+
+  const incomeWalletTotalsFromTx = useMemo(() => {
+    if (!Array.isArray(allTx) || allTx.length === 0) return { cash: 0, upi: 0 };
+    const filterObj = getFilterObj(incomeFilterType, incomeFilterValue);
+    const start = filterObj.startDate ? new Date(filterObj.startDate).getTime() : null;
+    const end = filterObj.endDate ? new Date(filterObj.endDate).getTime() : null;
+
+    let cash = 0, upi = 0;
+    allTx.forEach(t => {
+      const isCredit = t.type === 'credit' || t.type === 'income';
+      if (!isCredit) return;
+      const d = parseTxDate(t.date || t.txnDate);
+      if (d && (start || end)) {
+        const time = d.getTime();
+        if (start && time < start) return;
+        if (end && time > end) return;
+      }
+      const amt = Number(t.amount || 0);
+      if (t.wallet === 'Cash') cash += amt;
+      else if (t.wallet === 'UPI') upi += amt;
+    });
+    return { cash, upi };
+  }, [allTx, incomeFilterType, incomeFilterValue]);
+
   const rawWalletSpending = spendingSummary?.walletSpending || [];
-  const rawCashSpend = rawWalletSpending.find(w => w._id === 'Cash')?.total || 0;
-  const rawUpiSpend = rawWalletSpending.find(w => w._id === 'UPI')?.total || 0;
-  const walletSpendingData = (rawCashSpend > 0 || rawUpiSpend > 0)
-    ? [
-        { name: 'Cash', value: rawCashSpend },
-        { name: 'UPI', value: rawUpiSpend }
-      ]
-    : rawWalletSpending.map(item => ({ name: item._id, value: item.total }));
+  const rawCashSpend = spendingWalletTotalsFromTx.cash > 0 
+    ? spendingWalletTotalsFromTx.cash 
+    : (rawWalletSpending.find(w => w._id === 'Cash')?.total || 0);
+  const rawUpiSpend = spendingWalletTotalsFromTx.upi > 0 
+    ? spendingWalletTotalsFromTx.upi 
+    : (rawWalletSpending.find(w => w._id === 'UPI')?.total || 0);
+  const walletSpendingData = [
+    { name: 'Cash', value: rawCashSpend },
+    { name: 'UPI', value: rawUpiSpend }
+  ];
 
   const rawWalletIncome = incomeSummary?.walletIncome || [];
-  const rawCashIncome = rawWalletIncome.find(w => w._id === 'Cash')?.total || 0;
-  const rawUpiIncome = rawWalletIncome.find(w => w._id === 'UPI')?.total || 0;
-  const walletIncomeData = (rawCashIncome > 0 || rawUpiIncome > 0)
-    ? [
-        { name: 'Cash', value: rawCashIncome },
-        { name: 'UPI', value: rawUpiIncome }
-      ]
-    : rawWalletIncome.map(item => ({ name: item._id, value: item.total }));
+  const rawCashIncome = incomeWalletTotalsFromTx.cash > 0 
+    ? incomeWalletTotalsFromTx.cash 
+    : (rawWalletIncome.find(w => w._id === 'Cash')?.total || 0);
+  const rawUpiIncome = incomeWalletTotalsFromTx.upi > 0 
+    ? incomeWalletTotalsFromTx.upi 
+    : (rawWalletIncome.find(w => w._id === 'UPI')?.total || 0);
+  const walletIncomeData = [
+    { name: 'Cash', value: rawCashIncome },
+    { name: 'UPI', value: rawUpiIncome }
+  ];
 
   // Calculate Cash vs UPI breakdown for income categories from transactions if not present in summary payload
   const incomeCategoryWalletBreakdownFromTx = useMemo(() => {
@@ -1518,90 +1578,6 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
-                    {/* Wallet Stream Mode Selector: Total | Stacked | UPI | Cash */}
-                    <div style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      background: 'var(--card-bg)',
-                      border: '1px solid var(--card-border)',
-                      borderRadius: '20px',
-                      padding: '2px',
-                      gap: '2px'
-                    }}>
-                      <button
-                        type="button"
-                        onClick={() => setSpendingTimelineMode('total')}
-                        style={{
-                          border: 'none',
-                          outline: 'none',
-                          cursor: 'pointer',
-                          padding: '2px 8px',
-                          borderRadius: '16px',
-                          fontSize: '0.72rem',
-                          fontWeight: spendingTimelineMode === 'total' ? 700 : 500,
-                          background: spendingTimelineMode === 'total' ? 'var(--danger)' : 'transparent',
-                          color: spendingTimelineMode === 'total' ? '#fff' : 'var(--text-secondary)',
-                          transition: 'all 0.15s ease'
-                        }}
-                      >
-                        Total
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSpendingTimelineMode('stacked')}
-                        style={{
-                          border: 'none',
-                          outline: 'none',
-                          cursor: 'pointer',
-                          padding: '2px 8px',
-                          borderRadius: '16px',
-                          fontSize: '0.72rem',
-                          fontWeight: spendingTimelineMode === 'stacked' ? 700 : 500,
-                          background: spendingTimelineMode === 'stacked' ? 'var(--text-primary)' : 'transparent',
-                          color: spendingTimelineMode === 'stacked' ? 'var(--bg-main, #fff)' : 'var(--text-secondary)',
-                          transition: 'all 0.15s ease'
-                        }}
-                      >
-                        Stacked (Cash+UPI)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSpendingTimelineMode('upi')}
-                        style={{
-                          border: 'none',
-                          outline: 'none',
-                          cursor: 'pointer',
-                          padding: '2px 8px',
-                          borderRadius: '16px',
-                          fontSize: '0.72rem',
-                          fontWeight: spendingTimelineMode === 'upi' ? 700 : 500,
-                          background: spendingTimelineMode === 'upi' ? 'var(--accent-primary, #3b82f6)' : 'transparent',
-                          color: spendingTimelineMode === 'upi' ? '#fff' : 'var(--text-secondary)',
-                          transition: 'all 0.15s ease'
-                        }}
-                      >
-                        UPI
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSpendingTimelineMode('cash')}
-                        style={{
-                          border: 'none',
-                          outline: 'none',
-                          cursor: 'pointer',
-                          padding: '2px 8px',
-                          borderRadius: '16px',
-                          fontSize: '0.72rem',
-                          fontWeight: spendingTimelineMode === 'cash' ? 700 : 500,
-                          background: spendingTimelineMode === 'cash' ? '#f59e0b' : 'transparent',
-                          color: spendingTimelineMode === 'cash' ? '#fff' : 'var(--text-secondary)',
-                          transition: 'all 0.15s ease'
-                        }}
-                      >
-                        Cash
-                      </button>
-                    </div>
-
                     {/* Live Hover Stat or Peak Badge */}
                     {spendingTimelineHover ? (
                       <span style={{
@@ -1697,7 +1673,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                         content={<CustomTimelineTooltip isSpend={true} avg={spendingTimelineStats.avg} />} 
                         cursor={{ stroke: 'rgba(239, 68, 68, 0.4)', strokeWidth: 1.5, strokeDasharray: '4 4' }}
                       />
-                      {spendingTimelineStats.avg > 0 && (spendingTimelineMode === 'total' || spendingTimelineMode === 'stacked') && (
+                      {spendingTimelineStats.avg > 0 && (
                         <ReferenceLine 
                           y={spendingTimelineStats.avg} 
                           stroke="#ef4444" 
@@ -1706,82 +1682,34 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                           opacity={0.65} 
                         />
                       )}
-                      {spendingTimelineMode === 'total' && (
-                        <Area 
-                          type="monotone" 
-                          dataKey="amount" 
-                          stroke="#ef4444" 
-                          strokeWidth={2.5}
-                          fillOpacity={1} 
-                          fill="url(#spendPulseGrad)"
-                          isAnimationActive={true}
-                          animationDuration={1300}
-                          animationEasing="ease-out"
-                          activeDot={{ r: 6, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#ef4444' }}
-                        />
-                      )}
-                      {spendingTimelineMode === 'stacked' && (
-                        <>
-                          <Area 
-                            type="monotone" 
-                            dataKey="cash" 
-                            stackId="spendStack"
-                            stroke="#f59e0b" 
-                            strokeWidth={2}
-                            fillOpacity={1} 
-                            fill="url(#spendCashGrad)" 
-                            name="Cash Spend"
-                            isAnimationActive={true}
-                            animationDuration={1300}
-                            animationEasing="ease-out"
-                            activeDot={{ r: 5, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#f59e0b' }}
-                          />
-                          <Area 
-                            type="monotone" 
-                            dataKey="upi" 
-                            stackId="spendStack"
-                            stroke="#ef4444" 
-                            strokeWidth={2}
-                            fillOpacity={1} 
-                            fill="url(#spendUpiGrad)" 
-                            name="UPI Spend"
-                            isAnimationActive={true}
-                            animationDuration={1300}
-                            animationEasing="ease-out"
-                            activeDot={{ r: 5, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#ef4444' }}
-                          />
-                        </>
-                      )}
-                      {spendingTimelineMode === 'upi' && (
-                        <Area 
-                          type="monotone" 
-                          dataKey="upi" 
-                          stroke="#ef4444" 
-                          strokeWidth={2.5}
-                          fillOpacity={1} 
-                          fill="url(#spendUpiGrad)" 
-                          name="UPI Spend"
-                          isAnimationActive={true}
-                          animationDuration={1300}
-                          animationEasing="ease-out"
-                          activeDot={{ r: 6, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#ef4444' }}
-                        />
-                      )}
-                      {spendingTimelineMode === 'cash' && (
-                        <Area 
-                          type="monotone" 
-                          dataKey="cash" 
-                          stroke="#f59e0b" 
-                          strokeWidth={2.5}
-                          fillOpacity={1} 
-                          fill="url(#spendCashGrad)" 
-                          name="Cash Spend"
-                          isAnimationActive={true}
-                          animationDuration={1300}
-                          animationEasing="ease-out"
-                          activeDot={{ r: 6, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#f59e0b' }}
-                        />
-                      )}
+                      <Area 
+                        type="monotone" 
+                        dataKey="cash" 
+                        stackId="spendStack"
+                        stroke="#f59e0b" 
+                        strokeWidth={2}
+                        fillOpacity={1} 
+                        fill="url(#spendCashGrad)" 
+                        name="Cash Spend"
+                        isAnimationActive={true}
+                        animationDuration={1300}
+                        animationEasing="ease-out"
+                        activeDot={{ r: 5, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#f59e0b' }}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="upi" 
+                        stackId="spendStack"
+                        stroke="#ef4444" 
+                        strokeWidth={2}
+                        fillOpacity={1} 
+                        fill="url(#spendUpiGrad)" 
+                        name="UPI Spend"
+                        isAnimationActive={true}
+                        animationDuration={1300}
+                        animationEasing="ease-out"
+                        activeDot={{ r: 5, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#ef4444' }}
+                      />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
@@ -1806,11 +1734,11 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                   <span>Total Spend: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{formatAmt(spendingTimelineStats.total)}</strong></span>
                   <span style={{ opacity: 0.4 }}>|</span>
                   <span style={{ color: '#f59e0b', fontWeight: '600' }}>
-                    Cash: {getCurrency()}{formatAmt(cashSpend)} ({cashPct}%)
+                    Cash: {getCurrency()}{formatAmt(spendingTimelineStats.totalCash)} ({spendingTimelineStats.total > 0 ? ((spendingTimelineStats.totalCash / spendingTimelineStats.total) * 100).toFixed(1) : '0.0'}%)
                   </span>
                   <span style={{ opacity: 0.4 }}>|</span>
                   <span style={{ color: 'var(--danger)', fontWeight: '600' }}>
-                    UPI: {getCurrency()}{formatAmt(upiSpend)} ({upiPct}%)
+                    UPI: {getCurrency()}{formatAmt(spendingTimelineStats.totalUpi)} ({spendingTimelineStats.total > 0 ? ((spendingTimelineStats.totalUpi / spendingTimelineStats.total) * 100).toFixed(1) : '0.0'}%)
                   </span>
                   <span style={{ opacity: 0.4 }}>|</span>
                   <span>Daily Avg: <strong style={{ color: 'var(--danger)' }}>{getCurrency()}{formatAmt(spendingTimelineStats.avg)}</strong></span>
@@ -2480,90 +2408,6 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
-                    {/* Wallet Stream Mode Selector: Total | Stacked | UPI | Cash */}
-                    <div style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      background: 'var(--card-bg)',
-                      border: '1px solid var(--card-border)',
-                      borderRadius: '20px',
-                      padding: '2px',
-                      gap: '2px'
-                    }}>
-                      <button
-                        type="button"
-                        onClick={() => setIncomeTimelineMode('total')}
-                        style={{
-                          border: 'none',
-                          outline: 'none',
-                          cursor: 'pointer',
-                          padding: '2px 8px',
-                          borderRadius: '16px',
-                          fontSize: '0.72rem',
-                          fontWeight: incomeTimelineMode === 'total' ? 700 : 500,
-                          background: incomeTimelineMode === 'total' ? 'var(--success)' : 'transparent',
-                          color: incomeTimelineMode === 'total' ? '#fff' : 'var(--text-secondary)',
-                          transition: 'all 0.15s ease'
-                        }}
-                      >
-                        Total
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setIncomeTimelineMode('stacked')}
-                        style={{
-                          border: 'none',
-                          outline: 'none',
-                          cursor: 'pointer',
-                          padding: '2px 8px',
-                          borderRadius: '16px',
-                          fontSize: '0.72rem',
-                          fontWeight: incomeTimelineMode === 'stacked' ? 700 : 500,
-                          background: incomeTimelineMode === 'stacked' ? 'var(--text-primary)' : 'transparent',
-                          color: incomeTimelineMode === 'stacked' ? 'var(--bg-main, #fff)' : 'var(--text-secondary)',
-                          transition: 'all 0.15s ease'
-                        }}
-                      >
-                        Stacked (Cash+UPI)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setIncomeTimelineMode('upi')}
-                        style={{
-                          border: 'none',
-                          outline: 'none',
-                          cursor: 'pointer',
-                          padding: '2px 8px',
-                          borderRadius: '16px',
-                          fontSize: '0.72rem',
-                          fontWeight: incomeTimelineMode === 'upi' ? 700 : 500,
-                          background: incomeTimelineMode === 'upi' ? 'var(--accent-primary, #3b82f6)' : 'transparent',
-                          color: incomeTimelineMode === 'upi' ? '#fff' : 'var(--text-secondary)',
-                          transition: 'all 0.15s ease'
-                        }}
-                      >
-                        UPI
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setIncomeTimelineMode('cash')}
-                        style={{
-                          border: 'none',
-                          outline: 'none',
-                          cursor: 'pointer',
-                          padding: '2px 8px',
-                          borderRadius: '16px',
-                          fontSize: '0.72rem',
-                          fontWeight: incomeTimelineMode === 'cash' ? 700 : 500,
-                          background: incomeTimelineMode === 'cash' ? '#10b981' : 'transparent',
-                          color: incomeTimelineMode === 'cash' ? '#fff' : 'var(--text-secondary)',
-                          transition: 'all 0.15s ease'
-                        }}
-                      >
-                        Cash
-                      </button>
-                    </div>
-
                     {/* Live Hover Stat or Peak Badge */}
                     {incomeTimelineHover ? (
                       <span style={{
@@ -2659,7 +2503,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                         content={<CustomTimelineTooltip isSpend={false} avg={incomeTimelineStats.avg} />} 
                         cursor={{ stroke: 'rgba(16, 185, 129, 0.4)', strokeWidth: 1.5, strokeDasharray: '4 4' }}
                       />
-                      {incomeTimelineStats.avg > 0 && (incomeTimelineMode === 'total' || incomeTimelineMode === 'stacked') && (
+                      {incomeTimelineStats.avg > 0 && (
                         <ReferenceLine 
                           y={incomeTimelineStats.avg} 
                           stroke="#10b981" 
@@ -2668,82 +2512,34 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                           opacity={0.65} 
                         />
                       )}
-                      {incomeTimelineMode === 'total' && (
-                        <Area 
-                          type="monotone" 
-                          dataKey="amount" 
-                          stroke="#10b981" 
-                          strokeWidth={2.5}
-                          fillOpacity={1} 
-                          fill="url(#incomePulseGrad)"
-                          isAnimationActive={true}
-                          animationDuration={1300}
-                          animationEasing="ease-out"
-                          activeDot={{ r: 6, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#10b981' }}
-                        />
-                      )}
-                      {incomeTimelineMode === 'stacked' && (
-                        <>
-                          <Area 
-                            type="monotone" 
-                            dataKey="cash" 
-                            stackId="incomeStack"
-                            stroke="#f59e0b" 
-                            strokeWidth={2}
-                            fillOpacity={1} 
-                            fill="url(#incomeCashGrad)" 
-                            name="Cash Income"
-                            isAnimationActive={true}
-                            animationDuration={1300}
-                            animationEasing="ease-out"
-                            activeDot={{ r: 5, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#f59e0b' }}
-                          />
-                          <Area 
-                            type="monotone" 
-                            dataKey="upi" 
-                            stackId="incomeStack"
-                            stroke="#10b981" 
-                            strokeWidth={2}
-                            fillOpacity={1} 
-                            fill="url(#incomeUpiGrad)" 
-                            name="UPI Income"
-                            isAnimationActive={true}
-                            animationDuration={1300}
-                            animationEasing="ease-out"
-                            activeDot={{ r: 5, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#10b981' }}
-                          />
-                        </>
-                      )}
-                      {incomeTimelineMode === 'upi' && (
-                        <Area 
-                          type="monotone" 
-                          dataKey="upi" 
-                          stroke="#10b981" 
-                          strokeWidth={2.5}
-                          fillOpacity={1} 
-                          fill="url(#incomeUpiGrad)" 
-                          name="UPI Income"
-                          isAnimationActive={true}
-                          animationDuration={1300}
-                          animationEasing="ease-out"
-                          activeDot={{ r: 6, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#10b981' }}
-                        />
-                      )}
-                      {incomeTimelineMode === 'cash' && (
-                        <Area 
-                          type="monotone" 
-                          dataKey="cash" 
-                          stroke="#f59e0b" 
-                          strokeWidth={2.5}
-                          fillOpacity={1} 
-                          fill="url(#incomeCashGrad)" 
-                          name="Cash Income"
-                          isAnimationActive={true}
-                          animationDuration={1300}
-                          animationEasing="ease-out"
-                          activeDot={{ r: 6, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#f59e0b' }}
-                        />
-                      )}
+                      <Area 
+                        type="monotone" 
+                        dataKey="cash" 
+                        stackId="incomeStack"
+                        stroke="#f59e0b" 
+                        strokeWidth={2}
+                        fillOpacity={1} 
+                        fill="url(#incomeCashGrad)" 
+                        name="Cash Income"
+                        isAnimationActive={true}
+                        animationDuration={1300}
+                        animationEasing="ease-out"
+                        activeDot={{ r: 5, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#f59e0b' }}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="upi" 
+                        stackId="incomeStack"
+                        stroke="#10b981" 
+                        strokeWidth={2}
+                        fillOpacity={1} 
+                        fill="url(#incomeUpiGrad)" 
+                        name="UPI Income"
+                        isAnimationActive={true}
+                        animationDuration={1300}
+                        animationEasing="ease-out"
+                        activeDot={{ r: 5, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#10b981' }}
+                      />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
@@ -2768,11 +2564,11 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                   <span>Total Income: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{formatAmt(incomeTimelineStats.total)}</strong></span>
                   <span style={{ opacity: 0.4 }}>|</span>
                   <span style={{ color: '#10b981', fontWeight: '600' }}>
-                    Cash: {getCurrency()}{formatAmt(cashIncome)} ({cashIncomePct}%)
+                    Cash: {getCurrency()}{formatAmt(incomeTimelineStats.totalCash)} ({incomeTimelineStats.total > 0 ? ((incomeTimelineStats.totalCash / incomeTimelineStats.total) * 100).toFixed(1) : '0.0'}%)
                   </span>
                   <span style={{ opacity: 0.4 }}>|</span>
                   <span style={{ color: '#3b82f6', fontWeight: '600' }}>
-                    UPI: {getCurrency()}{formatAmt(upiIncome)} ({upiIncomePct}%)
+                    UPI: {getCurrency()}{formatAmt(incomeTimelineStats.totalUpi)} ({incomeTimelineStats.total > 0 ? ((incomeTimelineStats.totalUpi / incomeTimelineStats.total) * 100).toFixed(1) : '0.0'}%)
                   </span>
                   <span style={{ opacity: 0.4 }}>|</span>
                   <span>Daily Avg: <strong style={{ color: 'var(--success)' }}>{getCurrency()}{formatAmt(incomeTimelineStats.avg)}</strong></span>

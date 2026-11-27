@@ -419,7 +419,12 @@ function App() {
   };
 
   useEffect(() => {
-    if (isAuthenticated) loadWallets();
+    if (isAuthenticated) {
+      loadWallets();
+      if (activeTab === 'analysis' || activeTab === 'cash' || activeTab === 'home') {
+        loadTransactions();
+      }
+    }
   }, [isAuthenticated, activeTab, currentUser?.email, currentUser?._id, currentUser?.id]);
 
   useEffect(() => {
