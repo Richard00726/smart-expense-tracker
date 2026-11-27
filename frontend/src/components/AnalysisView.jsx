@@ -1122,15 +1122,18 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                   <div
                     className="custom-scrollbar"
                     style={{
-                      flex: 1,
+                      flex: isMobile ? 'none' : 1,
                       width: '100%',
                       minWidth: 0,
-                      height: '220px',
+                      height: isMobile ? '230px' : '220px',
+                      maxHeight: isMobile ? '230px' : '220px',
                       overflowY: 'auto',
+                      overflowX: 'hidden',
+                      WebkitOverflowScrolling: 'touch',
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '0.35rem',
-                      paddingRight: '4px'
+                      paddingRight: '6px'
                     }}
                   >
                     {categoryData.length === 0 ? (
@@ -1556,15 +1559,18 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                 <div
                   className="custom-scrollbar"
                   style={{
-                    flex: 1,
+                    flex: isMobile ? 'none' : 1,
                     width: '100%',
                     minWidth: 0,
-                    height: '220px',
+                    height: isMobile ? '230px' : '220px',
+                    maxHeight: isMobile ? '230px' : '220px',
                     overflowY: 'auto',
+                    overflowX: 'hidden',
+                    WebkitOverflowScrolling: 'touch',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '0.35rem',
-                    paddingRight: '4px'
+                    paddingRight: '6px'
                   }}
                 >
                   {incomeCategoryData.length === 0 ? (

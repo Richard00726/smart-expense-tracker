@@ -577,6 +577,31 @@ tr:hover td {
   width: 100%;
 }
 
+/* Custom Smooth Scrollbar for Category Breakdown Lists */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+  -webkit-overflow-scrolling: touch;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.6);
+}
+
 .cashflow-ledger-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -1514,6 +1539,18 @@ path:focus-visible {
     gap: 1.25rem !important;
     width: 100% !important;
     min-height: auto !important;
+  }
+
+  .donut-category-container .custom-scrollbar {
+    width: 100% !important;
+    height: 230px !important;
+    max-height: 230px !important;
+    flex: none !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-right: 6px !important;
+    box-sizing: border-box !important;
   }
 
   .cashflow-ledger-grid {
