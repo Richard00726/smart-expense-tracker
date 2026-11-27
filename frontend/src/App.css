@@ -566,9 +566,32 @@ tr:hover td {
   margin-bottom: 2rem;
 }
 
+.analysis-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  align-items: stretch;
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.analysis-hero-card {
+  grid-column: 1 / -1;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 @media (max-width: 880px) {
   .charts-grid {
     grid-template-columns: 1fr;
+  }
+  .analysis-charts-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  .analysis-hero-card {
+    grid-column: 1 !important;
   }
 }
 
@@ -1524,6 +1547,10 @@ path:focus-visible {
     gap: 1rem !important;
     margin: 0 !important;
     width: 100% !important;
+  }
+
+  .analysis-hero-card {
+    grid-column: 1 !important;
   }
 
   .chart-wrapper {

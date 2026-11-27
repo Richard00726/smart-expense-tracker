@@ -1,7 +1,15 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { getSummary, getCurrency } from '../services/api';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
-import { PieChart as PieChartIcon, BarChart2, TrendingUp, Activity, ArrowDownLeft, ArrowUpRight, Wallet, Landmark, Coins, CreditCard } from 'lucide-react';
+import { 
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer, 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
+  AreaChart, Area, LineChart, Line, ReferenceLine
+} from 'recharts';
+import { 
+  PieChart as PieChartIcon, BarChart2, TrendingUp, Activity, 
+  ArrowDownLeft, ArrowUpRight, Wallet, Landmark, Coins, CreditCard,
+  Calendar, Clock, Zap, Target
+} from 'lucide-react';
 import DateHierarchyFilter from './DateHierarchyFilter';
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899'];
@@ -51,6 +59,183 @@ const getInitialSummary = (key) => {
     if (saved) return JSON.parse(saved);
   } catch (e) {}
   return null;
+};
+
+// Pure helpers for Advanced Analysis Charts
+const parseTxDate = (val) => {
+  if (!val) return null;
+  if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
+  if (typeof val === 'string') {
+    const parts = val.split(/[-/]/);
+    if (parts.length === 3) {
+      if (parts[0].length === 2 && parts[2].length === 4) {
+        const d = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+        if (!isNaN(d.getTime())) return d;
+      }
+    }
+    const d = new Date(val);
+    if (!isNaN(d.getTime())) return d;
+  }
+  return null;
+};
+
+const buildTimelineData = (txList, filterType, filterValue) => {
+  if (!Array.isArray(txList) || txList.length === 0) return [];
+
+  let year, month;
+  if (filterType === 'month' && filterValue && filterValue.includes('-')) {
+    const parts = filterValue.split('-');
+    year = parseInt(parts[0], 10);
+    month = parseInt(parts[1], 10);
+  } else if (filterType === 'year' && filterValue) {
+    const y = parseInt(filterValue, 10);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const buckets = months.map((m) => ({
+      key: m,
+      label: m,
+      fullDate: `${m} ${y}`,
+      amount: 0,
+      count: 0
+    }));
+    txList.forEach(t => {
+      const d = parseTxDate(t.date || t.txnDate);
+      if (!d) return;
+      const mIdx = d.getMonth();
+      if (mIdx >= 0 && mIdx < 12) {
+        buckets[mIdx].amount += Number(t.amount || 0);
+        buckets[mIdx].count += 1;
+      }
+    });
+    return buckets;
+  } else {
+    const dates = txList
+      .map(t => parseTxDate(t.date || t.txnDate))
+      .filter(d => d !== null)
+      .sort((a, b) => a.getTime() - b.getTime());
+
+    if (dates.length > 0) {
+      const minDate = dates[0];
+      const maxDate = dates[dates.length - 1];
+      const diffDays = Math.round((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24));
+      if (diffDays > 35) {
+        const map = new Map();
+        txList.forEach(t => {
+          const d = parseTxDate(t.date || t.txnDate);
+          if (!d) return;
+          const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          const label = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+          if (!map.has(k)) {
+            map.set(k, { key: k, label, fullDate: label, amount: 0, count: 0 });
+          }
+          const item = map.get(k);
+          item.amount += Number(t.amount || 0);
+          item.count += 1;
+        });
+        return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0])).map(e => e[1]);
+      } else {
+        year = minDate.getFullYear();
+        month = minDate.getMonth() + 1;
+      }
+    } else {
+      year = new Date().getFullYear();
+      month = new Date().getMonth() + 1;
+    }
+  }
+
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const monthName = new Date(year, month - 1, 1).toLocaleDateString('en-US', { month: 'short' });
+  const days = [];
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dStr = String(d).padStart(2, '0');
+    days.push({
+      key: dStr,
+      label: dStr,
+      fullDate: `${d} ${monthName}`,
+      amount: 0,
+      count: 0
+    });
+  }
+
+  txList.forEach(t => {
+    const dObj = parseTxDate(t.date || t.txnDate);
+    if (!dObj) return;
+    const dayNum = dObj.getDate();
+    if (dayNum >= 1 && dayNum <= daysInMonth) {
+      days[dayNum - 1].amount += Number(t.amount || 0);
+      days[dayNum - 1].count += 1;
+    }
+  });
+
+  return days;
+};
+
+const buildWeekdayData = (txList) => {
+  const days = [
+    { day: 'Mon', fullName: 'Monday', amount: 0, count: 0, isWeekend: false },
+    { day: 'Tue', fullName: 'Tuesday', amount: 0, count: 0, isWeekend: false },
+    { day: 'Wed', fullName: 'Wednesday', amount: 0, count: 0, isWeekend: false },
+    { day: 'Thu', fullName: 'Thursday', amount: 0, count: 0, isWeekend: false },
+    { day: 'Fri', fullName: 'Friday', amount: 0, count: 0, isWeekend: false },
+    { day: 'Sat', fullName: 'Saturday', amount: 0, count: 0, isWeekend: true },
+    { day: 'Sun', fullName: 'Sunday', amount: 0, count: 0, isWeekend: true }
+  ];
+  const dayIndexMap = { 1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 0: 6 };
+
+  if (Array.isArray(txList)) {
+    txList.forEach(t => {
+      const d = parseTxDate(t.date || t.txnDate);
+      if (!d) return;
+      const dayOfWeek = d.getDay();
+      const idx = dayIndexMap[dayOfWeek];
+      if (idx !== undefined) {
+        days[idx].amount += Number(t.amount || 0);
+        days[idx].count += 1;
+      }
+    });
+  }
+
+  const total = days.reduce((sum, d) => sum + d.amount, 0);
+  const enriched = days.map(d => ({
+    ...d,
+    pct: total > 0 ? ((d.amount / total) * 100).toFixed(1) : '0.0'
+  }));
+
+  const weekdayTotal = enriched.filter(d => !d.isWeekend).reduce((sum, d) => sum + d.amount, 0);
+  const weekendTotal = enriched.filter(d => d.isWeekend).reduce((sum, d) => sum + d.amount, 0);
+  const weekendPct = total > 0 ? ((weekendTotal / total) * 100).toFixed(0) : '0';
+  const weekdayPct = total > 0 ? ((weekdayTotal / total) * 100).toFixed(0) : '0';
+  
+  const peakDay = enriched.reduce((max, d) => d.amount > max.amount ? d : max, enriched[0]);
+
+  return {
+    data: enriched,
+    total,
+    weekdayTotal,
+    weekendTotal,
+    weekendPct,
+    weekdayPct,
+    peakDay
+  };
+};
+
+const buildCumulativeData = (timelineData) => {
+  if (!Array.isArray(timelineData) || timelineData.length === 0) return [];
+  const total = timelineData.reduce((sum, d) => sum + d.amount, 0);
+  const n = timelineData.length;
+  const uniformDailyPace = n > 0 ? (total / n) : 0;
+
+  let runningTotal = 0;
+  return timelineData.map((d, index) => {
+    runningTotal += d.amount;
+    const paceTarget = Math.round(uniformDailyPace * (index + 1));
+    return {
+      label: d.label,
+      fullDate: d.fullDate,
+      actual: runningTotal,
+      pace: paceTarget,
+      diff: runningTotal - paceTarget
+    };
+  });
 };
 
 const AnalysisView = ({ refreshTrigger, balances }) => {
@@ -752,6 +937,211 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
   const cashIncomePct = totalIncomeNum > 0 ? ((cashIncome / totalIncomeNum) * 100).toFixed(1) : '0.0';
   const upiIncomePct = totalIncomeNum > 0 ? ((upiIncome / totalIncomeNum) * 100).toFixed(1) : '0.0';
 
+  // Filter transactions for spending analysis
+  const filteredSpendingTx = useMemo(() => {
+    if (!Array.isArray(allTx) || allTx.length === 0) return [];
+    const filterObj = getFilterObj(spendingFilterType, spendingFilterValue);
+    const start = filterObj.startDate ? new Date(filterObj.startDate).getTime() : null;
+    const end = filterObj.endDate ? new Date(filterObj.endDate).getTime() : null;
+
+    return allTx.filter(t => {
+      const isDebit = t.type === 'debit' || t.type === 'expense';
+      if (!isDebit) return false;
+      const d = parseTxDate(t.date || t.txnDate);
+      if (d && (start || end)) {
+        const time = d.getTime();
+        if (start && time < start) return false;
+        if (end && time > end) return false;
+      }
+      return true;
+    });
+  }, [allTx, spendingFilterType, spendingFilterValue]);
+
+  // Filter transactions for income analysis
+  const filteredIncomeTx = useMemo(() => {
+    if (!Array.isArray(allTx) || allTx.length === 0) return [];
+    const filterObj = getFilterObj(incomeFilterType, incomeFilterValue);
+    const start = filterObj.startDate ? new Date(filterObj.startDate).getTime() : null;
+    const end = filterObj.endDate ? new Date(filterObj.endDate).getTime() : null;
+
+    return allTx.filter(t => {
+      const isCredit = t.type === 'credit' || t.type === 'income';
+      if (!isCredit) return false;
+      const d = parseTxDate(t.date || t.txnDate);
+      if (d && (start || end)) {
+        const time = d.getTime();
+        if (start && time < start) return false;
+        if (end && time > end) return false;
+      }
+      return true;
+    });
+  }, [allTx, incomeFilterType, incomeFilterValue]);
+
+  // Spending 3 Trend Data Sets
+  const spendingTimelineData = useMemo(() => {
+    return buildTimelineData(filteredSpendingTx, spendingFilterType, spendingFilterValue);
+  }, [filteredSpendingTx, spendingFilterType, spendingFilterValue]);
+
+  const spendingTimelineStats = useMemo(() => {
+    const total = spendingTimelineData.reduce((sum, d) => sum + d.amount, 0);
+    const count = spendingTimelineData.length;
+    const avg = count > 0 ? (total / count) : 0;
+    const peak = spendingTimelineData.reduce((max, d) => d.amount > max.amount ? d : max, { amount: 0, label: '-' });
+    const activeDays = spendingTimelineData.filter(d => d.amount > 0).length;
+    return { total, avg, peak, activeDays };
+  }, [spendingTimelineData]);
+
+  const spendingWeekdayData = useMemo(() => {
+    return buildWeekdayData(filteredSpendingTx);
+  }, [filteredSpendingTx]);
+
+  const spendingCumulativeData = useMemo(() => {
+    return buildCumulativeData(spendingTimelineData);
+  }, [spendingTimelineData]);
+
+  // Income 3 Trend Data Sets
+  const incomeTimelineData = useMemo(() => {
+    return buildTimelineData(filteredIncomeTx, incomeFilterType, incomeFilterValue);
+  }, [filteredIncomeTx, incomeFilterType, incomeFilterValue]);
+
+  const incomeTimelineStats = useMemo(() => {
+    const total = incomeTimelineData.reduce((sum, d) => sum + d.amount, 0);
+    const count = incomeTimelineData.length;
+    const avg = count > 0 ? (total / count) : 0;
+    const peak = incomeTimelineData.reduce((max, d) => d.amount > max.amount ? d : max, { amount: 0, label: '-' });
+    const activeDays = incomeTimelineData.filter(d => d.amount > 0).length;
+    return { total, avg, peak, activeDays };
+  }, [incomeTimelineData]);
+
+  const incomeWeekdayData = useMemo(() => {
+    return buildWeekdayData(filteredIncomeTx);
+  }, [filteredIncomeTx]);
+
+  const incomeCumulativeData = useMemo(() => {
+    return buildCumulativeData(incomeTimelineData);
+  }, [incomeTimelineData]);
+
+  // Custom Chart Tooltips (Strictly zero emojis)
+  const CustomTimelineTooltip = ({ active, payload, isSpend, avg }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      const amount = Number(data.amount || 0);
+      const diff = avg > 0 ? (amount - avg) : 0;
+      const isAbove = diff > 0;
+      return (
+        <div style={{
+          backgroundColor: 'var(--card-bg, #fff)',
+          border: '1px solid var(--card-border, #e2e8f0)',
+          borderRadius: '10px',
+          padding: '0.65rem 0.85rem',
+          boxShadow: 'var(--card-shadow, 0 4px 12px rgba(0,0,0,0.1))',
+          fontSize: '0.82rem'
+        }}>
+          <p style={{ margin: '0 0 0.35rem 0', fontWeight: 700, color: 'var(--text-primary)' }}>{data.fullDate || data.label}</p>
+          <p style={{ margin: '0 0 0.25rem 0', color: isSpend ? 'var(--danger)' : 'var(--success)', display: 'flex', justifyContent: 'space-between', gap: '1.25rem' }}>
+            <span>{isSpend ? 'Spent :' : 'Received :'}</span>
+            <span style={{ fontWeight: 700 }}>{getCurrency()}{formatAmt(amount)}</span>
+          </p>
+          {data.count > 0 && (
+            <p style={{ margin: '0 0 0.25rem 0', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'space-between', gap: '1.25rem' }}>
+              <span>Transactions :</span>
+              <span style={{ fontWeight: 600 }}>{data.count}</span>
+            </p>
+          )}
+          {avg > 0 && amount > 0 && (
+            <div style={{
+              borderTop: '1px solid var(--card-border, #e2e8f0)',
+              paddingTop: '0.35rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: '1.25rem',
+              fontSize: '0.75rem',
+              color: isAbove ? (isSpend ? 'var(--danger)' : 'var(--success)') : 'var(--text-muted)'
+            }}>
+              <span>vs Daily Avg :</span>
+              <span style={{ fontWeight: 600 }}>{isAbove ? '+' : '-'}{getCurrency()}{formatAmt(Math.abs(diff))}</span>
+            </div>
+          )}
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const CustomWeekdayTooltip = ({ active, payload, isSpend }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div style={{
+          backgroundColor: 'var(--card-bg, #fff)',
+          border: '1px solid var(--card-border, #e2e8f0)',
+          borderRadius: '10px',
+          padding: '0.65rem 0.85rem',
+          boxShadow: 'var(--card-shadow, 0 4px 12px rgba(0,0,0,0.1))',
+          fontSize: '0.82rem'
+        }}>
+          <p style={{ margin: '0 0 0.35rem 0', fontWeight: 700, color: 'var(--text-primary)' }}>
+            {data.fullName || data.day} {data.isWeekend ? '(Weekend)' : '(Weekday)'}
+          </p>
+          <p style={{ margin: '0 0 0.25rem 0', color: isSpend ? 'var(--danger)' : 'var(--success)', display: 'flex', justifyContent: 'space-between', gap: '1.25rem' }}>
+            <span>Total :</span>
+            <span style={{ fontWeight: 700 }}>{getCurrency()}{formatAmt(data.amount)}</span>
+          </p>
+          <p style={{ margin: '0 0 0.25rem 0', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'space-between', gap: '1.25rem' }}>
+            <span>Share :</span>
+            <span style={{ fontWeight: 600 }}>{data.pct}% of period</span>
+          </p>
+          <p style={{ margin: 0, color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', gap: '1.25rem', fontSize: '0.75rem' }}>
+            <span>Txn Count :</span>
+            <span>{data.count} txns</span>
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const CustomCumulativeTooltip = ({ active, payload, isSpend }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      const diff = data.diff || 0;
+      const isAhead = diff > 0;
+      return (
+        <div style={{
+          backgroundColor: 'var(--card-bg, #fff)',
+          border: '1px solid var(--card-border, #e2e8f0)',
+          borderRadius: '10px',
+          padding: '0.65rem 0.85rem',
+          boxShadow: 'var(--card-shadow, 0 4px 12px rgba(0,0,0,0.1))',
+          fontSize: '0.82rem'
+        }}>
+          <p style={{ margin: '0 0 0.35rem 0', fontWeight: 700, color: 'var(--text-primary)' }}>{data.fullDate || data.label}</p>
+          <p style={{ margin: '0 0 0.25rem 0', color: isSpend ? 'var(--danger)' : 'var(--success)', display: 'flex', justifyContent: 'space-between', gap: '1.25rem' }}>
+            <span>Actual Cumulative :</span>
+            <span style={{ fontWeight: 700 }}>{getCurrency()}{formatAmt(data.actual)}</span>
+          </p>
+          <p style={{ margin: '0 0 0.25rem 0', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', gap: '1.25rem' }}>
+            <span>Steady Pace Target :</span>
+            <span style={{ fontWeight: 600 }}>{getCurrency()}{formatAmt(data.pace)}</span>
+          </p>
+          <div style={{
+            borderTop: '1px solid var(--card-border, #e2e8f0)',
+            paddingTop: '0.35rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: '1.25rem',
+            fontSize: '0.75rem',
+            color: isAhead ? (isSpend ? 'var(--danger)' : 'var(--success)') : 'var(--text-muted)'
+          }}>
+            <span>Variance :</span>
+            <span style={{ fontWeight: 600 }}>{isAhead ? '+' : '-'}{getCurrency()}{formatAmt(Math.abs(diff))}</span>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   // Global empty state check removed to ensure filter controls remain accessible
 
   return (
@@ -851,13 +1241,137 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
               className="charts-grid analysis-charts-grid"
               style={{
                 display: 'grid',
-                gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(320px, 1fr))',
-                gap: '24px',
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, minmax(0, 1fr))',
+                gap: isMobile ? '16px' : '20px',
                 alignItems: 'stretch',
-                margin: 0
+                margin: 0,
+                width: '100%',
+                boxSizing: 'border-box'
               }}
             >
-              {/* 1. CASH VS UPI SPENDING - LEFT CARD (16px internal padding) */}
+              {/* 1. DAILY SPENDING PULSE - FULL WIDTH HERO CARD (ROW 1: 100%) */}
+              <div
+                className="chart-wrapper analysis-hero-card"
+                style={{
+                  gridColumn: isMobile ? 'span 1' : '1 / -1',
+                  width: '100%',
+                  background: 'var(--bg-card-subtle)',
+                  border: '1px solid var(--card-border)',
+                  borderRadius: '14px',
+                  padding: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minHeight: '290px',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', minHeight: '26px', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Activity size={18} style={{ color: 'var(--danger)' }} />
+                    <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.02rem', fontWeight: 600 }}>
+                      Daily Spending Pulse
+                    </h4>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                    <span style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      background: 'var(--empty-state-bg)',
+                      border: '1px solid var(--card-border)',
+                      color: 'var(--text-muted)'
+                    }}>
+                      Avg: {getCurrency()}{formatCompactAmt(spendingTimelineStats.avg)}/day
+                    </span>
+                    {spendingTimelineStats.peak?.amount > 0 && (
+                      <span style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        border: '1px solid rgba(239, 68, 68, 0.25)',
+                        color: 'var(--danger)'
+                      }}>
+                        Peak: {getCurrency()}{formatCompactAmt(spendingTimelineStats.peak.amount)} ({spendingTimelineStats.peak.label})
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* AreaChart */}
+                <div style={{ height: isMobile ? '180px' : '200px', width: '100%' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={spendingTimelineData} margin={{ top: 10, right: 15, left: -5, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="spendPulseGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4} />
+                          <stop offset="95%" stopColor="#ef4444" stopOpacity={0.02} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" opacity={0.6} />
+                      <XAxis 
+                        dataKey="label" 
+                        stroke="var(--text-secondary)" 
+                        tick={{ fontSize: 11 }}
+                        interval={isMobile ? 'preserveStartEnd' : Math.max(0, Math.ceil(spendingTimelineData.length / 15))}
+                      />
+                      <YAxis 
+                        stroke="var(--text-secondary)" 
+                        tick={{ fontSize: 11 }}
+                        width={42}
+                        tickFormatter={(v) => v >= 100000 ? `${(v / 100000).toFixed(1)}L` : v >= 1000 ? `${Math.round(v / 1000)}k` : v}
+                      />
+                      <Tooltip content={<CustomTimelineTooltip isSpend={true} avg={spendingTimelineStats.avg} />} />
+                      {spendingTimelineStats.avg > 0 && (
+                        <ReferenceLine 
+                          y={spendingTimelineStats.avg} 
+                          stroke="#ef4444" 
+                          strokeDasharray="3 3" 
+                          strokeWidth={1.5}
+                          opacity={0.65} 
+                        />
+                      )}
+                      <Area 
+                        type="monotone" 
+                        dataKey="amount" 
+                        stroke="#ef4444" 
+                        strokeWidth={2}
+                        fillOpacity={1} 
+                        fill="url(#spendPulseGrad)" 
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Bottom Summary Pill */}
+                <div style={{
+                  marginTop: '0.85rem',
+                  textAlign: 'center',
+                  fontSize: '0.82rem',
+                  color: 'var(--text-secondary)',
+                  background: 'var(--card-bg)',
+                  padding: '0.55rem 0.75rem',
+                  borderRadius: '10px',
+                  border: '1px solid var(--card-border)',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '0.45rem',
+                  width: '100%'
+                }}>
+                  <span>Total Volume: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{formatAmt(spendingTimelineStats.total)}</strong></span>
+                  <span style={{ opacity: 0.4 }}>|</span>
+                  <span>Daily Avg: <strong style={{ color: 'var(--danger)' }}>{getCurrency()}{formatAmt(spendingTimelineStats.avg)}</strong></span>
+                  <span style={{ opacity: 0.4 }}>|</span>
+                  <span>Active Days: <strong style={{ color: 'var(--text-primary)' }}>{spendingTimelineStats.activeDays} of {spendingTimelineData.length}</strong></span>
+                </div>
+              </div>
+
+              {/* 2. CASH VS UPI SPENDING - ROW 2 LEFT CARD (50%) */}
               <div
                 className="chart-wrapper"
                 style={{
@@ -869,7 +1383,8 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
-                  minHeight: '290px'
+                  minHeight: '290px',
+                  boxSizing: 'border-box'
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', minHeight: '26px' }}>
@@ -940,7 +1455,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                 </div>
               </div>
 
-              {/* 2. SPEND BY CATEGORY - RIGHT CARD (16px internal padding) */}
+              {/* 3. SPEND BY CATEGORY - ROW 2 RIGHT CARD (50%) */}
               <div
                 className="chart-wrapper"
                 style={{
@@ -952,7 +1467,8 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
-                  minHeight: '290px'
+                  minHeight: '290px',
+                  boxSizing: 'border-box'
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', minHeight: '26px', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -1237,6 +1753,193 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                   </div>
                 </div>
               </div>
+
+              {/* 4. DAY-OF-WEEK RHYTHM - ROW 3 LEFT CARD (50%) */}
+              <div
+                className="chart-wrapper"
+                style={{
+                  width: '100%',
+                  background: 'var(--bg-card-subtle)',
+                  border: '1px solid var(--card-border)',
+                  borderRadius: '14px',
+                  padding: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minHeight: '290px',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', minHeight: '26px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Calendar size={18} style={{ color: 'var(--danger)' }} />
+                    <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.02rem', fontWeight: 600 }}>
+                      Day-of-Week Rhythm
+                    </h4>
+                  </div>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    background: 'var(--empty-state-bg)',
+                    border: '1px solid var(--card-border)',
+                    color: 'var(--text-muted)'
+                  }}>
+                    Peak: {spendingWeekdayData.peakDay?.day || '-'}
+                  </span>
+                </div>
+
+                <div style={{ height: '175px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={spendingWeekdayData.data} margin={{ top: 10, right: 15, left: -5, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" opacity={0.6} />
+                      <XAxis dataKey="day" stroke="var(--text-secondary)" tick={{ fontSize: 12 }} />
+                      <YAxis 
+                        stroke="var(--text-secondary)" 
+                        tick={{ fontSize: 11 }}
+                        width={42}
+                        tickFormatter={(v) => v >= 100000 ? `${(v / 100000).toFixed(1)}L` : v >= 1000 ? `${Math.round(v / 1000)}k` : v}
+                      />
+                      <Tooltip content={<CustomWeekdayTooltip isSpend={true} />} />
+                      <Bar dataKey="amount" radius={[6, 6, 0, 0]} maxBarSize={38}>
+                        {spendingWeekdayData.data.map((entry, index) => {
+                          const isWeekend = entry.isWeekend;
+                          const isPeak = entry.day === spendingWeekdayData.peakDay?.day && entry.amount > 0;
+                          const fill = isPeak ? '#ef4444' : isWeekend ? '#f87171' : '#fca5a5';
+                          return <Cell key={`spend-weekday-bar-${index}`} fill={fill} />;
+                        })}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Bottom Summary Pill */}
+                <div style={{
+                  marginTop: '0.85rem',
+                  textAlign: 'center',
+                  fontSize: '0.82rem',
+                  color: 'var(--text-secondary)',
+                  background: 'var(--card-bg)',
+                  padding: '0.55rem 0.75rem',
+                  borderRadius: '10px',
+                  border: '1px solid var(--card-border)',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '0.45rem',
+                  width: '100%'
+                }}>
+                  <span>Weekdays: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{formatCompactAmt(spendingWeekdayData.weekdayTotal)} ({spendingWeekdayData.weekdayPct}%)</strong></span>
+                  <span style={{ opacity: 0.4 }}>|</span>
+                  <span>Weekend: <strong style={{ color: '#ef4444' }}>{getCurrency()}{formatCompactAmt(spendingWeekdayData.weekendTotal)} ({spendingWeekdayData.weekendPct}%)</strong></span>
+                </div>
+              </div>
+
+              {/* 5. CUMULATIVE SPEND PACE - ROW 3 RIGHT CARD (50%) */}
+              <div
+                className="chart-wrapper"
+                style={{
+                  width: '100%',
+                  background: 'var(--bg-card-subtle)',
+                  border: '1px solid var(--card-border)',
+                  borderRadius: '14px',
+                  padding: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minHeight: '290px',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', minHeight: '26px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Target size={18} style={{ color: 'var(--danger)' }} />
+                    <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.02rem', fontWeight: 600 }}>
+                      Cumulative Spend Pace
+                    </h4>
+                  </div>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    background: 'var(--empty-state-bg)',
+                    border: '1px solid var(--card-border)',
+                    color: 'var(--text-muted)'
+                  }}>
+                    Actual vs Steady Pace
+                  </span>
+                </div>
+
+                <div style={{ height: '175px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={spendingCumulativeData} margin={{ top: 10, right: 15, left: -5, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" opacity={0.6} />
+                      <XAxis 
+                        dataKey="label" 
+                        stroke="var(--text-secondary)" 
+                        tick={{ fontSize: 11 }}
+                        interval={isMobile ? 'preserveStartEnd' : Math.max(0, Math.ceil(spendingCumulativeData.length / 10))}
+                      />
+                      <YAxis 
+                        stroke="var(--text-secondary)" 
+                        tick={{ fontSize: 11 }}
+                        width={42}
+                        tickFormatter={(v) => v >= 100000 ? `${(v / 100000).toFixed(1)}L` : v >= 1000 ? `${Math.round(v / 1000)}k` : v}
+                      />
+                      <Tooltip content={<CustomCumulativeTooltip isSpend={true} />} />
+                      <Line 
+                        type="monotone" 
+                        dataKey="actual" 
+                        name="Actual"
+                        stroke="var(--danger)" 
+                        strokeWidth={2.5}
+                        dot={false}
+                        activeDot={{ r: 5 }}
+                      />
+                      <Line 
+                        type="linear" 
+                        dataKey="pace" 
+                        name="Steady Pace"
+                        stroke="var(--text-muted)" 
+                        strokeDasharray="4 4" 
+                        strokeWidth={1.8}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Bottom Summary Pill */}
+                <div style={{
+                  marginTop: '0.85rem',
+                  textAlign: 'center',
+                  fontSize: '0.82rem',
+                  color: 'var(--text-secondary)',
+                  background: 'var(--card-bg)',
+                  padding: '0.55rem 0.75rem',
+                  borderRadius: '10px',
+                  border: '1px solid var(--card-border)',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '0.45rem',
+                  width: '100%'
+                }}>
+                  <span>Cumulative: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{formatAmt(spendingCumulativeData[spendingCumulativeData.length - 1]?.actual || 0)}</strong></span>
+                  <span style={{ opacity: 0.4 }}>|</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ width: '8px', height: '2px', background: 'var(--danger)', display: 'inline-block' }} /> Actual
+                  </span>
+                  <span style={{ opacity: 0.4 }}>|</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ width: '8px', height: '0px', borderTop: '2px dashed var(--text-muted)', display: 'inline-block' }} /> Steady Pace
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -1293,176 +1996,160 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
           </div>
         ) : (
           <div className="analysis-charts-container" style={{ padding: isMobile ? '0.75rem 0.85rem' : '1.5rem', width: '100%', boxSizing: 'border-box' }}>
-            <div className="charts-grid">
-            {/* 1. CASH VS UPI INCOME - LEFT CARD (16px internal padding) */}
             <div
-              className="chart-wrapper"
+              className="charts-grid analysis-charts-grid"
               style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, minmax(0, 1fr))',
+                gap: isMobile ? '16px' : '20px',
+                alignItems: 'stretch',
+                margin: 0,
                 width: '100%',
-                background: 'var(--bg-card-subtle)',
-                border: '1px solid var(--card-border)',
-                borderRadius: '14px',
-                padding: '16px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                minHeight: '290px'
+                boxSizing: 'border-box'
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', minHeight: '26px' }}>
-                <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.02rem', fontWeight: 600 }}>
-                  Cash vs UPI Income
-                </h4>
-                <span style={{
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  padding: '2px 8px',
-                  borderRadius: '12px',
-                  background: 'var(--empty-state-bg)',
+              {/* 1. DAILY INCOME PULSE - FULL WIDTH HERO CARD (ROW 1: 100%) */}
+              <div
+                className="chart-wrapper analysis-hero-card"
+                style={{
+                  gridColumn: isMobile ? 'span 1' : '1 / -1',
+                  width: '100%',
+                  background: 'var(--bg-card-subtle)',
                   border: '1px solid var(--card-border)',
-                  color: 'var(--text-muted)'
-                }}>
-                  Wallets
-                </span>
-              </div>
-
-              {/* Bar chart area */}
-              <div style={{ height: '175px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={walletIncomeData} margin={{ top: 10, right: 15, left: -5, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
-                    <XAxis dataKey="name" stroke="var(--text-secondary)" tick={{ fontSize: 12 }} />
-                    <YAxis 
-                      stroke="var(--text-secondary)" 
-                      tick={{ fontSize: 11 }}
-                      width={42}
-                      tickFormatter={(v) => v >= 100000 ? `${(v / 100000).toFixed(1)}L` : v >= 1000 ? `${Math.round(v / 1000)}k` : v}
-                    />
-                    <Tooltip 
-                      cursor={{ fill: 'var(--hover-bg)' }}
-                      contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', color: 'var(--text-primary)' }}
-                      formatter={(value) => [`${getCurrency()}${formatAmt(value)}`, 'Income']}
-                    />
-                    <Bar dataKey="value" fill="var(--success)" barSize={68} maxBarSize={75} radius={[6, 6, 0, 0]}>
-                      {walletIncomeData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.name === 'Cash' ? '#10b981' : '#3b82f6'} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Total | Cash | UPI pill */}
-              <div style={{
-                marginTop: '0.85rem',
-                textAlign: 'center',
-                fontSize: '0.82rem',
-                color: 'var(--text-secondary)',
-                background: 'var(--card-bg)',
-                padding: '0.55rem 0.75rem',
-                borderRadius: '10px',
-                border: '1px solid var(--card-border)',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: '0.45rem',
-                width: '100%'
-              }}>
-                <span>Total: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{formatAmt(totalIncome)}</strong></span>
-                <span style={{ opacity: 0.4 }}>|</span>
-                <span style={{ color: '#10b981', fontWeight: '600' }}>Cash: {getCurrency()}{formatAmt(cashIncome)} ({cashIncomePct}%)</span>
-                <span style={{ opacity: 0.4 }}>|</span>
-                <span style={{ color: '#3b82f6', fontWeight: '600' }}>UPI: {getCurrency()}{formatAmt(upiIncome)} ({upiIncomePct}%)</span>
-              </div>
-            </div>
-
-            {/* 2. INCOME BY CATEGORY - RIGHT CARD (16px internal padding) */}
-            <div
-              className="chart-wrapper"
-              style={{
-                width: '100%',
-                background: 'var(--bg-card-subtle)',
-                border: '1px solid var(--card-border)',
-                borderRadius: '14px',
-                padding: '16px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                minHeight: '290px'
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', minHeight: '26px', flexWrap: 'wrap', gap: '0.5rem' }}>
-                <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.02rem', fontWeight: 600 }}>
-                  Income by Category
-                </h4>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                  {/* Wallet Filter Toggle: Both | UPI | Cash (No emojis) */}
-                  <div style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    background: 'var(--card-bg)',
-                    border: '1px solid var(--card-border)',
-                    borderRadius: '20px',
-                    padding: '2px',
-                    gap: '2px'
-                  }}>
-                    <button
-                      type="button"
-                      onClick={() => setIncomeCategoryWalletFilter('all')}
-                      style={{
-                        border: 'none',
-                        outline: 'none',
-                        cursor: 'pointer',
-                        padding: '2px 8px',
-                        borderRadius: '16px',
-                        fontSize: '0.72rem',
-                        fontWeight: incomeCategoryWalletFilter === 'all' ? 700 : 500,
-                        background: incomeCategoryWalletFilter === 'all' ? 'var(--text-primary)' : 'transparent',
-                        color: incomeCategoryWalletFilter === 'all' ? 'var(--bg-main, #fff)' : 'var(--text-secondary)',
-                        transition: 'all 0.15s ease'
-                      }}
-                    >
-                      Both
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setIncomeCategoryWalletFilter('UPI')}
-                      style={{
-                        border: 'none',
-                        outline: 'none',
-                        cursor: 'pointer',
-                        padding: '2px 8px',
-                        borderRadius: '16px',
-                        fontSize: '0.72rem',
-                        fontWeight: incomeCategoryWalletFilter === 'UPI' ? 700 : 500,
-                        background: incomeCategoryWalletFilter === 'UPI' ? 'var(--accent-primary, #3b82f6)' : 'transparent',
-                        color: incomeCategoryWalletFilter === 'UPI' ? '#fff' : 'var(--text-secondary)',
-                        transition: 'all 0.15s ease'
-                      }}
-                    >
-                      UPI
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setIncomeCategoryWalletFilter('Cash')}
-                      style={{
-                        border: 'none',
-                        outline: 'none',
-                        cursor: 'pointer',
-                        padding: '2px 8px',
-                        borderRadius: '16px',
-                        fontSize: '0.72rem',
-                        fontWeight: incomeCategoryWalletFilter === 'Cash' ? 700 : 500,
-                        background: incomeCategoryWalletFilter === 'Cash' ? '#10b981' : 'transparent',
-                        color: incomeCategoryWalletFilter === 'Cash' ? '#fff' : 'var(--text-secondary)',
-                        transition: 'all 0.15s ease'
-                      }}
-                    >
-                      Cash
-                    </button>
+                  borderRadius: '14px',
+                  padding: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minHeight: '290px',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', minHeight: '26px', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Activity size={18} style={{ color: 'var(--success)' }} />
+                    <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.02rem', fontWeight: 600 }}>
+                      Daily Income Pulse
+                    </h4>
                   </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                    <span style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      background: 'var(--empty-state-bg)',
+                      border: '1px solid var(--card-border)',
+                      color: 'var(--text-muted)'
+                    }}>
+                      Avg: {getCurrency()}{formatCompactAmt(incomeTimelineStats.avg)}/day
+                    </span>
+                    {incomeTimelineStats.peak?.amount > 0 && (
+                      <span style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        background: 'rgba(16, 185, 129, 0.1)',
+                        border: '1px solid rgba(16, 185, 129, 0.25)',
+                        color: 'var(--success)'
+                      }}>
+                        Peak: {getCurrency()}{formatCompactAmt(incomeTimelineStats.peak.amount)} ({incomeTimelineStats.peak.label})
+                      </span>
+                    )}
+                  </div>
+                </div>
 
+                {/* AreaChart */}
+                <div style={{ height: isMobile ? '180px' : '200px', width: '100%' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={incomeTimelineData} margin={{ top: 10, right: 15, left: -5, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="incomePulseGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0.02} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" opacity={0.6} />
+                      <XAxis 
+                        dataKey="label" 
+                        stroke="var(--text-secondary)" 
+                        tick={{ fontSize: 11 }}
+                        interval={isMobile ? 'preserveStartEnd' : Math.max(0, Math.ceil(incomeTimelineData.length / 15))}
+                      />
+                      <YAxis 
+                        stroke="var(--text-secondary)" 
+                        tick={{ fontSize: 11 }}
+                        width={42}
+                        tickFormatter={(v) => v >= 100000 ? `${(v / 100000).toFixed(1)}L` : v >= 1000 ? `${Math.round(v / 1000)}k` : v}
+                      />
+                      <Tooltip content={<CustomTimelineTooltip isSpend={false} avg={incomeTimelineStats.avg} />} />
+                      {incomeTimelineStats.avg > 0 && (
+                        <ReferenceLine 
+                          y={incomeTimelineStats.avg} 
+                          stroke="#10b981" 
+                          strokeDasharray="3 3" 
+                          strokeWidth={1.5}
+                          opacity={0.65} 
+                        />
+                      )}
+                      <Area 
+                        type="monotone" 
+                        dataKey="amount" 
+                        stroke="#10b981" 
+                        strokeWidth={2}
+                        fillOpacity={1} 
+                        fill="url(#incomePulseGrad)" 
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Bottom Summary Pill */}
+                <div style={{
+                  marginTop: '0.85rem',
+                  textAlign: 'center',
+                  fontSize: '0.82rem',
+                  color: 'var(--text-secondary)',
+                  background: 'var(--card-bg)',
+                  padding: '0.55rem 0.75rem',
+                  borderRadius: '10px',
+                  border: '1px solid var(--card-border)',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '0.45rem',
+                  width: '100%'
+                }}>
+                  <span>Total Volume: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{formatAmt(incomeTimelineStats.total)}</strong></span>
+                  <span style={{ opacity: 0.4 }}>|</span>
+                  <span>Daily Avg: <strong style={{ color: 'var(--success)' }}>{getCurrency()}{formatAmt(incomeTimelineStats.avg)}</strong></span>
+                  <span style={{ opacity: 0.4 }}>|</span>
+                  <span>Active Days: <strong style={{ color: 'var(--text-primary)' }}>{incomeTimelineStats.activeDays} of {incomeTimelineData.length}</strong></span>
+                </div>
+              </div>
+
+              {/* 2. CASH VS UPI INCOME - ROW 2 LEFT CARD (50%) */}
+              <div
+                className="chart-wrapper"
+                style={{
+                  width: '100%',
+                  background: 'var(--bg-card-subtle)',
+                  border: '1px solid var(--card-border)',
+                  borderRadius: '14px',
+                  padding: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minHeight: '290px',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', minHeight: '26px' }}>
+                  <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.02rem', fontWeight: 600 }}>
+                    Cash vs UPI Income
+                  </h4>
                   <span style={{
                     fontSize: '0.75rem',
                     fontWeight: 600,
@@ -1472,208 +2159,546 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                     border: '1px solid var(--card-border)',
                     color: 'var(--text-muted)'
                   }}>
-                    {incomeCategoryData.length}
+                    Wallets
                   </span>
+                </div>
+
+                {/* Bar chart area */}
+                <div style={{ height: '175px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={walletIncomeData} margin={{ top: 10, right: 15, left: -5, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
+                      <XAxis dataKey="name" stroke="var(--text-secondary)" tick={{ fontSize: 12 }} />
+                      <YAxis 
+                        stroke="var(--text-secondary)" 
+                        tick={{ fontSize: 11 }}
+                        width={42}
+                        tickFormatter={(v) => v >= 100000 ? `${(v / 100000).toFixed(1)}L` : v >= 1000 ? `${Math.round(v / 1000)}k` : v}
+                      />
+                      <Tooltip 
+                        cursor={{ fill: 'var(--hover-bg)' }}
+                        contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', color: 'var(--text-primary)' }}
+                        formatter={(value) => [`${getCurrency()}${formatAmt(value)}`, 'Income']}
+                      />
+                      <Bar dataKey="value" fill="var(--success)" barSize={68} maxBarSize={75} radius={[6, 6, 0, 0]}>
+                        {walletIncomeData.map((entry, index) => (
+                          <Cell key={`income-cell-${index}`} fill={entry.name === 'Cash' ? '#10b981' : '#3b82f6'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Total | Cash | UPI pill */}
+                <div style={{
+                  marginTop: '0.85rem',
+                  textAlign: 'center',
+                  fontSize: '0.82rem',
+                  color: 'var(--text-secondary)',
+                  background: 'var(--card-bg)',
+                  padding: '0.55rem 0.75rem',
+                  borderRadius: '10px',
+                  border: '1px solid var(--card-border)',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '0.45rem',
+                  width: '100%'
+                }}>
+                  <span>Total: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{formatAmt(totalIncome)}</strong></span>
+                  <span style={{ opacity: 0.4 }}>|</span>
+                  <span style={{ color: '#10b981', fontWeight: '600' }}>Cash: {getCurrency()}{formatAmt(cashIncome)} ({cashIncomePct}%)</span>
+                  <span style={{ opacity: 0.4 }}>|</span>
+                  <span style={{ color: '#3b82f6', fontWeight: '600' }}>UPI: {getCurrency()}{formatAmt(upiIncome)} ({upiIncomePct}%)</span>
                 </div>
               </div>
 
-              {/* Side-by-side Donut & Category List Container */}
-              <div className="donut-category-container" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, minHeight: '220px' }}>
-                {/* Donut Chart */}
-                <div style={{ position: 'relative', width: '135px', height: '135px', flexShrink: 0, margin: '0 auto' }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart style={{ outline: 'none' }}>
-                      <Pie
-                        data={incomeCategoryData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={38}
-                        outerRadius={56}
-                        paddingAngle={3}
-                        minAngle={4}
-                        dataKey="value"
-                        tabIndex={-1}
-                        style={{ outline: 'none' }}
-                        onMouseEnter={(_, index) => {
-                          const cat = incomeCategoryData[index];
-                          if (cat) {
-                            setHoveredIncomeCategory(cat);
-                            const el = document.getElementById(`income-cat-row-${index}`);
-                            if (el) {
-                              el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                            }
-                          }
-                        }}
-                        onMouseLeave={() => setHoveredIncomeCategory(null)}
-                      >
-                        {incomeCategoryData.map((entry, index) => {
-                          const isHovered = hoveredIncomeCategory && hoveredIncomeCategory.name === entry.name;
-                          return (
-                            <Cell
-                              key={`cell-${index}`}
-                              fill={getCategoryColor(entry.name, index)}
-                              stroke="var(--card-bg)"
-                              strokeWidth={isHovered ? 2.5 : 1.5}
-                              tabIndex={-1}
-                              style={{ cursor: 'pointer', transition: 'all 0.15s ease', outline: 'none' }}
-                              onMouseEnter={() => {
-                                setHoveredIncomeCategory(entry);
-                                const el = document.getElementById(`income-cat-row-${index}`);
-                                if (el) {
-                                  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                                }
-                              }}
-                              onMouseLeave={() => setHoveredIncomeCategory(null)}
-                            />
-                          );
-                        })}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                  {/* Center Hub: Clean TOTAL INCOME */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                      textAlign: 'center',
-                      pointerEvents: 'none',
-                      display: 'flex',
-                      flexDirection: 'column',
+              {/* 3. INCOME BY CATEGORY - ROW 2 RIGHT CARD (50%) */}
+              <div
+                className="chart-wrapper"
+                style={{
+                  width: '100%',
+                  background: 'var(--bg-card-subtle)',
+                  border: '1px solid var(--card-border)',
+                  borderRadius: '14px',
+                  padding: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minHeight: '290px',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', minHeight: '26px', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.02rem', fontWeight: 600 }}>
+                    Income by Category
+                  </h4>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                    {/* Wallet Filter Toggle: Both | UPI | Cash (No emojis) */}
+                    <div style={{
+                      display: 'inline-flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '70px'
-                    }}
-                  >
-                    <span style={{ fontSize: '0.52rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                      {incomeCategoryWalletFilter === 'UPI' ? 'UPI' : incomeCategoryWalletFilter === 'Cash' ? 'CASH' : 'TOTAL'}
-                    </span>
-                    <span style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-primary)', margin: '1px 0', lineHeight: 1.1, whiteSpace: 'nowrap' }}>
-                      {getCurrency()}{formatCompactAmt(totalIncomeCategory)}
+                      background: 'var(--card-bg)',
+                      border: '1px solid var(--card-border)',
+                      borderRadius: '20px',
+                      padding: '2px',
+                      gap: '2px'
+                    }}>
+                      <button
+                        type="button"
+                        onClick={() => setIncomeCategoryWalletFilter('all')}
+                        style={{
+                          border: 'none',
+                          outline: 'none',
+                          cursor: 'pointer',
+                          padding: '2px 8px',
+                          borderRadius: '16px',
+                          fontSize: '0.72rem',
+                          fontWeight: incomeCategoryWalletFilter === 'all' ? 700 : 500,
+                          background: incomeCategoryWalletFilter === 'all' ? 'var(--text-primary)' : 'transparent',
+                          color: incomeCategoryWalletFilter === 'all' ? 'var(--bg-main, #fff)' : 'var(--text-secondary)',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        Both
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIncomeCategoryWalletFilter('UPI')}
+                        style={{
+                          border: 'none',
+                          outline: 'none',
+                          cursor: 'pointer',
+                          padding: '2px 8px',
+                          borderRadius: '16px',
+                          fontSize: '0.72rem',
+                          fontWeight: incomeCategoryWalletFilter === 'UPI' ? 700 : 500,
+                          background: incomeCategoryWalletFilter === 'UPI' ? 'var(--accent-primary, #3b82f6)' : 'transparent',
+                          color: incomeCategoryWalletFilter === 'UPI' ? '#fff' : 'var(--text-secondary)',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        UPI
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIncomeCategoryWalletFilter('Cash')}
+                        style={{
+                          border: 'none',
+                          outline: 'none',
+                          cursor: 'pointer',
+                          padding: '2px 8px',
+                          borderRadius: '16px',
+                          fontSize: '0.72rem',
+                          fontWeight: incomeCategoryWalletFilter === 'Cash' ? 700 : 500,
+                          background: incomeCategoryWalletFilter === 'Cash' ? '#10b981' : 'transparent',
+                          color: incomeCategoryWalletFilter === 'Cash' ? '#fff' : 'var(--text-secondary)',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        Cash
+                      </button>
+                    </div>
+
+                    <span style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      background: 'var(--empty-state-bg)',
+                      border: '1px solid var(--card-border)',
+                      color: 'var(--text-muted)'
+                    }}>
+                      {incomeCategoryData.length}
                     </span>
                   </div>
                 </div>
 
-                {/* Category Breakdown Ranking List */}
-                <div
-                  className="custom-scrollbar"
-                  style={{
-                    flex: isMobile ? 'none' : 1,
-                    width: '100%',
-                    minWidth: 0,
-                    height: isMobile ? '230px' : '220px',
-                    maxHeight: isMobile ? '230px' : '220px',
-                    overflowY: 'auto',
-                    overflowX: 'hidden',
-                    WebkitOverflowScrolling: 'touch',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.35rem',
-                    paddingRight: '6px'
-                  }}
-                >
-                  {incomeCategoryData.length === 0 ? (
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      height: '100%',
-                      color: 'var(--text-muted)',
-                      fontSize: '0.82rem',
-                      textAlign: 'center',
-                      padding: '1rem'
-                    }}>
-                      No {incomeCategoryWalletFilter === 'all' ? '' : `${incomeCategoryWalletFilter} `}income in this period
-                    </div>
-                  ) : (
-                    incomeCategoryData.map((cat, idx) => {
-                      const pct = totalIncomeCategory > 0 ? ((cat.value / totalIncomeCategory) * 100).toFixed(0) : '0';
-                      const catColor = getCategoryColor(cat.name, idx);
-                      const isHovered = hoveredIncomeCategory && hoveredIncomeCategory.name === cat.name;
-                      return (
-                        <div
-                          id={`income-cat-row-${idx}`}
-                          key={cat.name || idx}
-                          onMouseEnter={() => setHoveredIncomeCategory(cat)}
-                          onMouseLeave={() => setHoveredIncomeCategory(null)}
-                          style={{
-                            background: isHovered ? 'var(--hover-bg)' : 'var(--card-bg)',
-                            border: isHovered ? `1.5px solid ${catColor}` : '1px solid var(--card-border)',
-                            borderRadius: '8px',
-                            padding: '0.4rem 0.65rem',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '3px',
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease',
-                            transform: isHovered ? 'scale(1.01)' : 'scale(1)'
+                {/* Side-by-side Donut & Category List Container */}
+                <div className="donut-category-container" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, minHeight: '220px' }}>
+                  {/* Donut Chart */}
+                  <div style={{ position: 'relative', width: '135px', height: '135px', flexShrink: 0, margin: '0 auto' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart style={{ outline: 'none' }}>
+                        <Pie
+                          data={incomeCategoryData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={38}
+                          outerRadius={56}
+                          paddingAngle={3}
+                          minAngle={4}
+                          dataKey="value"
+                          tabIndex={-1}
+                          style={{ outline: 'none' }}
+                          onMouseEnter={(_, index) => {
+                            const cat = incomeCategoryData[index];
+                            if (cat) {
+                              setHoveredIncomeCategory(cat);
+                              const el = document.getElementById(`income-cat-row-${index}`);
+                              if (el) {
+                                el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                              }
+                            }
                           }}
+                          onMouseLeave={() => setHoveredIncomeCategory(null)}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0, flex: 1 }}>
-                              <span
+                          {incomeCategoryData.map((entry, index) => {
+                            const isHovered = hoveredIncomeCategory && hoveredIncomeCategory.name === entry.name;
+                            return (
+                              <Cell
+                                key={`income-pie-cell-${index}`}
+                                fill={getCategoryColor(entry.name, index)}
+                                stroke="var(--card-bg)"
+                                strokeWidth={isHovered ? 2.5 : 1.5}
+                                tabIndex={-1}
+                                style={{ cursor: 'pointer', transition: 'all 0.15s ease', outline: 'none' }}
+                                onMouseEnter={() => {
+                                  setHoveredIncomeCategory(entry);
+                                  const el = document.getElementById(`income-cat-row-${index}`);
+                                  if (el) {
+                                    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                  }
+                                }}
+                                onMouseLeave={() => setHoveredIncomeCategory(null)}
+                              />
+                            );
+                          })}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                    {/* Center Hub: Clean TOTAL INCOME */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        textAlign: 'center',
+                        pointerEvents: 'none',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '70px'
+                      }}
+                    >
+                      <span style={{ fontSize: '0.52rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        {incomeCategoryWalletFilter === 'UPI' ? 'UPI' : incomeCategoryWalletFilter === 'Cash' ? 'CASH' : 'TOTAL'}
+                      </span>
+                      <span style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-primary)', margin: '1px 0', lineHeight: 1.1, whiteSpace: 'nowrap' }}>
+                        {getCurrency()}{formatCompactAmt(totalIncomeCategory)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Category Breakdown Ranking List */}
+                  <div
+                    className="custom-scrollbar"
+                    style={{
+                      flex: isMobile ? 'none' : 1,
+                      width: '100%',
+                      minWidth: 0,
+                      height: isMobile ? '230px' : '220px',
+                      maxHeight: isMobile ? '230px' : '220px',
+                      overflowY: 'auto',
+                      overflowX: 'hidden',
+                      WebkitOverflowScrolling: 'touch',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.35rem',
+                      paddingRight: '6px'
+                    }}
+                  >
+                    {incomeCategoryData.length === 0 ? (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        height: '100%',
+                        color: 'var(--text-muted)',
+                        fontSize: '0.82rem',
+                        textAlign: 'center',
+                        padding: '1rem'
+                      }}>
+                        No {incomeCategoryWalletFilter === 'all' ? '' : `${incomeCategoryWalletFilter} `}income in this period
+                      </div>
+                    ) : (
+                      incomeCategoryData.map((cat, idx) => {
+                        const pct = totalIncomeCategory > 0 ? ((cat.value / totalIncomeCategory) * 100).toFixed(0) : '0';
+                        const catColor = getCategoryColor(cat.name, idx);
+                        const isHovered = hoveredIncomeCategory && hoveredIncomeCategory.name === cat.name;
+                        return (
+                          <div
+                            id={`income-cat-row-${idx}`}
+                            key={cat.name || idx}
+                            onMouseEnter={() => setHoveredIncomeCategory(cat)}
+                            onMouseLeave={() => setHoveredIncomeCategory(null)}
+                            style={{
+                              background: isHovered ? 'var(--hover-bg)' : 'var(--card-bg)',
+                              border: isHovered ? `1.5px solid ${catColor}` : '1px solid var(--card-border)',
+                              borderRadius: '8px',
+                              padding: '0.4rem 0.65rem',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '3px',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease',
+                              transform: isHovered ? 'scale(1.01)' : 'scale(1)'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0, flex: 1 }}>
+                                <span
+                                  style={{
+                                    width: '8px',
+                                    height: '8px',
+                                    borderRadius: '50%',
+                                    backgroundColor: catColor,
+                                    boxShadow: `0 0 0 1.5px var(--card-bg), 0 0 4px ${catColor}66`,
+                                    flexShrink: 0
+                                  }}
+                                />
+                                <span
+                                  style={{
+                                    fontWeight: isHovered ? 700 : 600,
+                                    fontSize: '0.78rem',
+                                    color: isHovered ? catColor : 'var(--text-primary)',
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis'
+                                  }}
+                                >
+                                  {cat.name}
+                                </span>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
+                                <span
+                                  style={{
+                                    fontSize: '0.7rem',
+                                    fontWeight: 700,
+                                    color: 'var(--text-secondary)'
+                                  }}
+                                >
+                                  {pct}%
+                                </span>
+                                <span
+                                  style={{
+                                    fontWeight: 700,
+                                    fontSize: '0.8rem',
+                                    color: 'var(--text-primary)',
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  {getCurrency()}{formatAmt(cat.value)}
+                                </span>
+                              </div>
+                            </div>
+                            <div style={{ width: '100%', height: '3px', background: 'var(--card-border)', borderRadius: '9999px', overflow: 'hidden' }}>
+                              <div
                                 style={{
-                                  width: '8px',
-                                  height: '8px',
-                                  borderRadius: '50%',
+                                  width: `${Math.max(3.5, Math.min(100, Number(pct)))}%`,
+                                  height: '100%',
                                   backgroundColor: catColor,
-                                  boxShadow: `0 0 0 1.5px var(--card-bg), 0 0 4px ${catColor}66`,
-                                  flexShrink: 0
+                                  borderRadius: '9999px'
                                 }}
                               />
-                              <span
-                                style={{
-                                  fontWeight: isHovered ? 700 : 600,
-                                  fontSize: '0.78rem',
-                                  color: isHovered ? catColor : 'var(--text-primary)',
-                                  whiteSpace: 'nowrap',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis'
-                                }}
-                              >
-                                {cat.name}
-                              </span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
-                              <span
-                                style={{
-                                  fontSize: '0.7rem',
-                                  fontWeight: 700,
-                                  color: 'var(--text-secondary)'
-                                }}
-                              >
-                                {pct}%
-                              </span>
-                              <span
-                                style={{
-                                  fontWeight: 700,
-                                  fontSize: '0.8rem',
-                                  color: 'var(--text-primary)',
-                                  whiteSpace: 'nowrap'
-                                }}
-                              >
-                                {getCurrency()}{formatAmt(cat.value)}
-                              </span>
                             </div>
                           </div>
-                          <div style={{ width: '100%', height: '3px', background: 'var(--card-border)', borderRadius: '9999px', overflow: 'hidden' }}>
-                            <div
-                              style={{
-                                width: `${Math.max(3.5, Math.min(100, Number(pct)))}%`,
-                                height: '100%',
-                                backgroundColor: catColor,
-                                borderRadius: '9999px'
-                              }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
+                        );
+                      })
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+
+              {/* 4. DAY-OF-WEEK RHYTHM - ROW 3 LEFT CARD (50%) */}
+              <div
+                className="chart-wrapper"
+                style={{
+                  width: '100%',
+                  background: 'var(--bg-card-subtle)',
+                  border: '1px solid var(--card-border)',
+                  borderRadius: '14px',
+                  padding: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minHeight: '290px',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', minHeight: '26px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Calendar size={18} style={{ color: 'var(--success)' }} />
+                    <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.02rem', fontWeight: 600 }}>
+                      Day-of-Week Rhythm
+                    </h4>
+                  </div>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    background: 'var(--empty-state-bg)',
+                    border: '1px solid var(--card-border)',
+                    color: 'var(--text-muted)'
+                  }}>
+                    Peak: {incomeWeekdayData.peakDay?.day || '-'}
+                  </span>
+                </div>
+
+                <div style={{ height: '175px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={incomeWeekdayData.data} margin={{ top: 10, right: 15, left: -5, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" opacity={0.6} />
+                      <XAxis dataKey="day" stroke="var(--text-secondary)" tick={{ fontSize: 12 }} />
+                      <YAxis 
+                        stroke="var(--text-secondary)" 
+                        tick={{ fontSize: 11 }}
+                        width={42}
+                        tickFormatter={(v) => v >= 100000 ? `${(v / 100000).toFixed(1)}L` : v >= 1000 ? `${Math.round(v / 1000)}k` : v}
+                      />
+                      <Tooltip content={<CustomWeekdayTooltip isSpend={false} />} />
+                      <Bar dataKey="amount" radius={[6, 6, 0, 0]} maxBarSize={38}>
+                        {incomeWeekdayData.data.map((entry, index) => {
+                          const isWeekend = entry.isWeekend;
+                          const isPeak = entry.day === incomeWeekdayData.peakDay?.day && entry.amount > 0;
+                          const fill = isPeak ? '#10b981' : isWeekend ? '#34d399' : '#6ee7b7';
+                          return <Cell key={`income-weekday-bar-${index}`} fill={fill} />;
+                        })}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Bottom Summary Pill */}
+                <div style={{
+                  marginTop: '0.85rem',
+                  textAlign: 'center',
+                  fontSize: '0.82rem',
+                  color: 'var(--text-secondary)',
+                  background: 'var(--card-bg)',
+                  padding: '0.55rem 0.75rem',
+                  borderRadius: '10px',
+                  border: '1px solid var(--card-border)',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '0.45rem',
+                  width: '100%'
+                }}>
+                  <span>Weekdays: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{formatCompactAmt(incomeWeekdayData.weekdayTotal)} ({incomeWeekdayData.weekdayPct}%)</strong></span>
+                  <span style={{ opacity: 0.4 }}>|</span>
+                  <span>Weekend: <strong style={{ color: '#10b981' }}>{getCurrency()}{formatCompactAmt(incomeWeekdayData.weekendTotal)} ({incomeWeekdayData.weekendPct}%)</strong></span>
+                </div>
+              </div>
+
+              {/* 5. CUMULATIVE INCOME PACE - ROW 3 RIGHT CARD (50%) */}
+              <div
+                className="chart-wrapper"
+                style={{
+                  width: '100%',
+                  background: 'var(--bg-card-subtle)',
+                  border: '1px solid var(--card-border)',
+                  borderRadius: '14px',
+                  padding: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minHeight: '290px',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', minHeight: '26px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Target size={18} style={{ color: 'var(--success)' }} />
+                    <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.02rem', fontWeight: 600 }}>
+                      Cumulative Income Pace
+                    </h4>
+                  </div>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    background: 'var(--empty-state-bg)',
+                    border: '1px solid var(--card-border)',
+                    color: 'var(--text-muted)'
+                  }}>
+                    Actual vs Steady Pace
+                  </span>
+                </div>
+
+                <div style={{ height: '175px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={incomeCumulativeData} margin={{ top: 10, right: 15, left: -5, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" opacity={0.6} />
+                      <XAxis 
+                        dataKey="label" 
+                        stroke="var(--text-secondary)" 
+                        tick={{ fontSize: 11 }}
+                        interval={isMobile ? 'preserveStartEnd' : Math.max(0, Math.ceil(incomeCumulativeData.length / 10))}
+                      />
+                      <YAxis 
+                        stroke="var(--text-secondary)" 
+                        tick={{ fontSize: 11 }}
+                        width={42}
+                        tickFormatter={(v) => v >= 100000 ? `${(v / 100000).toFixed(1)}L` : v >= 1000 ? `${Math.round(v / 1000)}k` : v}
+                      />
+                      <Tooltip content={<CustomCumulativeTooltip isSpend={false} />} />
+                      <Line 
+                        type="monotone" 
+                        dataKey="actual" 
+                        name="Actual"
+                        stroke="var(--success)" 
+                        strokeWidth={2.5}
+                        dot={false}
+                        activeDot={{ r: 5 }}
+                      />
+                      <Line 
+                        type="linear" 
+                        dataKey="pace" 
+                        name="Steady Pace"
+                        stroke="var(--text-muted)" 
+                        strokeDasharray="4 4" 
+                        strokeWidth={1.8}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Bottom Summary Pill */}
+                <div style={{
+                  marginTop: '0.85rem',
+                  textAlign: 'center',
+                  fontSize: '0.82rem',
+                  color: 'var(--text-secondary)',
+                  background: 'var(--card-bg)',
+                  padding: '0.55rem 0.75rem',
+                  borderRadius: '10px',
+                  border: '1px solid var(--card-border)',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '0.45rem',
+                  width: '100%'
+                }}>
+                  <span>Cumulative: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{formatAmt(incomeCumulativeData[incomeCumulativeData.length - 1]?.actual || 0)}</strong></span>
+                  <span style={{ opacity: 0.4 }}>|</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ width: '8px', height: '2px', background: 'var(--success)', display: 'inline-block' }} /> Actual
+                  </span>
+                  <span style={{ opacity: 0.4 }}>|</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ width: '8px', height: '0px', borderTop: '2px dashed var(--text-muted)', display: 'inline-block' }} /> Steady Pace
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         )}
