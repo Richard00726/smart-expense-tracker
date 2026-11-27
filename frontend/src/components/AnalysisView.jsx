@@ -3,7 +3,7 @@ import { getSummary, getCurrency } from '../services/api';
 import { 
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer, 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
-  AreaChart, Area, LineChart, Line, ReferenceLine
+  AreaChart, Area, LineChart, Line, ReferenceLine, ReferenceDot
 } from 'recharts';
 import { 
   PieChart as PieChartIcon, BarChart2, TrendingUp, Activity, 
@@ -1122,6 +1122,55 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
     return buildCumulativeData(incomeTimelineData);
   }, [incomeTimelineData]);
 
+  // Live Animated Peak Dot Marker with pulsing ripple rings (Strictly zero emojis)
+  const PeakDotMarker = (props) => {
+    const { cx, cy, amount, label, isSpend } = props;
+    if (cx === undefined || cy === undefined || isNaN(cx) || isNaN(cy)) return null;
+    const color = isSpend ? '#ef4444' : '#10b981';
+    const labelY = cy < 32 ? cy + 22 : cy - 14;
+    const text = `Peak ${getCurrency()}${formatCompactAmt(amount)} (${label})`;
+
+    return (
+      <g className="peak-live-marker" style={{ pointerEvents: 'none' }}>
+        {/* Expanding Ripple Ring 1 */}
+        <circle cx={cx} cy={cy} r="6" fill="none" stroke={color} strokeWidth="2">
+          <animate attributeName="r" from="6" to="24" dur="2s" repeatCount="indefinite" />
+          <animate attributeName="opacity" from="0.9" to="0" dur="2s" repeatCount="indefinite" />
+          <animate attributeName="stroke-width" from="2" to="0.5" dur="2s" repeatCount="indefinite" />
+        </circle>
+
+        {/* Expanding Ripple Ring 2 (staggered by 0.7s) */}
+        <circle cx={cx} cy={cy} r="6" fill="none" stroke={color} strokeWidth="2">
+          <animate attributeName="r" from="6" to="24" begin="0.7s" dur="2s" repeatCount="indefinite" />
+          <animate attributeName="opacity" from="0.9" to="0" dur="2s" repeatCount="indefinite" />
+          <animate attributeName="stroke-width" from="2" to="0.5" dur="2s" repeatCount="indefinite" />
+        </circle>
+
+        {/* Static Guide Halo matching Image 2 */}
+        <circle cx={cx} cy={cy} r="10" fill="none" stroke={color} strokeWidth="1" strokeDasharray="2 2" opacity="0.35" />
+
+        {/* Center Solid Core Dot */}
+        <circle cx={cx} cy={cy} r="5" fill={color} stroke="#ffffff" strokeWidth="2" />
+
+        {/* Peak Text Label sitting above curve point */}
+        <text
+          x={cx}
+          y={labelY}
+          textAnchor="middle"
+          fill={color}
+          fontSize="11"
+          fontWeight="700"
+          style={{
+            letterSpacing: '-0.2px',
+            textShadow: '0 1px 3px rgba(0,0,0,0.35)'
+          }}
+        >
+          {text}
+        </text>
+      </g>
+    );
+  };
+
   // Custom Chart Tooltips (Strictly zero emojis)
   const CustomTimelineTooltip = ({ active, payload, isSpend, avg }) => {
     if (active && payload && payload.length) {
@@ -1599,42 +1648,27 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                         <span style={{ color: 'var(--danger)' }}>UPI {getCurrency()}{formatCompactAmt(spendingTimelineHover.upi || 0)}</span>
                       </span>
                     ) : (
-                      <>
-                        <span style={{
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          padding: '2px 8px',
-                          borderRadius: '12px',
-                          background: 'var(--empty-state-bg)',
-                          border: '1px solid var(--card-border)',
-                          color: 'var(--text-muted)'
-                        }}>
-                          Avg: {getCurrency()}{formatCompactAmt(spendingTimelineStats.avg)}/day
-                        </span>
-                        {spendingTimelineStats.peak?.amount > 0 && (
-                          <span style={{
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            padding: '2px 8px',
-                            borderRadius: '12px',
-                            background: 'rgba(239, 68, 68, 0.1)',
-                            border: '1px solid rgba(239, 68, 68, 0.25)',
-                            color: 'var(--danger)'
-                          }}>
-                            Peak: {getCurrency()}{formatCompactAmt(spendingTimelineStats.peak.amount)} ({spendingTimelineStats.peak.label})
-                          </span>
-                        )}
-                      </>
+                      <span style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        background: 'var(--empty-state-bg)',
+                        border: '1px solid var(--card-border)',
+                        color: 'var(--text-muted)'
+                      }}>
+                        Avg: {getCurrency()}{formatCompactAmt(spendingTimelineStats.avg)}/day
+                      </span>
                     )}
                   </div>
                 </div>
 
                 {/* AreaChart */}
-                <div style={{ height: isMobile ? '180px' : '200px', width: '100%' }}>
+                <div style={{ height: isMobile ? '205px' : '235px', width: '100%' }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart 
                       data={spendingTimelineData} 
-                      margin={{ top: 10, right: 15, left: -5, bottom: 0 }}
+                      margin={{ top: 24, right: 15, left: -5, bottom: 0 }}
                       onMouseMove={(e) => {
                         if (e && e.activePayload && e.activePayload.length) {
                           setSpendingTimelineHover(e.activePayload[0].payload);
@@ -1682,6 +1716,22 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                           opacity={0.65} 
                         />
                       )}
+                      {spendingTimelineStats.peak?.amount > 0 && (
+                        <ReferenceDot 
+                          x={spendingTimelineStats.peak.label} 
+                          y={spendingTimelineStats.peak.amount} 
+                          isFront={true}
+                          ifOverflow="extendDomain"
+                          shape={(props) => (
+                            <PeakDotMarker 
+                              {...props} 
+                              amount={spendingTimelineStats.peak.amount} 
+                              label={spendingTimelineStats.peak.fullDate || spendingTimelineStats.peak.label} 
+                              isSpend={true} 
+                            />
+                          )} 
+                        />
+                      )}
                       <Area 
                         type="monotone" 
                         dataKey="cash" 
@@ -1712,36 +1762,6 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                       />
                     </AreaChart>
                   </ResponsiveContainer>
-                </div>
-
-                {/* Bottom Summary Pill */}
-                <div style={{
-                  marginTop: '0.85rem',
-                  textAlign: 'center',
-                  fontSize: '0.82rem',
-                  color: 'var(--text-secondary)',
-                  background: 'var(--card-bg)',
-                  padding: '0.55rem 0.75rem',
-                  borderRadius: '10px',
-                  border: '1px solid var(--card-border)',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: '0.45rem',
-                  width: '100%'
-                }}>
-                  <span>Total Spend: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{formatAmt(spendingTimelineStats.total)}</strong></span>
-                  <span style={{ opacity: 0.4 }}>|</span>
-                  <span style={{ color: '#f59e0b', fontWeight: '600' }}>
-                    Cash: {getCurrency()}{formatAmt(spendingTimelineStats.totalCash)} ({spendingTimelineStats.total > 0 ? ((spendingTimelineStats.totalCash / spendingTimelineStats.total) * 100).toFixed(1) : '0.0'}%)
-                  </span>
-                  <span style={{ opacity: 0.4 }}>|</span>
-                  <span style={{ color: 'var(--danger)', fontWeight: '600' }}>
-                    UPI: {getCurrency()}{formatAmt(spendingTimelineStats.totalUpi)} ({spendingTimelineStats.total > 0 ? ((spendingTimelineStats.totalUpi / spendingTimelineStats.total) * 100).toFixed(1) : '0.0'}%)
-                  </span>
-                  <span style={{ opacity: 0.4 }}>|</span>
-                  <span>Daily Avg: <strong style={{ color: 'var(--danger)' }}>{getCurrency()}{formatAmt(spendingTimelineStats.avg)}</strong></span>
                 </div>
               </div>
 
@@ -2429,42 +2449,27 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                         <span style={{ color: '#10b981' }}>UPI {getCurrency()}{formatCompactAmt(incomeTimelineHover.upi || 0)}</span>
                       </span>
                     ) : (
-                      <>
-                        <span style={{
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          padding: '2px 8px',
-                          borderRadius: '12px',
-                          background: 'var(--empty-state-bg)',
-                          border: '1px solid var(--card-border)',
-                          color: 'var(--text-muted)'
-                        }}>
-                          Avg: {getCurrency()}{formatCompactAmt(incomeTimelineStats.avg)}/day
-                        </span>
-                        {incomeTimelineStats.peak?.amount > 0 && (
-                          <span style={{
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            padding: '2px 8px',
-                            borderRadius: '12px',
-                            background: 'rgba(16, 185, 129, 0.1)',
-                            border: '1px solid rgba(16, 185, 129, 0.25)',
-                            color: 'var(--success)'
-                          }}>
-                            Peak: {getCurrency()}{formatCompactAmt(incomeTimelineStats.peak.amount)} ({incomeTimelineStats.peak.label})
-                          </span>
-                        )}
-                      </>
+                      <span style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        background: 'var(--empty-state-bg)',
+                        border: '1px solid var(--card-border)',
+                        color: 'var(--text-muted)'
+                      }}>
+                        Avg: {getCurrency()}{formatCompactAmt(incomeTimelineStats.avg)}/day
+                      </span>
                     )}
                   </div>
                 </div>
 
                 {/* AreaChart */}
-                <div style={{ height: isMobile ? '180px' : '200px', width: '100%' }}>
+                <div style={{ height: isMobile ? '205px' : '235px', width: '100%' }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart 
                       data={incomeTimelineData} 
-                      margin={{ top: 10, right: 15, left: -5, bottom: 0 }}
+                      margin={{ top: 24, right: 15, left: -5, bottom: 0 }}
                       onMouseMove={(e) => {
                         if (e && e.activePayload && e.activePayload.length) {
                           setIncomeTimelineHover(e.activePayload[0].payload);
@@ -2512,6 +2517,22 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                           opacity={0.65} 
                         />
                       )}
+                      {incomeTimelineStats.peak?.amount > 0 && (
+                        <ReferenceDot 
+                          x={incomeTimelineStats.peak.label} 
+                          y={incomeTimelineStats.peak.amount} 
+                          isFront={true}
+                          ifOverflow="extendDomain"
+                          shape={(props) => (
+                            <PeakDotMarker 
+                              {...props} 
+                              amount={incomeTimelineStats.peak.amount} 
+                              label={incomeTimelineStats.peak.fullDate || incomeTimelineStats.peak.label} 
+                              isSpend={false} 
+                            />
+                          )} 
+                        />
+                      )}
                       <Area 
                         type="monotone" 
                         dataKey="cash" 
@@ -2542,36 +2563,6 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                       />
                     </AreaChart>
                   </ResponsiveContainer>
-                </div>
-
-                {/* Bottom Summary Pill */}
-                <div style={{
-                  marginTop: '0.85rem',
-                  textAlign: 'center',
-                  fontSize: '0.82rem',
-                  color: 'var(--text-secondary)',
-                  background: 'var(--card-bg)',
-                  padding: '0.55rem 0.75rem',
-                  borderRadius: '10px',
-                  border: '1px solid var(--card-border)',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: '0.45rem',
-                  width: '100%'
-                }}>
-                  <span>Total Income: <strong style={{ color: 'var(--text-primary)' }}>{getCurrency()}{formatAmt(incomeTimelineStats.total)}</strong></span>
-                  <span style={{ opacity: 0.4 }}>|</span>
-                  <span style={{ color: '#10b981', fontWeight: '600' }}>
-                    Cash: {getCurrency()}{formatAmt(incomeTimelineStats.totalCash)} ({incomeTimelineStats.total > 0 ? ((incomeTimelineStats.totalCash / incomeTimelineStats.total) * 100).toFixed(1) : '0.0'}%)
-                  </span>
-                  <span style={{ opacity: 0.4 }}>|</span>
-                  <span style={{ color: '#3b82f6', fontWeight: '600' }}>
-                    UPI: {getCurrency()}{formatAmt(incomeTimelineStats.totalUpi)} ({incomeTimelineStats.total > 0 ? ((incomeTimelineStats.totalUpi / incomeTimelineStats.total) * 100).toFixed(1) : '0.0'}%)
-                  </span>
-                  <span style={{ opacity: 0.4 }}>|</span>
-                  <span>Daily Avg: <strong style={{ color: 'var(--success)' }}>{getCurrency()}{formatAmt(incomeTimelineStats.avg)}</strong></span>
                 </div>
               </div>
 
