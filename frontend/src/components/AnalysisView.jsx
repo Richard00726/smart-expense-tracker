@@ -169,6 +169,7 @@ const buildTimelineData = (txList, filterType, filterValue) => {
   txList.forEach(t => {
     const dObj = parseTxDate(t.date || t.txnDate);
     if (!dObj) return;
+    if (dObj.getFullYear() !== year || (dObj.getMonth() + 1) !== month) return;
     const dayNum = dObj.getDate();
     if (dayNum >= 1 && dayNum <= daysInMonth) {
       const amt = Number(t.amount || 0);
@@ -437,11 +438,49 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
   const [incomeLoading, setIncomeLoading] = useState(!initialData);
   const [flowLoading, setFlowLoading] = useState(!initialData);
 
-  const [spendingFilterType, setSpendingFilterType] = useState('all');
-  const [spendingFilterValue, setSpendingFilterValue] = useState('');
+  const [spendingFilterType, setSpendingFilterType] = useState(() => {
+    try {
+      return sessionStorage.getItem('analysis_spending_filter_type') || 'all';
+    } catch {
+      return 'all';
+    }
+  });
+  const [spendingFilterValue, setSpendingFilterValue] = useState(() => {
+    try {
+      return sessionStorage.getItem('analysis_spending_filter_value') || '';
+    } catch {
+      return '';
+    }
+  });
 
-  const [incomeFilterType, setIncomeFilterType] = useState('all');
-  const [incomeFilterValue, setIncomeFilterValue] = useState('');
+  const [incomeFilterType, setIncomeFilterType] = useState(() => {
+    try {
+      return sessionStorage.getItem('analysis_income_filter_type') || 'all';
+    } catch {
+      return 'all';
+    }
+  });
+  const [incomeFilterValue, setIncomeFilterValue] = useState(() => {
+    try {
+      return sessionStorage.getItem('analysis_income_filter_value') || '';
+    } catch {
+      return '';
+    }
+  });
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('analysis_spending_filter_type', spendingFilterType);
+      sessionStorage.setItem('analysis_spending_filter_value', spendingFilterValue);
+    } catch (e) {}
+  }, [spendingFilterType, spendingFilterValue]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('analysis_income_filter_type', incomeFilterType);
+      sessionStorage.setItem('analysis_income_filter_value', incomeFilterValue);
+    } catch (e) {}
+  }, [incomeFilterType, incomeFilterValue]);
 
   const [flowFilterType, setFlowFilterType] = useState('all');
   const [flowFilterValue, setFlowFilterValue] = useState('');
@@ -1122,47 +1161,36 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
     return buildCumulativeData(incomeTimelineData);
   }, [incomeTimelineData]);
 
-  // Live Animated Peak Dot Marker with pulsing ripple rings (Strictly zero emojis)
+  // Live Animated Peak Dot Marker with subtle live pulse (Strictly zero emojis)
   const PeakDotMarker = (props) => {
     const { cx, cy, amount, label, isSpend } = props;
     if (cx === undefined || cy === undefined || isNaN(cx) || isNaN(cy)) return null;
     const color = isSpend ? '#ef4444' : '#10b981';
-    const labelY = cy < 32 ? cy + 22 : cy - 14;
+    const labelY = cy < 30 ? cy + 18 : cy - 14;
     const text = `Peak ${getCurrency()}${formatCompactAmt(amount)} (${label})`;
 
     return (
       <g className="peak-live-marker" style={{ pointerEvents: 'none' }}>
-        {/* Expanding Ripple Ring 1 */}
-        <circle cx={cx} cy={cy} r="6" fill="none" stroke={color} strokeWidth="2">
-          <animate attributeName="r" from="6" to="24" dur="2s" repeatCount="indefinite" />
-          <animate attributeName="opacity" from="0.9" to="0" dur="2s" repeatCount="indefinite" />
-          <animate attributeName="stroke-width" from="2" to="0.5" dur="2s" repeatCount="indefinite" />
+        {/* Subtle, small delicate live ping ripple - non-intrusive */}
+        <circle cx={cx} cy={cy} r="3.5" fill="none" stroke={color} strokeWidth="1">
+          <animate attributeName="r" from="3.5" to="9" dur="1.8s" repeatCount="indefinite" />
+          <animate attributeName="opacity" from="0.75" to="0" dur="1.8s" repeatCount="indefinite" />
         </circle>
 
-        {/* Expanding Ripple Ring 2 (staggered by 0.7s) */}
-        <circle cx={cx} cy={cy} r="6" fill="none" stroke={color} strokeWidth="2">
-          <animate attributeName="r" from="6" to="24" begin="0.7s" dur="2s" repeatCount="indefinite" />
-          <animate attributeName="opacity" from="0.9" to="0" dur="2s" repeatCount="indefinite" />
-          <animate attributeName="stroke-width" from="2" to="0.5" dur="2s" repeatCount="indefinite" />
-        </circle>
+        {/* Small Solid Core Dot */}
+        <circle cx={cx} cy={cy} r="3.5" fill={color} stroke="#ffffff" strokeWidth="1.5" />
 
-        {/* Static Guide Halo matching Image 2 */}
-        <circle cx={cx} cy={cy} r="10" fill="none" stroke={color} strokeWidth="1" strokeDasharray="2 2" opacity="0.35" />
-
-        {/* Center Solid Core Dot */}
-        <circle cx={cx} cy={cy} r="5" fill={color} stroke="#ffffff" strokeWidth="2" />
-
-        {/* Peak Text Label sitting above curve point */}
+        {/* Peak Text Label sitting clearly above curve point with no overlap */}
         <text
           x={cx}
           y={labelY}
           textAnchor="middle"
           fill={color}
-          fontSize="11"
+          fontSize="10.5"
           fontWeight="700"
           style={{
             letterSpacing: '-0.2px',
-            textShadow: '0 1px 3px rgba(0,0,0,0.35)'
+            textShadow: '0 1px 2px rgba(0,0,0,0.35)'
           }}
         >
           {text}
@@ -1667,6 +1695,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                 <div style={{ height: isMobile ? '205px' : '235px', width: '100%' }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart 
+                      key={`spend-pulse-${spendingTimelineData.length}-${spendingFilterType}-${spendingFilterValue}`}
                       data={spendingTimelineData} 
                       margin={{ top: 24, right: 15, left: -5, bottom: 0 }}
                       onMouseMove={(e) => {
@@ -1742,7 +1771,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                         fill="url(#spendCashGrad)" 
                         name="Cash Spend"
                         isAnimationActive={true}
-                        animationDuration={1300}
+                        animationDuration={600}
                         animationEasing="ease-out"
                         activeDot={{ r: 5, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#f59e0b' }}
                       />
@@ -1756,7 +1785,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                         fill="url(#spendUpiGrad)" 
                         name="UPI Spend"
                         isAnimationActive={true}
-                        animationDuration={1300}
+                        animationDuration={600}
                         animationEasing="ease-out"
                         activeDot={{ r: 5, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#ef4444' }}
                       />
@@ -2468,6 +2497,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                 <div style={{ height: isMobile ? '205px' : '235px', width: '100%' }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart 
+                      key={`income-pulse-${incomeTimelineData.length}-${incomeFilterType}-${incomeFilterValue}`}
                       data={incomeTimelineData} 
                       margin={{ top: 24, right: 15, left: -5, bottom: 0 }}
                       onMouseMove={(e) => {
@@ -2543,7 +2573,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                         fill="url(#incomeCashGrad)" 
                         name="Cash Income"
                         isAnimationActive={true}
-                        animationDuration={1300}
+                        animationDuration={600}
                         animationEasing="ease-out"
                         activeDot={{ r: 5, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#f59e0b' }}
                       />
@@ -2557,7 +2587,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                         fill="url(#incomeUpiGrad)" 
                         name="UPI Income"
                         isAnimationActive={true}
-                        animationDuration={1300}
+                        animationDuration={600}
                         animationEasing="ease-out"
                         activeDot={{ r: 5, stroke: 'var(--card-bg)', strokeWidth: 2, fill: '#10b981' }}
                       />

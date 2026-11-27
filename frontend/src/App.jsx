@@ -192,8 +192,12 @@ function App() {
       setTransactions(sorted);
       if (txFilterType === 'all' && txWalletFilter === 'all') {
         try {
-          localStorage.setItem('cached_transactions', JSON.stringify(sorted.slice(0, 100)));
-        } catch (e) {}
+          localStorage.setItem('cached_transactions', JSON.stringify(sorted));
+        } catch (e) {
+          try {
+            localStorage.setItem('cached_transactions', JSON.stringify(sorted.slice(0, 500)));
+          } catch (e2) {}
+        }
       }
     } catch (error) {
       console.error("Failed to load transactions:", error);
