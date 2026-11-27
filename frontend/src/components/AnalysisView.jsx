@@ -452,8 +452,8 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
   const [hoveredIncomeCategory, setHoveredIncomeCategory] = useState(null);
   const [spendingTimelineHover, setSpendingTimelineHover] = useState(null);
   const [incomeTimelineHover, setIncomeTimelineHover] = useState(null);
-  const [spendingTimelineMode, setSpendingTimelineMode] = useState('total'); // 'total', 'stacked', 'upi', 'cash'
-  const [incomeTimelineMode, setIncomeTimelineMode] = useState('total');
+  const [spendingTimelineMode, setSpendingTimelineMode] = useState('stacked'); // 'total', 'stacked', 'upi', 'cash'
+  const [incomeTimelineMode, setIncomeTimelineMode] = useState('stacked');
 
   const [userChangedSpendingMonth, setUserChangedSpendingMonth] = useState(false);
   const [userChangedIncomeMonth, setUserChangedIncomeMonth] = useState(false);
@@ -1515,9 +1515,6 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                     <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.02rem', fontWeight: 600 }}>
                       Daily Spending Pulse
                     </h4>
-                    <span className="live-pulse-badge">
-                      <span className="live-pulse-dot" /> LIVE
-                    </span>
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
@@ -1700,7 +1697,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                         content={<CustomTimelineTooltip isSpend={true} avg={spendingTimelineStats.avg} />} 
                         cursor={{ stroke: 'rgba(239, 68, 68, 0.4)', strokeWidth: 1.5, strokeDasharray: '4 4' }}
                       />
-                      {spendingTimelineStats.avg > 0 && spendingTimelineMode === 'total' && (
+                      {spendingTimelineStats.avg > 0 && (spendingTimelineMode === 'total' || spendingTimelineMode === 'stacked') && (
                         <ReferenceLine 
                           y={spendingTimelineStats.avg} 
                           stroke="#ef4444" 
@@ -2480,9 +2477,6 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                     <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.02rem', fontWeight: 600 }}>
                       Daily Income Pulse
                     </h4>
-                    <span className="live-pulse-badge live-pulse-badge-success">
-                      <span className="live-pulse-dot live-pulse-dot-success" /> LIVE
-                    </span>
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
@@ -2665,7 +2659,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                         content={<CustomTimelineTooltip isSpend={false} avg={incomeTimelineStats.avg} />} 
                         cursor={{ stroke: 'rgba(16, 185, 129, 0.4)', strokeWidth: 1.5, strokeDasharray: '4 4' }}
                       />
-                      {incomeTimelineStats.avg > 0 && incomeTimelineMode === 'total' && (
+                      {incomeTimelineStats.avg > 0 && (incomeTimelineMode === 'total' || incomeTimelineMode === 'stacked') && (
                         <ReferenceLine 
                           y={incomeTimelineStats.avg} 
                           stroke="#10b981" 
