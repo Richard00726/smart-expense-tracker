@@ -97,7 +97,8 @@ const buildTimelineData = (txList, filterType, filterValue) => {
       amount: 0,
       cash: 0,
       upi: 0,
-      count: 0
+      count: 0,
+      isMonth: true
     }));
     txList.forEach(t => {
       const d = parseTxDate(t.date || t.txnDate);
@@ -130,7 +131,7 @@ const buildTimelineData = (txList, filterType, filterValue) => {
           const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
           const label = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
           if (!map.has(k)) {
-            map.set(k, { key: k, label, fullDate: label, amount: 0, cash: 0, upi: 0, count: 0 });
+            map.set(k, { key: k, label, fullDate: label, amount: 0, cash: 0, upi: 0, count: 0, isMonth: true });
           }
           const item = map.get(k);
           const amt = Number(t.amount || 0);
@@ -162,7 +163,8 @@ const buildTimelineData = (txList, filterType, filterValue) => {
       amount: 0,
       cash: 0,
       upi: 0,
-      count: 0
+      count: 0,
+      isMonth: false
     });
   }
 
@@ -1126,7 +1128,8 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
     const avg = count > 0 ? (total / count) : 0;
     const peak = spendingTimelineData.reduce((max, d) => d.amount > max.amount ? d : max, { amount: 0, label: '-' });
     const activeDays = spendingTimelineData.filter(d => d.amount > 0).length;
-    return { total, totalCash, totalUpi, avg, peak, activeDays };
+    const isMonthly = spendingTimelineData.length > 0 && Boolean(spendingTimelineData[0]?.isMonth);
+    return { total, totalCash, totalUpi, avg, peak, activeDays, isMonthly };
   }, [spendingTimelineData]);
 
   const spendingWeekdayData = useMemo(() => {
@@ -1150,7 +1153,8 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
     const avg = count > 0 ? (total / count) : 0;
     const peak = incomeTimelineData.reduce((max, d) => d.amount > max.amount ? d : max, { amount: 0, label: '-' });
     const activeDays = incomeTimelineData.filter(d => d.amount > 0).length;
-    return { total, totalCash, totalUpi, avg, peak, activeDays };
+    const isMonthly = incomeTimelineData.length > 0 && Boolean(incomeTimelineData[0]?.isMonth);
+    return { total, totalCash, totalUpi, avg, peak, activeDays, isMonthly };
   }, [incomeTimelineData]);
 
   const incomeWeekdayData = useMemo(() => {
@@ -1166,7 +1170,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
     const { cx, cy, amount, label, isSpend } = props;
     if (cx === undefined || cy === undefined || isNaN(cx) || isNaN(cy)) return null;
     const color = isSpend ? '#ef4444' : '#10b981';
-    const labelY = cy < 30 ? cy + 18 : cy - 14;
+    const labelY = cy < 32 ? cy + 20 : cy - 15;
     const text = `Peak ${getCurrency()}${formatCompactAmt(amount)} (${label})`;
 
     return (
@@ -1186,11 +1190,11 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
           y={labelY}
           textAnchor="middle"
           fill={color}
-          fontSize="10.5"
-          fontWeight="700"
+          fontSize="12.5"
+          fontWeight="800"
           style={{
             letterSpacing: '-0.2px',
-            textShadow: '0 1px 2px rgba(0,0,0,0.35)'
+            textShadow: '0 1px 3px rgba(0,0,0,0.45)'
           }}
         >
           {text}
@@ -1200,7 +1204,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
   };
 
   // Custom Chart Tooltips (Strictly zero emojis)
-  const CustomTimelineTooltip = ({ active, payload, isSpend, avg }) => {
+  const CustomTimelineTooltip = ({ active, payload, isSpend, avg, isMonthly }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       const totalAmount = Number(data.amount || 0);
@@ -1313,7 +1317,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
               fontSize: '0.74rem',
               color: isAbove ? (isSpend ? 'var(--danger)' : 'var(--success)') : 'var(--text-muted)'
             }}>
-              <span>vs Daily Avg :</span>
+              <span>{isMonthly ? 'vs Monthly Avg :' : 'vs Daily Avg :'}</span>
               <span style={{ fontWeight: 700 }}>
                 {isAbove ? '+' : '-'}{getCurrency()}{formatAmt(Math.abs(diff))}
               </span>
@@ -1650,7 +1654,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <Activity size={18} style={{ color: 'var(--danger)' }} />
                     <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.02rem', fontWeight: 600 }}>
-                      Daily Spending Pulse
+                      {spendingTimelineStats.isMonthly ? 'Spending Pulse' : 'Daily Spending Pulse'}
                     </h4>
                   </div>
 
@@ -1658,9 +1662,9 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                     {/* Live Hover Stat or Peak Badge */}
                     {spendingTimelineHover ? (
                       <span style={{
-                        fontSize: '0.75rem',
+                        fontSize: '0.8rem',
                         fontWeight: 700,
-                        padding: '2px 8px',
+                        padding: '3px 10px',
                         borderRadius: '12px',
                         background: 'rgba(239, 68, 68, 0.1)',
                         border: '1px solid rgba(239, 68, 68, 0.3)',
@@ -1677,15 +1681,15 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                       </span>
                     ) : (
                       <span style={{
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        padding: '2px 8px',
+                        fontSize: '0.82rem',
+                        fontWeight: 700,
+                        padding: '3px 10px',
                         borderRadius: '12px',
                         background: 'var(--empty-state-bg)',
                         border: '1px solid var(--card-border)',
                         color: 'var(--text-muted)'
                       }}>
-                        Avg: {getCurrency()}{formatCompactAmt(spendingTimelineStats.avg)}/day
+                        Avg: {getCurrency()}{formatCompactAmt(spendingTimelineStats.avg)}/{spendingTimelineStats.isMonthly ? 'month' : 'day'}
                       </span>
                     )}
                   </div>
@@ -1733,7 +1737,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                         tickFormatter={(v) => v >= 100000 ? `${(v / 100000).toFixed(1)}L` : v >= 1000 ? `${Math.round(v / 1000)}k` : v}
                       />
                       <Tooltip 
-                        content={<CustomTimelineTooltip isSpend={true} avg={spendingTimelineStats.avg} />} 
+                        content={<CustomTimelineTooltip isSpend={true} avg={spendingTimelineStats.avg} isMonthly={spendingTimelineStats.isMonthly} />} 
                         cursor={{ stroke: 'rgba(239, 68, 68, 0.4)', strokeWidth: 1.5, strokeDasharray: '4 4' }}
                       />
                       {spendingTimelineStats.avg > 0 && (
@@ -2452,7 +2456,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <Activity size={18} style={{ color: 'var(--success)' }} />
                     <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.02rem', fontWeight: 600 }}>
-                      Daily Income Pulse
+                      {incomeTimelineStats.isMonthly ? 'Income Pulse' : 'Daily Income Pulse'}
                     </h4>
                   </div>
 
@@ -2460,9 +2464,9 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                     {/* Live Hover Stat or Peak Badge */}
                     {incomeTimelineHover ? (
                       <span style={{
-                        fontSize: '0.75rem',
+                        fontSize: '0.8rem',
                         fontWeight: 700,
-                        padding: '2px 8px',
+                        padding: '3px 10px',
                         borderRadius: '12px',
                         background: 'rgba(16, 185, 129, 0.1)',
                         border: '1px solid rgba(16, 185, 129, 0.3)',
@@ -2479,15 +2483,15 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                       </span>
                     ) : (
                       <span style={{
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        padding: '2px 8px',
+                        fontSize: '0.82rem',
+                        fontWeight: 700,
+                        padding: '3px 10px',
                         borderRadius: '12px',
                         background: 'var(--empty-state-bg)',
                         border: '1px solid var(--card-border)',
                         color: 'var(--text-muted)'
                       }}>
-                        Avg: {getCurrency()}{formatCompactAmt(incomeTimelineStats.avg)}/day
+                        Avg: {getCurrency()}{formatCompactAmt(incomeTimelineStats.avg)}/{incomeTimelineStats.isMonthly ? 'month' : 'day'}
                       </span>
                     )}
                   </div>
@@ -2535,7 +2539,7 @@ const AnalysisView = ({ refreshTrigger, balances }) => {
                         tickFormatter={(v) => v >= 100000 ? `${(v / 100000).toFixed(1)}L` : v >= 1000 ? `${Math.round(v / 1000)}k` : v}
                       />
                       <Tooltip 
-                        content={<CustomTimelineTooltip isSpend={false} avg={incomeTimelineStats.avg} />} 
+                        content={<CustomTimelineTooltip isSpend={false} avg={incomeTimelineStats.avg} isMonthly={incomeTimelineStats.isMonthly} />} 
                         cursor={{ stroke: 'rgba(16, 185, 129, 0.4)', strokeWidth: 1.5, strokeDasharray: '4 4' }}
                       />
                       {incomeTimelineStats.avg > 0 && (
